@@ -30,6 +30,8 @@ import it.unimi.dsi.fastutil.longs.Long2LongMap;
 import it.unimi.dsi.fastutil.longs.Long2LongMaps;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import me.shedaniel.rei.api.client.REIRuntime;
 import me.shedaniel.rei.api.client.config.ConfigObject;
 import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
@@ -122,7 +124,7 @@ public class ViewsImpl implements Views {
         DisplayRegistry displayRegistry = DisplayRegistry.getInstance();
         DisplaysHolder displaysHolder = ((DisplayRegistryImpl) displayRegistry).displaysHolder();
         
-        Map<DisplayCategory<?>, Set<Display>> result = Maps.newLinkedHashMap();
+        Map<DisplayCategory<?>, Set<Display>> result = Maps.newHashMap();
         forCategories(processingVisibilityHandlers, filteringCategories, displayRegistry, result, (configuration, categoryId, displays, set) -> {
             if (categories.contains(categoryId)) { // If the category is in the search, add all displays
                 for (Display display : displays) {
@@ -217,16 +219,24 @@ public class ViewsImpl implements Views {
             }
         });
         
+        // Merging displays
+        Stopwatch mergingStopwatch = Stopwatch.createStarted(), sortingStopwatch = Stopwatch.createUnstarted();
         Map<DisplayCategory<?>, List<DisplaySpec>> resultSpec = (Map<DisplayCategory<?>, List<DisplaySpec>>) (Map) new LinkedHashMap<>();
         for (CategoryRegistry.CategoryConfiguration<?> configuration : CategoryRegistry.getInstance()) {
             Set<Display> displays = result.get(configuration.getCategory());
             if (displays == null) continue;
             resultSpec.put(configuration.getCategory(), new ArrayList<>(displays));
         }
-        // optimize displays
+        
         if (builder.isMergingDisplays() && ConfigObject.getInstance().doMergeDisplayUnderOne()) {
             mergeAndOptimize(result, resultSpec);
         }
+        
+        mergingStopwatch.stop();
+        // Sorting displays
+        sortingStopwatch.start();
+        Map<DisplayCategory<?>, List<DisplaySpec>> sorted = sortDisplays(merged);
+        sortingStopwatch.stop();
         
         String message = String.format("Built Recipe View in %s for %d categories, %d recipes for, %d usages for and %d live recipe generators.",
                 stopwatch.stop(), categories.size(), recipesForStacks.size(), usagesForStacks.size(), generatorsCount);
@@ -236,6 +246,18 @@ public class ViewsImpl implements Views {
             InternalLogger.getInstance().trace(message);
         }
         return resultSpec;
+    }
+    
+    private static Map<DisplayCategory<?>, List<DisplaySpec>> sortDisplays(Map<DisplayCategory<?>, List<DisplaySpec>> unsorted) {
+        Object2IntMap<CategoryIdentifier<?>> categoryOrder = new Object2IntOpenHashMap<>();
+        categoryOrder.defaultReturnValue(Integer.MAX_VALUE);
+        int i = 0;
+        for (CategoryRegistry.CategoryConfiguration<?> configuration : CategoryRegistry.getInstance()) {
+            categoryOrder.put(configuration.getCategoryIdentifier(), i++);
+        }
+        Map<DisplayCategory<?>, List<DisplaySpec>> result = new TreeMap<>(Comparator.comparingInt(category -> categoryOrder.getInt(category.getCategoryIdentifier())));
+        result.putAll(unsorted);
+        return result;
     }
     
     private static void forCategories(boolean processingVisibilityHandlers, Set<CategoryIdentifier<?>> filteringCategories, DisplayRegistry displayRegistry, Map<DisplayCategory<?>, Set<Display>> result, QuadConsumer<CategoryRegistry.CategoryConfiguration<?>, CategoryIdentifier<?>, List<Display>, Set<Display>> displayConsumer) {
