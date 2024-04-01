@@ -32,7 +32,7 @@ import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.client.ClientHooks;
+import net.neoforged.neoforge.event.EventHooks;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -51,7 +51,7 @@ public class CreativeModeTabCollectorImpl {
                     ResourceKey<CreativeModeTab> resourceKey = BuiltInRegistries.CREATIVE_MODE_TAB
                             .getResourceKey(tab)
                             .orElseThrow(() -> new IllegalStateException("Unregistered creative tab: " + tab));
-                    ClientHooks.onCreativeModeTabBuildContents(tab, resourceKey, tab.displayItemsGenerator, parameters, (stack, visibility) -> {
+                    EventHooks.onCreativeModeTabBuildContents(tab, resourceKey, tab.displayItemsGenerator, parameters, (stack, visibility) -> {
                         if (visibility == CreativeModeTab.TabVisibility.SEARCH_TAB_ONLY) return;
                         builder.accept(stack, visibility);
                     });
