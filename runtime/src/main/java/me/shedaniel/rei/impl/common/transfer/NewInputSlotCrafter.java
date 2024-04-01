@@ -129,6 +129,6 @@ public class NewInputSlotCrafter<T extends AbstractContainerMenu, C extends Cont
     }
     
     static boolean canStackAddMore(ItemStack existingStack, ItemStack stack) {
-        return !existingStack.isEmpty() && ItemStack.isSameItemSameTags(existingStack, stack) && existingStack.isStackable() && existingStack.getCount() + stack.getCount() <= existingStack.getMaxStackSize();
+        return !existingStack.isEmpty() && ItemStack.isSameItemSameComponents(existingStack, stack) && existingStack.isStackable() && existingStack.getCount() + stack.getCount() <= existingStack.getMaxStackSize();
     }
 }

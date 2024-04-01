@@ -55,6 +55,6 @@ public interface DumpHandler<T extends AbstractContainerMenu, D extends Display>
     }
     
     static boolean canStackAddMore(ItemStack existingStack, ItemStack stack) {
-        return !existingStack.isEmpty() && ItemStack.isSameItemSameTags(existingStack, stack) && existingStack.isStackable() && existingStack.getCount() + stack.getCount() <= existingStack.getMaxStackSize();
+        return !existingStack.isEmpty() && ItemStack.isSameItemSameComponents(existingStack, stack) && existingStack.isStackable() && existingStack.getCount() + stack.getCount() <= existingStack.getMaxStackSize();
     }
 }
