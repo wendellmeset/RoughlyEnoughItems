@@ -47,6 +47,7 @@ import me.shedaniel.rei.api.client.gui.widgets.Widgets;
 import me.shedaniel.rei.api.client.registry.category.ButtonArea;
 import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
 import me.shedaniel.rei.api.client.registry.display.DisplayCategory;
+import me.shedaniel.rei.api.client.registry.display.DisplayRegistry;
 import me.shedaniel.rei.api.client.view.ViewSearchBuilder;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.display.Display;
@@ -168,7 +169,7 @@ public class DefaultDisplayViewingScreen extends AbstractDisplayViewingScreen {
                 .onClick(button -> previousCategory()).tooltipLine(Component.translatable("text.rei.previous_category")));
         this.widgets.add(Widgets.createClickableLabel(new Point(bounds.getCenterX(), bounds.getY() + 7), getCurrentCategory().getTitle(), clickableLabelWidget -> {
             ViewSearchBuilder.builder().addAllCategories().open();
-        }).tooltip(Component.translatable("text.rei.view_all_categories")));
+        }).tooltip(Component.translatable("text.rei.view_all_categories"), Component.translatable("text.rei.view_all_categories.tooltip", CategoryRegistry.getInstance().stream().filter(config -> !DisplayRegistry.getInstance().get(config.getCategoryIdentifier()).isEmpty()).count()).withStyle(ChatFormatting.DARK_GRAY)));
         this.widgets.add(categoryNext = Widgets.createButton(new Rectangle(bounds.getCenterX() + guiWidth / 2 - 17, bounds.getY() + 5, 12, 12), Component.literal(""))
                 .onClick(button -> nextCategory()).tooltipLine(Component.translatable("text.rei.next_category")));
         this.categoryBack.setEnabled(categories.size() > 1);
