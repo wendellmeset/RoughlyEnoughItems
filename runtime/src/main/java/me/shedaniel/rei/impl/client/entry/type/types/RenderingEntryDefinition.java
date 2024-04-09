@@ -36,6 +36,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +46,7 @@ public class RenderingEntryDefinition {
     public static final EntryDefinition<Renderer> RENDERING = new BuiltinEntryDefinition<Renderer>(Renderer.class, BuiltinClientEntryTypes.RENDERING, false, RenderingEntryDefinition::throwRendering, () -> () -> DeferredRenderer.INSTANCE) {
         @Override
         public Component asFormattedText(EntryStack<Renderer> entry, Renderer value) {
-            Tooltip tooltip = value.getTooltip(TooltipContext.ofMouse());
+            Tooltip tooltip = value.getTooltip(TooltipContext.ofMouse(Item.TooltipContext.EMPTY));
             if (tooltip != null) {
                 for (Tooltip.Entry e : tooltip.entries()) {
                     if (e.isText()) {

@@ -42,6 +42,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -89,7 +90,7 @@ public class RoughlyEnoughItemsNetwork {
             }
             ItemStack stack = buf.readJsonWithCodec(ItemStack.OPTIONAL_CODEC);
             if (player.getInventory().add(stack.copy())) {
-                FriendlyByteBuf newBuf = new FriendlyByteBuf(Unpooled.buffer());
+                RegistryFriendlyByteBuf newBuf = new RegistryFriendlyByteBuf(Unpooled.buffer(), player.registryAccess());
                 newBuf.writeJsonWithCodec(ItemStack.OPTIONAL_CODEC, stack.copy());
                 newBuf.writeUtf(player.getScoreboardName(), 32767);
                 NetworkManager.sendToPlayer(player, RoughlyEnoughItemsNetwork.CREATE_ITEMS_MESSAGE_PACKET, newBuf);
@@ -107,14 +108,14 @@ public class RoughlyEnoughItemsNetwork {
             AbstractContainerMenu menu = player.containerMenu;
             ItemStack itemStack = buf.readJsonWithCodec(ItemStack.OPTIONAL_CODEC);
             ItemStack stack = itemStack.copy();
-            if (!menu.getCarried().isEmpty() && ItemStack.isSameItemSameTags(menu.getCarried(), stack)) {
+            if (!menu.getCarried().isEmpty() && ItemStack.isSameItemSameComponents(menu.getCarried(), stack)) {
                 stack.setCount(Mth.clamp(stack.getCount() + menu.getCarried().getCount(), 1, stack.getMaxStackSize()));
             } else if (!menu.getCarried().isEmpty()) {
                 return;
             }
             menu.setCarried(stack.copy());
             menu.broadcastChanges();
-            FriendlyByteBuf newBuf = new FriendlyByteBuf(Unpooled.buffer());
+            RegistryFriendlyByteBuf newBuf = new RegistryFriendlyByteBuf(Unpooled.buffer(), player.registryAccess());
             newBuf.writeJsonWithCodec(ItemStack.OPTIONAL_CODEC, stack.copy());
             newBuf.writeUtf(player.getScoreboardName(), 32767);
             NetworkManager.sendToPlayer(player, RoughlyEnoughItemsNetwork.CREATE_ITEMS_MESSAGE_PACKET, newBuf);
@@ -131,7 +132,7 @@ public class RoughlyEnoughItemsNetwork {
                 AbstractContainerMenu menu = player.containerMenu;
                 player.getInventory().items.set(hotbarSlotId, stack.copy());
                 menu.broadcastChanges();
-                FriendlyByteBuf newBuf = new FriendlyByteBuf(Unpooled.buffer());
+                RegistryFriendlyByteBuf newBuf = new RegistryFriendlyByteBuf(Unpooled.buffer(), player.registryAccess());
                 newBuf.writeJsonWithCodec(ItemStack.OPTIONAL_CODEC, stack.copy());
                 newBuf.writeUtf(player.getScoreboardName(), 32767);
                 NetworkManager.sendToPlayer(player, RoughlyEnoughItemsNetwork.CREATE_ITEMS_MESSAGE_PACKET, newBuf);

@@ -43,7 +43,7 @@ import net.minecraft.client.gui.screens.recipebook.RecipeUpdateListener;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
@@ -83,7 +83,7 @@ public enum SimpleTransferHandlerImpl implements ClientInternals.SimpleTransferH
             listener.getRecipeBookComponent().ghostRecipe.clear();
         }
         
-        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(), context.getMinecraft().getConnection().registryAccess());
         buf.writeResourceLocation(context.getDisplay().getCategoryIdentifier().getIdentifier());
         buf.writeBoolean(context.isStackedCrafting());
         

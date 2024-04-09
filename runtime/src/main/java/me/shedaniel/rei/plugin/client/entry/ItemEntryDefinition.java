@@ -198,7 +198,7 @@ public class ItemEntryDefinition implements EntryDefinition<ItemStack>, EntrySer
     
     @Override
     public Component asFormattedText(EntryStack<ItemStack> entry, ItemStack value) {
-        return asFormattedText(entry, value, TooltipContext.of());
+        return asFormattedText(entry, value, TooltipContext.of(Item.TooltipContext.EMPTY));
     }
     
     @Override
@@ -232,7 +232,7 @@ public class ItemEntryDefinition implements EntryDefinition<ItemStack>, EntrySer
     private List<Component> tryGetItemStackToolTip(EntryStack<ItemStack> entry, ItemStack value, TooltipContext context) {
         if (!SEARCH_BLACKLISTED.contains(value.getItem()))
             try {
-                return value.getTooltipLines(Minecraft.getInstance().player, context.getFlag());
+                return value.getTooltipLines(context.vanillaContext(), Minecraft.getInstance().player, context.getFlag());
             } catch (Throwable e) {
                 if (context.isSearch()) throw e;
                 e.printStackTrace();

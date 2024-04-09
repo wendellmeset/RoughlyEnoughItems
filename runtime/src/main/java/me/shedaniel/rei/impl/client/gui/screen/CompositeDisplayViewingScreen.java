@@ -51,6 +51,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
+import net.minecraft.world.item.Item;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -373,7 +374,7 @@ public class CompositeDisplayViewingScreen extends AbstractDisplayViewingScreen 
             for (int i = 0; i < buttonList.size(); i++) {
                 if (buttonList.get(i).getBounds().getMaxY() > scrollListBounds.getMinY() && buttonList.get(i).getBounds().getMinY() < scrollListBounds.getMaxY()) {
                     displayRenderers.get(i).render(graphics, buttonList.get(i).getBounds(), mouseX, mouseY, delta);
-                    Optional.ofNullable(displayRenderers.get(i).getTooltip(TooltipContext.of(new Point(mouseX, mouseY)))).ifPresent(Tooltip::queue);
+                    Optional.ofNullable(displayRenderers.get(i).getTooltip(TooltipContext.of(new Point(mouseX, mouseY), Item.TooltipContext.of(minecraft.level)))).ifPresent(Tooltip::queue);
                 }
             }
             scrolling.renderScrollBar(graphics, 0, scrollBarAlpha, REIRuntime.getInstance().isDarkThemeEnabled() ? 0.8f : 1f);

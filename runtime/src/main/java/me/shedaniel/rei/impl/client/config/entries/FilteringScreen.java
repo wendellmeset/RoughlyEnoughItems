@@ -59,6 +59,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
+import net.minecraft.world.item.Item;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -511,7 +512,7 @@ public class FilteringScreen extends Screen {
         protected void queueTooltip(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
             if (searchField.containsMouse(mouseX, mouseY))
                 return;
-            Tooltip tooltip = getCurrentTooltip(TooltipContext.of(new Point(mouseX, mouseY)));
+            Tooltip tooltip = getCurrentTooltip(TooltipContext.of(new Point(mouseX, mouseY), Item.TooltipContext.of(minecraft.level)));
             if (tooltip != null) {
                 FilteringScreen.this.tooltip = tooltip;
             }

@@ -48,6 +48,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.recipebook.RecipeUpdateListener;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -114,7 +115,7 @@ public class DefaultCategoryHandler implements TransferHandler {
         if (containerScreen instanceof RecipeUpdateListener listener) {
             listener.getRecipeBookComponent().ghostRecipe.clear();
         }
-        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(), context.getMinecraft().getConnection().registryAccess());
         buf.writeResourceLocation(display.getCategoryIdentifier().getIdentifier());
         buf.writeBoolean(context.isStackedCrafting());
         

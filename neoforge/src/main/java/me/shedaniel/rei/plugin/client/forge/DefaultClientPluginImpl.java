@@ -23,15 +23,17 @@
 
 package me.shedaniel.rei.plugin.client.forge;
 
-import com.google.common.collect.Sets;
+import com.google.gson.internal.LinkedTreeMap;
 import me.shedaniel.rei.api.client.registry.display.DisplayRegistry;
 import me.shedaniel.rei.plugin.client.BuiltinClientPlugin;
 import me.shedaniel.rei.plugin.client.DefaultClientPlugin;
+import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionBrewing;
-import net.minecraft.world.item.alchemy.PotionUtils;
+import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.neoforged.neoforge.common.brewing.BrewingRecipe;
 import net.neoforged.neoforge.common.brewing.BrewingRecipeRegistry;
@@ -39,6 +41,8 @@ import net.neoforged.neoforge.common.brewing.IBrewingRecipe;
 import net.neoforged.neoforge.common.brewing.VanillaBrewingRecipe;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Set;
 
 public class DefaultClientPluginImpl extends DefaultClientPlugin {
@@ -55,31 +59,34 @@ public class DefaultClientPluginImpl extends DefaultClientPlugin {
     }
     
     private static void registerVanillaPotions(DisplayRegistry registry, BuiltinClientPlugin clientPlugin) {
-        Set<Potion> potions = Sets.newLinkedHashSet();
+        Set<Holder<Potion>> potions = Collections.newSetFromMap(new LinkedTreeMap<>(Comparator.comparing(Holder::getRegisteredName), false));
         for (Ingredient container : PotionBrewing.ALLOWED_CONTAINERS) {
             for (PotionBrewing.Mix<Potion> mix : PotionBrewing.POTION_MIXES) {
-                Potion from = mix.from;
+                Holder<Potion> from = mix.from();
                 Ingredient ingredient = mix.ingredient;
-                Potion to = mix.to;
+                Holder<Potion> to = mix.to();
                 Ingredient base = Ingredient.of(Arrays.stream(container.getItems())
                         .map(ItemStack::copy)
-                        .map(stack -> PotionUtils.setPotion(stack, from)));
+                        .peek(stack -> stack.set(DataComponents.POTION_CONTENTS, new PotionContents(from))));
                 ItemStack output = Arrays.stream(container.getItems())
                         .map(ItemStack::copy)
-                        .map(stack -> PotionUtils.setPotion(stack, to))
+                        .peek(stack -> stack.set(DataComponents.POTION_CONTENTS, new PotionContents(to)))
                         .findFirst().orElse(ItemStack.EMPTY);
                 clientPlugin.registerBrewingRecipe(base, ingredient, output);
                 potions.add(from);
                 potions.add(to);
             }
         }
-        for (Potion potion : potions) {
+        for (Holder<Potion> potion : potions) {
             for (PotionBrewing.Mix<Item> mix : PotionBrewing.CONTAINER_MIXES) {
-                Item from = mix.from;
-                Ingredient ingredient = mix.ingredient;
-                Item to = mix.to;
-                Ingredient base = Ingredient.of(PotionUtils.setPotion(new ItemStack(from), potion));
-                ItemStack output = PotionUtils.setPotion(new ItemStack(to), potion);
+                Holder<Item> from = mix.from();
+                Ingredient ingredient = mix.ingredient();
+                Holder<Item> to = mix.to();
+                ItemStack baseStack = new ItemStack(from);
+                baseStack.set(DataComponents.POTION_CONTENTS, new PotionContents(potion));
+                Ingredient base = Ingredient.of(baseStack);
+                ItemStack output = new ItemStack(to);
+                output.set(DataComponents.POTION_CONTENTS, new PotionContents(potion));
                 clientPlugin.registerBrewingRecipe(base, ingredient, output);
             }
         }

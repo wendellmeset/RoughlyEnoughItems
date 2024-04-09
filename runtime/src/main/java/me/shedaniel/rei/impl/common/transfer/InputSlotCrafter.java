@@ -160,7 +160,7 @@ public abstract class InputSlotCrafter<T extends AbstractContainerMenu, C extend
     }
     
     private static boolean areItemsEqual(ItemStack stack1, ItemStack stack2) {
-        return ItemStack.isSameItemSameTags(stack1, stack2);
+        return ItemStack.isSameItemSameComponents(stack1, stack2);
     }
     
     public static class NotEnoughMaterialsException extends RuntimeException {

@@ -7,6 +7,10 @@ pluginManagement {
     }
 }
 
+if (JavaVersion.current().ordinal() + 1 < 21) {
+    throw new IllegalStateException("Please run gradle with Java 21+!")
+}
+
 rootProject.name = "RoughlyEnoughItems"
 
 include "api"
@@ -14,4 +18,4 @@ include "default-plugin"
 include "runtime"
 include "fabric"
 //include "forge"
-//include "neoforge"
+include "neoforge"

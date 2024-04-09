@@ -47,14 +47,16 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
+import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import org.apache.commons.lang3.function.TriFunction;
+import org.apache.commons.io.function.IOQuadFunction;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -83,7 +85,7 @@ public final class ClientInternals {
     private static Function<Boolean, ClickArea.Result> clickAreaHandlerResult = (result) -> throwNotSetup();
     private static BiConsumer<List<ClientTooltipComponent>, TooltipComponent> clientTooltipComponentProvider = (tooltip, result) -> throwNotSetup();
     private static BiFunction<@Nullable Point, Collection<Tooltip.Entry>, Tooltip> tooltipProvider = (point, texts) -> throwNotSetup();
-    private static TriFunction<Point, @Nullable TooltipFlag, Boolean, TooltipContext> tooltipContextProvider = (point, texts, search) -> throwNotSetup();
+    private static PropertyDispatch.QuadFunction<Point, @Nullable TooltipFlag, Boolean, Item.TooltipContext, TooltipContext> tooltipContextProvider = (point, texts, search, context) -> throwNotSetup();
     private static Function<Object, Tooltip.Entry> tooltipEntryProvider = (component) -> throwNotSetup();
     private static Supplier<List<String>> jeiCompatMods = ClientInternals::throwNotSetup;
     private static Supplier<Object> builtinClientPlugin = ClientInternals::throwNotSetup;
@@ -146,8 +148,8 @@ public final class ClientInternals {
         return tooltipProvider.apply(point, texts);
     }
     
-    public static TooltipContext createTooltipContext(Point point, @Nullable TooltipFlag flag, boolean isSearch) {
-        return tooltipContextProvider.apply(point, flag, isSearch);
+    public static TooltipContext createTooltipContext(Point point, @Nullable TooltipFlag flag, boolean isSearch, Item.TooltipContext context) {
+        return tooltipContextProvider.apply(point, flag, isSearch, context);
     }
     
     public static Tooltip.Entry createTooltipEntry(Object component) {

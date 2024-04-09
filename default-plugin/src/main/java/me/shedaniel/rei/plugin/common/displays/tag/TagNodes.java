@@ -32,6 +32,7 @@ import dev.architectury.utils.EnvExecutor;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -40,6 +41,7 @@ import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -124,7 +126,7 @@ public class TagNodes {
         NetworkManager.registerReceiver(NetworkManager.c2s(), REQUEST_TAGS_PACKET_C2S, Collections.singletonList(new SplitPacketTransformer()), (buf, context) -> {
             UUID uuid = buf.readUUID();
             ResourceKey<? extends Registry<?>> resourceKey = ResourceKey.createRegistryKey(buf.readResourceLocation());
-            FriendlyByteBuf newBuf = new FriendlyByteBuf(Unpooled.buffer());
+            RegistryFriendlyByteBuf newBuf = new RegistryFriendlyByteBuf(Unpooled.buffer(), context.registryAccess());
             newBuf.writeUUID(uuid);
             Map<ResourceLocation, TagData> dataMap = TAG_DATA_MAP.getOrDefault(resourceKey, Collections.emptyMap());
             newBuf.writeInt(dataMap.size());
@@ -146,7 +148,7 @@ public class TagNodes {
             requestedTags.get(resourceKey).accept(callback);
             callback.accept(DataResult.success(TAG_DATA_MAP.getOrDefault(resourceKey, Collections.emptyMap())));
         } else {
-            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(), BasicDisplay.registryAccess());
             UUID uuid = UUID.randomUUID();
             buf.writeUUID(uuid);
             buf.writeResourceLocation(resourceKey.location());

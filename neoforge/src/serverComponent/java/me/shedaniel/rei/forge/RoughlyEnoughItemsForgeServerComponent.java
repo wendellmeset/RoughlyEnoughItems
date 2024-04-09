@@ -25,9 +25,7 @@ package me.shedaniel.rei.forge;
 
 import me.shedaniel.rei.impl.init.RoughlyEnoughItemsInitializer;
 import net.neoforged.api.distmarker.Dist;
-import net.neoforged.fml.IExtensionPoint;
 import net.neoforged.fml.ModList;
-import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.data.loading.DatagenModLoader;
@@ -37,7 +35,6 @@ import org.apache.logging.log4j.Logger;
 @Mod("roughlyenoughitems_servercomponent")
 public class RoughlyEnoughItemsForgeServerComponent {
     public RoughlyEnoughItemsForgeServerComponent() {
-        ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> IExtensionPoint.DisplayTest.IGNORESERVERONLY, (a, b) -> true));
         Logger logger = LogManager.getLogger(RoughlyEnoughItemsForgeServerComponent.class);
         if (!DatagenModLoader.isRunningDataGen()) {
             if (FMLEnvironment.dist == Dist.CLIENT) {

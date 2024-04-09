@@ -34,6 +34,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.util.Unit;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.TooltipFlag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +46,7 @@ import java.util.StringJoiner;
 @ApiStatus.Internal
 @Environment(EnvType.CLIENT)
 public final class TooltipArgumentType extends ArgumentType<Unit, String> {
-    private static final TooltipContext CONTEXT = TooltipContext.of(new Point(), TooltipFlag.Default.NORMAL, true);
+    private static final TooltipContext CONTEXT = TooltipContext.of(new Point(), Item.TooltipContext.EMPTY, TooltipFlag.Default.NORMAL, true);
     public static String INVALID = "INVALID_PIECE_OF_TOOLTIP_I_DONT_THINK_PEOPLE_WILL_EXACTLY_HAVE_THIS_REI_REI_REI";
     private static final Style STYLE = Style.EMPTY.withColor(TextColor.fromRgb(0xffe0ad));
     

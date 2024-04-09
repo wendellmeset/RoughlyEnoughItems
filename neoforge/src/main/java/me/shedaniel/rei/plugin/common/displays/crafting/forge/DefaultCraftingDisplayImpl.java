@@ -31,7 +31,7 @@ public class DefaultCraftingDisplayImpl {
     public static void registerPlatformSizeProvider() {
         DefaultCraftingDisplay.registerSizeProvider(recipe -> {
             if (recipe instanceof IShapedRecipe<?>) {
-                return new CraftingRecipeSizeProvider.Size(((IShapedRecipe<?>) recipe).getRecipeWidth(), ((IShapedRecipe<?>) recipe).getRecipeHeight());
+                return new CraftingRecipeSizeProvider.Size(((IShapedRecipe<?>) recipe).getWidth(), ((IShapedRecipe<?>) recipe).getHeight());
             }
             
             return null;

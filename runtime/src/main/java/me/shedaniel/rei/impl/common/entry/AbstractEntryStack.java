@@ -42,6 +42,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.apache.commons.lang3.mutable.Mutable;
 import org.apache.commons.lang3.mutable.MutableObject;
@@ -241,7 +242,7 @@ public abstract class AbstractEntryStack<A> implements EntryStack<A>, Renderer {
     
     @Override
     public Component asFormattedText() {
-        return getDefinition().asFormattedText(this, getValue(), TooltipContext.of());
+        return getDefinition().asFormattedText(this, getValue(), TooltipContext.of(Item.TooltipContext.EMPTY));
     }
     
     @Override

@@ -58,7 +58,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.core.NonNullList;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.LazyLoadedValue;
@@ -188,7 +188,7 @@ public class ClientHelperImpl implements ClientHelper {
             inventoryScreen.isQuickCrafting = false;
             return;
         }
-        NetworkManager.sendToServer(RoughlyEnoughItemsNetwork.DELETE_ITEMS_PACKET, new FriendlyByteBuf(Unpooled.buffer()));
+        NetworkManager.sendToServer(RoughlyEnoughItemsNetwork.DELETE_ITEMS_PACKET, new RegistryFriendlyByteBuf(Unpooled.buffer(), Minecraft.getInstance().player.registryAccess()));
         if (Minecraft.getInstance().screen instanceof AbstractContainerScreen<?> containerScreen) {
             containerScreen.isQuickCrafting = false;
         }
@@ -219,7 +219,7 @@ public class ClientHelperImpl implements ClientHelper {
                 return false;
             }
             try {
-                FriendlyByteBuf newBuf = new FriendlyByteBuf(Unpooled.buffer());
+                RegistryFriendlyByteBuf newBuf = new RegistryFriendlyByteBuf(Unpooled.buffer(), Minecraft.getInstance().player.registryAccess());
                 newBuf.writeJsonWithCodec(ItemStack.OPTIONAL_CODEC, cheatedStack);
                 NetworkManager.sendToServer(ConfigObject.getInstance().isGrabbingItems() ? RoughlyEnoughItemsNetwork.CREATE_ITEMS_GRAB_PACKET : RoughlyEnoughItemsNetwork.CREATE_ITEMS_PACKET, newBuf);
                 return true;
@@ -266,7 +266,7 @@ public class ClientHelperImpl implements ClientHelper {
                 return false;
             }
             try {
-                FriendlyByteBuf newBuf = new FriendlyByteBuf(Unpooled.buffer());
+                RegistryFriendlyByteBuf newBuf = new RegistryFriendlyByteBuf(Unpooled.buffer(), Minecraft.getInstance().player.registryAccess());
                 newBuf.writeJsonWithCodec(ItemStack.OPTIONAL_CODEC, stack.getValue().copy());
                 newBuf.writeVarInt(hotbarSlotId);
                 NetworkManager.sendToServer(RoughlyEnoughItemsNetwork.CREATE_ITEMS_HOTBAR_PACKET, newBuf);

@@ -78,6 +78,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
+import net.minecraft.world.item.Item;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -429,7 +430,7 @@ public class EntryWidget extends Slot implements DraggableStackProviderWidget {
     }
     
     protected void queueTooltip(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-        Tooltip tooltip = getCurrentTooltip(TooltipContext.ofMouse());
+        Tooltip tooltip = getCurrentTooltip(TooltipContext.ofMouse(Item.TooltipContext.of(minecraft.level)));
         if (tooltip != null) {
             tooltip.queue();
         }

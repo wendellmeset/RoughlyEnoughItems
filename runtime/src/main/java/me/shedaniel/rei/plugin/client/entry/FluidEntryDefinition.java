@@ -300,7 +300,7 @@ public class FluidEntryDefinition implements EntryDefinition<FluidStack>, EntryS
         public Tooltip getTooltip(EntryStack<FluidStack> entry, TooltipContext context) {
             if (entry.isEmpty())
                 return null;
-            List<Component> toolTip = Lists.newArrayList(entry.asFormattedText());
+            List<Component> toolTip = Lists.newArrayList(entry.asFormattedText(context));
             long amount = entry.getValue().getAmount();
             if (amount >= 0 && entry.get(EntryStack.Settings.FLUID_AMOUNT_VISIBLE)) {
                 String amountTooltip = I18n.get(FLUID_AMOUNT, entry.getValue().getAmount());

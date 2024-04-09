@@ -28,6 +28,7 @@ import me.shedaniel.math.impl.PointHelper;
 import me.shedaniel.rei.impl.ClientInternals;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.TooltipFlag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
@@ -35,24 +36,24 @@ import org.jetbrains.annotations.Nullable;
 @Environment(EnvType.CLIENT)
 @ApiStatus.NonExtendable
 public interface TooltipContext {
-    static TooltipContext of() {
-        return TooltipContext.of(new Point());
+    static TooltipContext of(Item.TooltipContext vanillaContext) {
+        return TooltipContext.of(new Point(), vanillaContext);
     }
     
-    static TooltipContext of(Point point) {
-        return TooltipContext.of(point, null);
+    static TooltipContext of(Point point, Item.TooltipContext vanillaContext) {
+        return TooltipContext.of(point, vanillaContext, null);
     }
     
-    static TooltipContext of(Point point, @Nullable TooltipFlag flag) {
-        return TooltipContext.of(point, flag, false);
+    static TooltipContext of(Point point, Item.TooltipContext vanillaContext, @Nullable TooltipFlag flag) {
+        return TooltipContext.of(point, vanillaContext, flag, false);
     }
     
-    static TooltipContext of(Point point, @Nullable TooltipFlag flag, boolean isSearch) {
-        return ClientInternals.createTooltipContext(point, flag, isSearch);
+    static TooltipContext of(Point point, Item.TooltipContext vanillaContext, @Nullable TooltipFlag flag, boolean isSearch) {
+        return ClientInternals.createTooltipContext(point, flag, isSearch, vanillaContext);
     }
     
-    static TooltipContext ofMouse() {
-        return TooltipContext.of(PointHelper.ofMouse());
+    static TooltipContext ofMouse(Item.TooltipContext vanillaContext) {
+        return TooltipContext.of(PointHelper.ofMouse(), vanillaContext);
     }
     
     TooltipFlag getFlag();
@@ -60,4 +61,6 @@ public interface TooltipContext {
     Point getPoint();
     
     boolean isSearch();
+    
+    Item.TooltipContext vanillaContext();
 }

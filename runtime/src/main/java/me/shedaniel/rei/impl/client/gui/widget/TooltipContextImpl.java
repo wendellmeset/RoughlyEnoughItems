@@ -26,6 +26,7 @@ package me.shedaniel.rei.impl.client.gui.widget;
 import me.shedaniel.math.Point;
 import me.shedaniel.rei.api.client.gui.widgets.TooltipContext;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.TooltipFlag;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,11 +37,13 @@ public class TooltipContextImpl implements TooltipContext {
     @Nullable
     private final TooltipFlag flag;
     private final boolean isSearch;
+    private final Item.TooltipContext vanillaContext;
     
-    public TooltipContextImpl(Point point, @Nullable TooltipFlag flag, boolean isSearch) {
+    public TooltipContextImpl(Point point, @Nullable TooltipFlag flag, boolean isSearch, Item.TooltipContext vanillaContext) {
         this.point = Objects.requireNonNull(point);
         this.flag = flag;
         this.isSearch = isSearch;
+        this.vanillaContext = Objects.requireNonNull(vanillaContext);
     }
     
     @Override
@@ -57,5 +60,10 @@ public class TooltipContextImpl implements TooltipContext {
     @Override
     public boolean isSearch() {
         return isSearch;
+    }
+    
+    @Override
+    public Item.TooltipContext vanillaContext() {
+        return vanillaContext;
     }
 }

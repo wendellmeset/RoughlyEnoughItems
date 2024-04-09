@@ -51,7 +51,7 @@ public class DelegatingFavoriteEntryProviderImpl extends FavoriteEntry {
         synchronized (this) {
             if (this.value == null) {
                 DataResult<FavoriteEntry> result = supplier.get();
-                this.value = result.getOrThrow(false, error -> {});
+                this.value = result.result().orElse(null);
             }
         }
         return Objects.requireNonNull(value).getUnwrapped();

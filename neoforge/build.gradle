@@ -15,7 +15,7 @@ configurations {
 }
 
 processResources {
-    filesMatching("META-INF/mods.toml") {
+    filesMatching("META-INF/neoforge.mods.toml") {
         expand "version": project.version
     }
     inputs.property "version", project.version
@@ -42,7 +42,7 @@ sourceSets {
 }
 
 processServerComponentResources {
-    filesMatching("META-INF/mods.toml") {
+    filesMatching("META-INF/neoforge.mods.toml") {
         expand "version": project.version
     }
     inputs.property "version", project.version
@@ -110,7 +110,7 @@ sourcesJar {
 task serverOnlyJar(type: Jar, dependsOn: [remapJar]) {
     archiveClassifier = "server-only"
     from(zipTree(remapJar.archiveFile.get().asFile)) {
-        exclude "META-INF/mods.toml", "mezz/**", "me/shedaniel/rei/forge/RoughlyEnoughItemsForge.class", "me/shedaniel/rei/forge/JEIStub.class"
+        exclude "META-INF/neoforge.mods.toml", "mezz/**", "me/shedaniel/rei/forge/RoughlyEnoughItemsForge.class", "me/shedaniel/rei/forge/JEIStub.class"
     }
     from(sourceSets.serverComponent.output)
 }
@@ -159,6 +159,7 @@ publishing {
 }
 
 unifiedPublishing {
+    if (rootProject.neoforge_pr != "") return
     project {
         displayName = "[NeoForge $rootProject.supported_version] v$project.version"
         releaseType = "beta"

@@ -170,7 +170,7 @@ public class FavoritesPanelEntriesRow extends FavoritesPanelRow {
         @Override
         @Nullable
         public Tooltip getCurrentTooltip(TooltipContext context) {
-            context = TooltipContext.ofMouse();
+            context = TooltipContext.ofMouse(context.vanillaContext());
             if (!panel.getInnerBounds().contains(context.getPoint())) return null;
             Tooltip tooltip = super.getCurrentTooltip(context);
             if (tooltip != null) {

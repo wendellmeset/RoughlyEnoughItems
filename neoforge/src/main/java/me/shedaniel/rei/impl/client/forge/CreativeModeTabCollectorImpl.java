@@ -23,6 +23,8 @@
 
 package me.shedaniel.rei.impl.client.forge;
 
+import com.google.common.base.MoreObjects;
+import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.impl.common.InternalLogger;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -32,17 +34,18 @@ import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.client.ClientHooks;
+import net.neoforged.neoforge.event.EventHooks;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class CreativeModeTabCollectorImpl {
     public static Map<CreativeModeTab, Collection<ItemStack>> collectTabs() {
         Map<CreativeModeTab, Collection<ItemStack>> map = new LinkedHashMap<>();
         FeatureFlagSet featureFlags = FeatureFlags.REGISTRY.allFlags();
-        CreativeModeTab.ItemDisplayParameters parameters = new CreativeModeTab.ItemDisplayParameters(featureFlags, true, RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY));
+        CreativeModeTab.ItemDisplayParameters parameters = new CreativeModeTab.ItemDisplayParameters(featureFlags, true, Objects.requireNonNullElseGet(BasicDisplay.registryAccess(), () -> RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY)));
         
         for (CreativeModeTab tab : CreativeModeTabs.allTabs()) {
             if (tab.getType() != CreativeModeTab.Type.HOTBAR && tab.getType() != CreativeModeTab.Type.INVENTORY) {
@@ -51,7 +54,7 @@ public class CreativeModeTabCollectorImpl {
                     ResourceKey<CreativeModeTab> resourceKey = BuiltInRegistries.CREATIVE_MODE_TAB
                             .getResourceKey(tab)
                             .orElseThrow(() -> new IllegalStateException("Unregistered creative tab: " + tab));
-                    ClientHooks.onCreativeModeTabBuildContents(tab, resourceKey, tab.displayItemsGenerator, parameters, (stack, visibility) -> {
+                    EventHooks.onCreativeModeTabBuildContents(tab, resourceKey, tab.displayItemsGenerator, parameters, (stack, visibility) -> {
                         if (visibility == CreativeModeTab.TabVisibility.SEARCH_TAB_ONLY) return;
                         builder.accept(stack, visibility);
                     });
