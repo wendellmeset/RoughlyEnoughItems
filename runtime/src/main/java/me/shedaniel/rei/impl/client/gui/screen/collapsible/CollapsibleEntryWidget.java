@@ -121,7 +121,7 @@ public class CollapsibleEntryWidget extends WidgetWithBounds {
                 public void render(PoseStack matrices, int mouseX, int mouseY, float delta) {
                     super.render(matrices, mouseX, mouseY, delta);
                     RenderSystem.setShaderTexture(0, InternalTextures.CHEST_GUI_TEXTURE);
-                    blit(matrices, x + 3, y + 3, 0, 0, 14, 14);
+                    blit(matrices, getX() + 3, getY() + 3, 0, 0, 14, 14);
                 }
             };
         } else {
