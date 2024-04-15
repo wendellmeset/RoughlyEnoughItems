@@ -58,7 +58,7 @@ import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.language.I18n;
-import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import org.apache.commons.lang3.mutable.Mutable;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +91,7 @@ public class REIConfigScreen extends Screen implements ConfigAccess {
     }
     
     public REIConfigScreen(Screen parent, List<OptionCategory> categories) {
-        super(Component.translatable("config.roughlyenoughitems.title"));
+        super(new TranslatableComponent("config.roughlyenoughitems.title"));
         this.parent = parent;
         this.categories = CollectionUtils.map(categories, OptionCategory::copy);
         this.cleanRequiresLevel();
