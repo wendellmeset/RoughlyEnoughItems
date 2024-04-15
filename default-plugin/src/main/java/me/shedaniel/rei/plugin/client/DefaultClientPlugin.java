@@ -27,10 +27,7 @@ import com.google.common.collect.*;
 import dev.architectury.event.EventResult;
 import dev.architectury.networking.NetworkManager;
 import dev.architectury.platform.Platform;
-import it.unimi.dsi.fastutil.objects.Object2FloatMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.favorites.FavoriteEntry;
 import me.shedaniel.rei.api.client.favorites.FavoriteEntryType;
@@ -309,7 +306,7 @@ public class DefaultClientPlugin implements REIClientPlugin, BuiltinClientPlugin
         registry.registerRecipeFiller(StonecutterRecipe.class, RecipeType.STONECUTTING, DefaultStoneCuttingDisplay::new);
         registry.registerRecipeFiller(LegacyUpgradeRecipe.class, RecipeType.SMITHING, DefaultSmithingDisplay::new);
         registry.registerRecipeFiller(SmithingTransformRecipe.class, RecipeType.SMITHING, DefaultSmithingDisplay::new);
-        registry.registerRecipeFiller(SmithingTrimRecipe.class, RecipeType.SMITHING, DefaultSmithingDisplay::new);
+        registry.registerRecipesFiller(SmithingTrimRecipe.class, RecipeType.SMITHING, DefaultSmithingDisplay::from);
         registry.registerFiller(AnvilRecipe.class, DefaultAnvilDisplay::new);
         registry.registerFiller(BrewingRecipe.class, DefaultBrewingDisplay::new);
         registry.registerFiller(TagKey.class, tagKey -> {
