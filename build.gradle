@@ -85,7 +85,6 @@ allprojects {
     license {
         header rootProject.file("HEADER")
         include "**/*.java"
-        exclude "mezz/jei/api/**/*.java"
 
         ext {
             name = "shedaniel"
