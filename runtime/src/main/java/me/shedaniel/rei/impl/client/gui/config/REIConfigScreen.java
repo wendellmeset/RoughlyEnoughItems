@@ -45,15 +45,20 @@ import me.shedaniel.rei.impl.client.gui.ScreenOverlayImpl;
 import me.shedaniel.rei.impl.client.gui.config.components.ConfigCategoriesListWidget;
 import me.shedaniel.rei.impl.client.gui.config.components.ConfigEntriesListWidget;
 import me.shedaniel.rei.impl.client.gui.config.components.ConfigSearchListWidget;
-import me.shedaniel.rei.impl.client.gui.config.options.*;
+import me.shedaniel.rei.impl.client.gui.config.options.AllREIConfigCategories;
+import me.shedaniel.rei.impl.client.gui.config.options.CompositeOption;
+import me.shedaniel.rei.impl.client.gui.config.options.OptionCategory;
+import me.shedaniel.rei.impl.client.gui.config.options.OptionGroup;
 import me.shedaniel.rei.impl.client.gui.modules.Menu;
 import me.shedaniel.rei.impl.client.gui.widget.HoleWidget;
 import me.shedaniel.rei.impl.client.gui.widget.basewidgets.TextFieldWidget;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.language.I18n;
+import net.minecraft.network.chat.Component;
 import org.apache.commons.lang3.mutable.Mutable;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.Nullable;
@@ -86,7 +91,7 @@ public class REIConfigScreen extends Screen implements ConfigAccess {
     }
     
     public REIConfigScreen(Screen parent, List<OptionCategory> categories) {
-        super(ConfigUtils.translatable("config.roughlyenoughitems.title"));
+        super(Component.translatable("config.roughlyenoughitems.title"));
         this.parent = parent;
         this.categories = CollectionUtils.map(categories, OptionCategory::copy);
         this.cleanRequiresLevel();
@@ -152,6 +157,12 @@ public class REIConfigScreen extends Screen implements ConfigAccess {
             this.widgets.add(textField);
             this.widgets.add(Widgets.createDrawableWidget((helper, matrices, mouseX, mouseY, delta) -> {
                 textField.setSuggestion(!textField.isFocused() && textField.getText().isEmpty() ? I18n.get("config.rei.texts.search_options") : null);
+                if (!textField.isFocused()) return;
+                Rectangle bounds = textField.getBounds();
+                GuiComponent.fill(matrices, bounds.x - 6, bounds.y - 6, bounds.getMaxX() + 4, bounds.y - 5, 0xffe0e0e0);
+                GuiComponent.fill(matrices, bounds.x - 6, bounds.getMaxY() + 1, bounds.getMaxX() + 4, bounds.getMaxY() + 2, 0xffe0e0e0);
+                GuiComponent.fill(matrices, bounds.x - 6, bounds.y - 6, bounds.x - 7, bounds.getMaxY() + 2, 0xffe0e0e0);
+                GuiComponent.fill(matrices, bounds.getMaxX() + 3, bounds.y - 6, bounds.getMaxX() + 4, bounds.getMaxY() + 2, 0xffe0e0e0);
             }));
             this.widgets.add(ConfigSearchListWidget.create(this, this.categories, textField, new Rectangle(8, 32 + 20 + 4, width - 16, height - 32 - (32 + 20 + 4))));
         } else {
@@ -224,7 +235,11 @@ public class REIConfigScreen extends Screen implements ConfigAccess {
     
     @Override
     public void onClose() {
-        this.minecraft.setScreen(this.parent);
+        if (searching) {
+            setSearching(false);
+        } else {
+            this.minecraft.setScreen(this.parent);
+        }
     }
     
     @Override
