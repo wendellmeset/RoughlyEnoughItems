@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 import java.util.function.UnaryOperator;
+import java.util.regex.Pattern;
 
 import static me.shedaniel.rei.impl.client.gui.config.options.ConfigUtils.literal;
 
@@ -106,7 +107,7 @@ public class TextTransformations {
         if (string.toLowerCase(Locale.ROOT).equals(highlight.toLowerCase(Locale.ROOT))) {
             return component.withStyle(styleOperator).withStyle(ChatFormatting.YELLOW);
         }
-        String[] parts = string.toLowerCase(Locale.ROOT).split(highlight.toLowerCase(Locale.ROOT));
+        String[] parts = string.toLowerCase(Locale.ROOT).split(Pattern.quote(highlight.toLowerCase(Locale.ROOT)));
         if (string.toLowerCase(Locale.ROOT).endsWith(highlight.toLowerCase(Locale.ROOT))) {
             // Append an empty string to the end
             String[] newParts = new String[parts.length + 1];
