@@ -237,7 +237,7 @@ public interface DisplayRegistry extends RecipeManagerContext<REIClientPlugin> {
      * @since 8.4
      */
     @ApiStatus.Experimental
-    default <T extends Recipe<?>, D extends Display> void registerRecipesFiller(Class<T> typeClass, RecipeType<? super T> recipeType, Function<? extends T, @Nullable Collection<? extends D>> filler) {
+    default <T extends Recipe<?>, D extends Display> void registerRecipesFiller(Class<T> typeClass, RecipeType<? super T> recipeType, Function<? extends RecipeHolder<T>, @Nullable Collection<? extends D>> filler) {
         registerRecipesFiller(typeClass, type -> Objects.equals(recipeType, type), filler);
     }
     
@@ -269,7 +269,7 @@ public interface DisplayRegistry extends RecipeManagerContext<REIClientPlugin> {
      * @since 8.4
      */
     @ApiStatus.Experimental
-    default <T extends Recipe<?>, D extends Display> void registerRecipesFiller(Class<T> typeClass, Predicate<RecipeType<? super T>> recipeType, Function<? extends T, @Nullable Collection<? extends D>> filler) {
+    default <T extends Recipe<?>, D extends Display> void registerRecipesFiller(Class<T> typeClass, Predicate<RecipeType<? super T>> recipeType, Function<? extends RecipeHolder<T>, @Nullable Collection<? extends D>> filler) {
         registerRecipesFiller(typeClass, recipeType, Predicates.alwaysTrue(), filler);
     }
     
@@ -305,8 +305,12 @@ public interface DisplayRegistry extends RecipeManagerContext<REIClientPlugin> {
      * @since 8.4
      */
     @ApiStatus.Experimental
-    default <T extends Recipe<?>, D extends Display> void registerRecipesFiller(Class<T> typeClass, Predicate<RecipeType<? super T>> recipeType, Predicate<? extends T> predicate, Function<? extends T, @Nullable Collection<? extends D>> filler) {
-        registerDisplaysFiller(typeClass, recipe -> recipeType.test((RecipeType<? super T>) recipe.getType()) && ((Predicate<T>) predicate).test(recipe), filler);
+    default <T extends Recipe<?>, D extends Display> void registerRecipesFiller(Class<T> typeClass, Predicate<RecipeType<? super T>> recipeType, Predicate<? extends RecipeHolder<T>> predicate, Function<? extends RecipeHolder<T>, @Nullable Collection<? extends D>> filler) {
+        registerDisplaysFiller(RecipeHolder.class, recipe -> {
+            return typeClass.isInstance(recipe.value())
+                    && recipeType.test((RecipeType<? super T>) recipe.value().getType())
+                    && ((Predicate<RecipeHolder<T>>) predicate).test(recipe);
+        }, filler);
     }
     
     /**

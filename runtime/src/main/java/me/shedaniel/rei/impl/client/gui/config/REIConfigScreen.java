@@ -321,13 +321,13 @@ public class REIConfigScreen extends Screen implements ConfigAccess {
     }
     
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
-        if (menu != null && menu.mouseScrolled(mouseX, mouseY, amount))
+    public boolean mouseScrolled(double mouseX, double mouseY, double amountX, double amountY) {
+        if (menu != null && menu.mouseScrolled(mouseX, mouseY, amountX, amountY))
             return true;
         for (GuiEventListener listener : children())
-            if (listener.mouseScrolled(mouseX, mouseY, amount))
+            if (listener.mouseScrolled(mouseX, mouseY, amountX, amountY))
                 return true;
-        return super.mouseScrolled(mouseX, mouseY, amount);
+        return super.mouseScrolled(mouseX, mouseY, amountX, amountY);
     }
     
     @Override

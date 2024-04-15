@@ -37,13 +37,14 @@ import me.shedaniel.rei.plugin.common.displays.crafting.DefaultCraftingDisplay;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
-public interface CraftingRecipeFiller<T extends CraftingRecipe> extends Function<T, Collection<Display>> {
+public interface CraftingRecipeFiller<T extends CraftingRecipe> extends Function<RecipeHolder<T>, Collection<Display>> {
     default void registerCategories(CategoryRegistry registry) {
     }
     

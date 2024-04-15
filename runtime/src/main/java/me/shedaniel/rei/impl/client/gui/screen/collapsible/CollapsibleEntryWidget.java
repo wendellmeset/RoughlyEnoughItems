@@ -296,10 +296,10 @@ public class CollapsibleEntryWidget extends WidgetWithBounds {
     }
     
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
-        if (this.scroller.getMaxScroll() > 0 && this.scroller.getBounds().contains(mouseX, mouseY)) {
-            if ((amount < 0 || this.scroller.scrollAmountInt() != 0) && (amount > 0 || this.scroller.scrollAmountInt() != this.scroller.getMaxScroll())) {
-                this.scroller.offset(ClothConfigInitializer.getScrollStep() * -amount, true);
+    public boolean mouseScrolled(double mouseX, double mouseY, double amountX, double amountY) {
+        if (this.scroller.getMaxScroll() > 0 && this.scroller.getBounds().contains(mouseX, mouseY) && amountY != 0) {
+            if ((amountY < 0 || this.scroller.scrollAmountInt() != 0) && (amountY > 0 || this.scroller.scrollAmountInt() != this.scroller.getMaxScroll())) {
+                this.scroller.offset(ClothConfigInitializer.getScrollStep() * -amountY, true);
                 return true;
             }
         }

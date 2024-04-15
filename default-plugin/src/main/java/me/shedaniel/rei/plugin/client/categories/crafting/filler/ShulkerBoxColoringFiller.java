@@ -30,6 +30,7 @@ import me.shedaniel.rei.plugin.common.displays.crafting.DefaultCustomShapelessDi
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.ShulkerBoxColoring;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
 
@@ -39,7 +40,7 @@ import java.util.List;
 
 public class ShulkerBoxColoringFiller implements CraftingRecipeFiller<ShulkerBoxColoring> {
     @Override
-    public Collection<Display> apply(ShulkerBoxColoring recipe) {
+    public Collection<Display> apply(RecipeHolder<ShulkerBoxColoring> recipe) {
         List<Display> displays = new ArrayList<>();
         EntryIngredient shulkerBox = EntryIngredients.of(Items.SHULKER_BOX);
         

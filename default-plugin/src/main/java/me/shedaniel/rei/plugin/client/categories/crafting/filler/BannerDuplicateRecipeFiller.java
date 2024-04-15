@@ -35,12 +35,13 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.BannerDuplicateRecipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 
 import java.util.*;
 
 public class BannerDuplicateRecipeFiller implements CraftingRecipeFiller<BannerDuplicateRecipe> {
     @Override
-    public Collection<Display> apply(BannerDuplicateRecipe recipe) {
+    public Collection<Display> apply(RecipeHolder<BannerDuplicateRecipe> recipe) {
         List<Display> displays = new ArrayList<>();
         Map<DyeColor, Pair<EntryIngredient.Builder, EntryStack<?>>> displayMap = new HashMap<>();
         

@@ -271,7 +271,7 @@ public enum PanelBoundariesConfiguration implements OptionValueEntry.Configurato
         public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
             this.innerAlphaAnimator.setTarget(this.innerAlphaAnimator.target() + (1.0F - this.innerAlphaAnimator.target()) * 0.06F);
             this.innerAlphaAnimator.update(delta);
-            this.renderBackground(graphics);
+            super.render(graphics, mouseX, mouseY, delta);
             Rectangle panelBounds = new Rectangle(this.width * 3 / 10, this.height * 4 / 40, this.width * 4 / 10, this.height * 32 / 40);
             Widgets.createCategoryBase(panelBounds).render(graphics, mouseX, mouseY, delta);
             int y = panelBounds.y + 6;
@@ -304,7 +304,6 @@ public enum PanelBoundariesConfiguration implements OptionValueEntry.Configurato
             this.verticalAlignmentSlider.setY(y);
             this.verticalAlignmentSlider.setWidth(panelBounds.width - 12);
             
-            super.render(graphics, mouseX, mouseY, delta);
             renderPreview(graphics, panelBounds, delta);
         }
         

@@ -36,6 +36,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.*;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.ShieldDecorationRecipe;
 import net.minecraft.world.level.block.entity.BannerPattern;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -72,7 +73,7 @@ public class ShieldDecorationRecipeFiller implements CraftingRecipeFiller<Shield
     }
     
     @Override
-    public Collection<Display> apply(ShieldDecorationRecipe recipe) {
+    public Collection<Display> apply(RecipeHolder<ShieldDecorationRecipe> recipe) {
         List<Display> displays = new ArrayList<>();
         EntryIngredient shield = EntryIngredients.of(Items.SHIELD);
         EntryIngredient.Builder inputsBuilder = EntryIngredient.builder();

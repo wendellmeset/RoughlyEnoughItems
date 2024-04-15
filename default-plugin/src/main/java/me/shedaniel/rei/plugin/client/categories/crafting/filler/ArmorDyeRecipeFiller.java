@@ -34,6 +34,7 @@ import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.DyeableLeatherItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.ArmorDyeRecipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,7 +43,7 @@ import java.util.Random;
 
 public class ArmorDyeRecipeFiller implements CraftingRecipeFiller<ArmorDyeRecipe> {
     @Override
-    public Collection<Display> apply(ArmorDyeRecipe recipe) {
+    public Collection<Display> apply(RecipeHolder<ArmorDyeRecipe> recipe) {
         List<Display> displays = new ArrayList<>();
         List<EntryStack<?>> toDye = EntryRegistry.getInstance().getEntryStacks().filter(entry -> entry.getValueType() == ItemStack.class && entry.<ItemStack>castValue().getItem() instanceof DyeableLeatherItem).toList();
         DyeColor[] colors = DyeColor.values();

@@ -200,8 +200,8 @@ public class CollapsibleEntriesScreen extends Screen {
     }
     
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
-        return this.listWidget.mouseScrolled(mouseX, mouseY, amount) || super.mouseScrolled(mouseX, mouseY, amount);
+    public boolean mouseScrolled(double mouseX, double mouseY, double amountX, double amountY) {
+        return this.listWidget.mouseScrolled(mouseX, mouseY, amountX, amountY) || super.mouseScrolled(mouseX, mouseY, amountX, amountY);
     }
     
     @Override
@@ -302,14 +302,14 @@ public class CollapsibleEntriesScreen extends Screen {
         }
         
         @Override
-        public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
+        public boolean mouseScrolled(double mouseX, double mouseY, double amountX, double amountY) {
             for (CollapsibleEntryWidget widget : children) {
-                if (widget.mouseScrolled(mouseX, mouseY, amount)) {
+                if (widget.mouseScrolled(mouseX, mouseY, amountX, amountY)) {
                     return true;
                 }
             }
-            if (mouseY > this.top) {
-                this.scroller.offset(ClothConfigInitializer.getScrollStep() * -amount, true);
+            if (mouseY > this.top && amountY != 0) {
+                this.scroller.offset(ClothConfigInitializer.getScrollStep() * -amountY, true);
                 return true;
             } else {
                 return false;

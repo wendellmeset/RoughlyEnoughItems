@@ -453,13 +453,13 @@ public class CustomCollapsibleEntrySelectionScreen extends Screen {
     }
     
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
-        if (getBounds().contains(mouseX, mouseY)) {
-            scrolling.offset(ClothConfigInitializer.getScrollStep() * -amount, true);
+    public boolean mouseScrolled(double mouseX, double mouseY, double amountX, double amountY) {
+        if (getBounds().contains(mouseX, mouseY) && amountY != 0) {
+            scrolling.offset(ClothConfigInitializer.getScrollStep() * -amountY, true);
             return true;
         }
         
-        super.mouseScrolled(mouseX, mouseY, amount);
+        super.mouseScrolled(mouseX, mouseY, amountX, amountY);
         return true;
     }
     

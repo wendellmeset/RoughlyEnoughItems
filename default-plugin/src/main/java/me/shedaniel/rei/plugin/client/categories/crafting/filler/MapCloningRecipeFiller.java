@@ -28,6 +28,7 @@ import me.shedaniel.rei.api.common.util.EntryIngredients;
 import me.shedaniel.rei.plugin.common.displays.crafting.DefaultCustomShapelessDisplay;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.MapCloningRecipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,7 +36,7 @@ import java.util.List;
 
 public class MapCloningRecipeFiller implements CraftingRecipeFiller<MapCloningRecipe> {
     @Override
-    public Collection<Display> apply(MapCloningRecipe recipe) {
+    public Collection<Display> apply(RecipeHolder<MapCloningRecipe> recipe) {
         List<Display> displays = new ArrayList<>();
         
         displays.add(new DefaultCustomShapelessDisplay(recipe,

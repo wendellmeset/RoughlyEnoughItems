@@ -35,6 +35,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionUtils;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.TippedArrowRecipe;
 
 import java.util.ArrayList;
@@ -43,7 +44,7 @@ import java.util.List;
 
 public class TippedArrowRecipeFiller implements CraftingRecipeFiller<TippedArrowRecipe> {
     @Override
-    public Collection<Display> apply(TippedArrowRecipe recipe) {
+    public Collection<Display> apply(RecipeHolder<TippedArrowRecipe> recipe) {
         EntryIngredient arrowStack = EntryIngredient.of(EntryStacks.of(Items.ARROW));
         ReferenceSet<Potion> registeredPotions = new ReferenceOpenHashSet<>();
         List<Display> displays = new ArrayList<>();

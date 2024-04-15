@@ -30,6 +30,7 @@ import me.shedaniel.rei.plugin.common.displays.crafting.DefaultCustomShapelessDi
 import net.minecraft.network.chat.Component;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.SuspiciousStewRecipe;
 
 import java.util.ArrayList;
@@ -38,7 +39,7 @@ import java.util.List;
 
 public class SuspiciousStewRecipeFiller implements CraftingRecipeFiller<SuspiciousStewRecipe> {
     @Override
-    public Collection<Display> apply(SuspiciousStewRecipe recipe) {
+    public Collection<Display> apply(RecipeHolder<SuspiciousStewRecipe> recipe) {
         List<Display> displays = new ArrayList<>();
         
         displays.add(new DefaultCustomShapelessDisplay(recipe,

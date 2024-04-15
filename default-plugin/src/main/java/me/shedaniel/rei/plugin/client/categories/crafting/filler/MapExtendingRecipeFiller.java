@@ -33,6 +33,7 @@ import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.MapExtendingRecipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,7 +41,7 @@ import java.util.List;
 
 public class MapExtendingRecipeFiller implements CraftingRecipeFiller<MapExtendingRecipe> {
     @Override
-    public Collection<Display> apply(MapExtendingRecipe recipe) {
+    public Collection<Display> apply(RecipeHolder<MapExtendingRecipe> recipe) {
         List<Display> displays = new ArrayList<>();
         
         for (int i = 0; i < 4; i++) {

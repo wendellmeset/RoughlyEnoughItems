@@ -35,6 +35,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.FireworkRocketRecipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,7 +43,7 @@ import java.util.List;
 
 public class FireworkRocketRecipeFiller implements CraftingRecipeFiller<FireworkRocketRecipe> {
     @Override
-    public Collection<Display> apply(FireworkRocketRecipe recipe) {
+    public Collection<Display> apply(RecipeHolder<FireworkRocketRecipe> recipe) {
         List<Display> displays = new ArrayList<>();
         {
             EntryIngredient[] inputs = new EntryIngredient[4];

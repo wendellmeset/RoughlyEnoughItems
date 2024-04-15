@@ -34,6 +34,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.WrittenBookItem;
 import net.minecraft.world.item.crafting.BookCloningRecipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,7 +61,7 @@ public class BookCloningRecipeFiller implements CraftingRecipeFiller<BookCloning
     };
     
     @Override
-    public Collection<Display> apply(BookCloningRecipe recipe) {
+    public Collection<Display> apply(RecipeHolder<BookCloningRecipe> recipe) {
         List<Display> displays = new ArrayList<>();
         
         for (int i = 1; i <= 8; i++) {
