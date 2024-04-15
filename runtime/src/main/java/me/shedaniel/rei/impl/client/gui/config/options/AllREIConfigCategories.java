@@ -74,8 +74,8 @@ public interface AllREIConfigCategories {
             .add(DEBUG_PERFORMANCE);
     OptionCategory FLAGS = make("flags");
     OptionCategory RESET = make("reset")
-            .add(RESET_RELOAD)
-            .add(RESET_RESET);
+            .add(RESET_RELOAD);
+            // .add(RESET_RESET);
     List<OptionCategory> CATEGORIES = ImmutableList.of(
             APPEARANCE,
             INPUT,
