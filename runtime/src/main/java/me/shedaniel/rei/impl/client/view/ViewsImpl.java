@@ -29,9 +29,9 @@ import com.google.common.collect.Maps;
 import it.unimi.dsi.fastutil.longs.Long2LongMap;
 import it.unimi.dsi.fastutil.longs.Long2LongMaps;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import me.shedaniel.rei.api.client.REIRuntime;
 import me.shedaniel.rei.api.client.config.ConfigObject;
 import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
@@ -221,15 +221,13 @@ public class ViewsImpl implements Views {
         
         // Merging displays
         Stopwatch mergingStopwatch = Stopwatch.createStarted(), sortingStopwatch = Stopwatch.createUnstarted();
-        Map<DisplayCategory<?>, List<DisplaySpec>> resultSpec = (Map<DisplayCategory<?>, List<DisplaySpec>>) (Map) new LinkedHashMap<>();
-        for (CategoryRegistry.CategoryConfiguration<?> configuration : CategoryRegistry.getInstance()) {
-            Set<Display> displays = result.get(configuration.getCategory());
-            if (displays == null) continue;
-            resultSpec.put(configuration.getCategory(), new ArrayList<>(displays));
+        Map<DisplayCategory<?>, List<DisplaySpec>> merged = (Map<DisplayCategory<?>, List<DisplaySpec>>) (Map) new LinkedHashMap<>();
+        for (Map.Entry<DisplayCategory<?>, Set<Display>> entry : result.entrySet()) {
+            merged.put(entry.getKey(), new ArrayList<>(entry.getValue()));
         }
         
         if (builder.isMergingDisplays() && ConfigObject.getInstance().doMergeDisplayUnderOne()) {
-            mergeAndOptimize(result, resultSpec);
+            mergeAndOptimize(result, merged);
         }
         
         mergingStopwatch.stop();
@@ -245,7 +243,7 @@ public class ViewsImpl implements Views {
         } else {
             InternalLogger.getInstance().trace(message);
         }
-        return resultSpec;
+        return sorted;
     }
     
     private static Map<DisplayCategory<?>, List<DisplaySpec>> sortDisplays(Map<DisplayCategory<?>, List<DisplaySpec>> unsorted) {
