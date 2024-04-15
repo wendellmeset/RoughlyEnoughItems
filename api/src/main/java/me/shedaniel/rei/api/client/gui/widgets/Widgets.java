@@ -40,6 +40,7 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.item.Item;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -52,7 +53,8 @@ import java.util.function.Supplier;
 
 @Environment(EnvType.CLIENT)
 public final class Widgets {
-    private Widgets() {}
+    private Widgets() {
+    }
     
     public static Widget createDrawableWidget(DrawableConsumer drawable) {
         return ClientInternals.getWidgetsProvider().createDrawableWidget(drawable);
@@ -63,10 +65,11 @@ public final class Widgets {
     }
     
     public static WidgetWithBounds withTooltip(WidgetWithBounds widget, Collection<Component> texts) {
-        return withBounds(concat(
+        return concatWithBounds(
+                widget::getBounds,
                 widget,
                 createTooltip(widget::getBounds, texts)
-        ), widget::getBounds);
+        );
     }
     
     public static Widget createTooltip(Rectangle bounds, Component... texts) {
@@ -96,6 +99,7 @@ public final class Widgets {
             Point mouse = new Point(mouseX, mouseY);
             Tooltip tooltip = tooltipSupplier.apply(mouse);
             if (tooltip != null) {
+                tooltip = Tooltip.from(TooltipContext.ofMouse(Item.TooltipContext.EMPTY).getPoint(), tooltip.entries());
                 tooltip.queue();
             }
         });
@@ -160,11 +164,11 @@ public final class Widgets {
     }
     
     public static WidgetWithBounds withBounds(Widget widget) {
-        return wrapWidgetWithBounds(widget, null);
+        return withBounds(widget, (Rectangle) null);
     }
     
     public static WidgetWithBounds withBounds(Widget widget, Rectangle bounds) {
-        return wrapWidgetWithBoundsSupplier(widget, bounds == null ? null : () -> bounds);
+        return withBounds(widget, bounds == null ? null : () -> bounds);
     }
     
     public static WidgetWithBounds withBounds(Widget widget, Supplier<Rectangle> bounds) {
@@ -303,6 +307,22 @@ public final class Widgets {
         return ClientInternals.getWidgetsProvider().concatWidgets(widgets);
     }
     
+    public static WidgetWithBounds concatWithBounds(Rectangle bounds, Widget... widgets) {
+        return concatWithBounds(bounds, Arrays.asList(widgets));
+    }
+    
+    public static WidgetWithBounds concatWithBounds(Rectangle bounds, List<Widget> widgets) {
+        return ClientInternals.getWidgetsProvider().concatWidgetsWithBounds(() -> bounds, widgets);
+    }
+    
+    public static WidgetWithBounds concatWithBounds(Supplier<Rectangle> bounds, Widget... widgets) {
+        return concatWithBounds(bounds, Arrays.asList(widgets));
+    }
+    
+    public static WidgetWithBounds concatWithBounds(Supplier<Rectangle> bounds, List<Widget> widgets) {
+        return ClientInternals.getWidgetsProvider().concatWidgetsWithBounds(bounds, widgets);
+    }
+    
     public static WidgetWithBounds noOp() {
         return ClientInternals.getWidgetsProvider().noOp();
     }
@@ -310,6 +330,16 @@ public final class Widgets {
     @ApiStatus.Experimental
     public static WidgetWithBounds overflowed(Rectangle bounds, WidgetWithBounds widget) {
         return ClientInternals.getWidgetsProvider().wrapOverflow(bounds, widget);
+    }
+    
+    @ApiStatus.Experimental
+    public static WidgetWithBounds scissored(Rectangle bounds, Widget widget) {
+        return ClientInternals.getWidgetsProvider().wrapScissored(bounds, widget);
+    }
+    
+    @ApiStatus.Experimental
+    public static WidgetWithBounds scissored(WidgetWithBounds widget) {
+        return ClientInternals.getWidgetsProvider().wrapScissored(widget);
     }
     
     @ApiStatus.Experimental

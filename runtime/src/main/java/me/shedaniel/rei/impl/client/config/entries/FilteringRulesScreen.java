@@ -34,6 +34,7 @@ import me.shedaniel.rei.impl.client.entry.filtering.FilteringContextType;
 import me.shedaniel.rei.impl.client.entry.filtering.rules.ManualFilteringRule;
 import me.shedaniel.rei.impl.client.entry.filtering.rules.SearchFilteringRuleType;
 import me.shedaniel.rei.impl.client.gui.InternalTextures;
+import me.shedaniel.rei.impl.client.gui.screen.generic.OptionEntriesScreen;
 import me.shedaniel.rei.impl.client.gui.widget.EntryWidget;
 import me.shedaniel.rei.impl.client.gui.widget.UpdatedListWidget;
 import me.shedaniel.rei.impl.common.entry.type.FilteringLogic;
@@ -57,13 +58,15 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class FilteringRulesScreen extends Screen {
-    private final FilteringEntry entry;
+    private final FilteringScreen filteringScreen;
+    private final List<FilteringRule<?>> rules;
     private RulesList rulesList;
-    Screen parent;
+    public Screen parent;
     
-    public FilteringRulesScreen(FilteringEntry entry) {
+    public FilteringRulesScreen(FilteringScreen filteringScreen, List<FilteringRule<?>> rules) {
         super(Component.translatable("config.roughlyenoughitems.filteringRulesScreen"));
-        this.entry = entry;
+        this.filteringScreen = filteringScreen;
+        this.rules = rules;
     }
     
     @Override
@@ -80,21 +83,21 @@ public class FilteringRulesScreen extends Screen {
         {
             Component addText = Component.literal(" + ");
             addRenderableWidget(new Button(width - 4 - 20, 4, 20, 20, addText, button -> {
-                FilteringAddRuleScreen screen = new FilteringAddRuleScreen(entry);
+                FilteringAddRuleScreen screen = new FilteringAddRuleScreen(rules);
                 screen.parent = this;
                 minecraft.setScreen(screen);
             }, Supplier::get) {
             });
         }
         rulesList = addWidget(new RulesList(minecraft, width, height, 30, height));
-        for (int i = entry.rules.size() - 1; i >= 0; i--) {
-            FilteringRule<?> rule = entry.rules.get(i);
+        for (int i = rules.size() - 1; i >= 0; i--) {
+            FilteringRule<?> rule = rules.get(i);
             if (rule instanceof ManualFilteringRule)
-                rulesList.addItem(new DefaultRuleEntry(rule, entry, (screen) -> {
-                    entry.filteringScreen.parent = screen;
-                    return entry.filteringScreen;
+                rulesList.addItem(new DefaultRuleEntry(rule, rules, (screen) -> {
+                    filteringScreen.parent = screen;
+                    return filteringScreen;
                 }));
-            else rulesList.addItem(new DefaultRuleEntry(rule, entry, null));
+            else rulesList.addItem(new DefaultRuleEntry(rule, rules, null));
         }
         rulesList.selectItem(rulesList.children().get(0));
     }
@@ -104,6 +107,11 @@ public class FilteringRulesScreen extends Screen {
         super.render(graphics, mouseX, mouseY, delta);
         this.rulesList.render(graphics, mouseX, mouseY, delta);
         graphics.drawString(this.font, this.title.getVisualOrderText(), (int) (this.width / 2.0F - this.font.width(this.title) / 2.0F), 12, -1);
+    }
+    
+    @Override
+    public void onClose() {
+        this.minecraft.setScreen(parent);
     }
     
     public static class RulesList extends UpdatedListWidget<RuleEntry> {
@@ -171,11 +179,10 @@ public class FilteringRulesScreen extends Screen {
         private final Button deleteButton;
         private final Function<Screen, Screen> screenFunction;
         
-        public DefaultRuleEntry(FilteringRule<?> rule, FilteringEntry entry, Function<Screen, Screen> screenFunction) {
+        public DefaultRuleEntry(FilteringRule<?> rule, List<FilteringRule<?>> rules, Function<Screen, Screen> screenFunction) {
             super(rule);
             this.screenFunction = Objects.requireNonNullElseGet(screenFunction == null ? ((FilteringRuleType<FilteringRule<?>>) rule.getType()).createEntryScreen(rule) : screenFunction, () -> placeholderScreen(rule));
             configureButton = new Button(0, 0, 20, 20, Component.nullToEmpty(null), button -> {
-                entry.edited = true;
                 Minecraft.getInstance().setScreen(this.screenFunction.apply(Minecraft.getInstance().screen));
             }, Supplier::get) {
                 @Override
@@ -188,8 +195,7 @@ public class FilteringRulesScreen extends Screen {
                 Component deleteText = Component.translatable("config.roughlyenoughitems.filteringRulesScreen.delete");
                 deleteButton = new Button(0, 0, Minecraft.getInstance().font.width(deleteText) + 10, 20, deleteText, button -> {
                     final Screen screen = Minecraft.getInstance().screen;
-                    entry.edited = true;
-                    entry.rules.remove(rule);
+                    rules.remove(rule);
                     screen.init(Minecraft.getInstance(), screen.width, screen.height);
                 }, Supplier::get) {
                 };
@@ -241,26 +247,26 @@ public class FilteringRulesScreen extends Screen {
     }
     
     private static <Cache> Function<Screen, Screen> placeholderScreen(FilteringRule<Cache> r) {
-        class PlaceholderScreen extends FilteringRuleOptionsScreen<FilteringRule<Cache>> {
+        class PlaceholderScreen extends OptionEntriesScreen {
             public PlaceholderScreen(Screen parent) {
-                super(r, parent);
+                super(Component.translatable("config.roughlyenoughitems.filteringRulesScreen"), parent);
             }
             
             @Override
-            public void addEntries(Consumer<RuleEntry> entryConsumer) {
+            public void addEntries(Consumer<ListEntry> entryConsumer) {
                 addEmpty(entryConsumer, 10);
                 Function<Boolean, Component> function = bool -> {
                     return Component.translatable("rule.roughlyenoughitems.filtering.search.show." + bool);
                 };
                 Map<FilteringContextType, Set<HashedEntryStackWrapper>> stacks = FilteringLogic.hidden(List.of(r), false, false, EntryRegistry.getInstance().getEntryStacks().collect(Collectors.toList()));
                 
-                entryConsumer.accept(new SubRulesEntry(rule, () -> function.apply(true),
-                        Collections.singletonList(new SearchFilteringRuleType.EntryStacksRuleEntry(rule,
+                entryConsumer.accept(new SubListEntry(() -> function.apply(true),
+                        Collections.singletonList(new SearchFilteringRuleType.EntryStacksRuleEntry(
                                 Suppliers.ofInstance(CollectionUtils.map(stacks.get(FilteringContextType.SHOWN),
                                         stack -> (EntryWidget) Widgets.createSlot(new Rectangle(0, 0, 18, 18)).disableBackground().entry(stack.unwrap().normalize())))))));
                 addEmpty(entryConsumer, 10);
-                entryConsumer.accept(new SubRulesEntry(rule, () -> function.apply(false),
-                        Collections.singletonList(new SearchFilteringRuleType.EntryStacksRuleEntry(rule,
+                entryConsumer.accept(new SubListEntry(() -> function.apply(false),
+                        Collections.singletonList(new SearchFilteringRuleType.EntryStacksRuleEntry(
                                 Suppliers.ofInstance(CollectionUtils.map(stacks.get(FilteringContextType.HIDDEN),
                                         stack -> (EntryWidget) Widgets.createSlot(new Rectangle(0, 0, 18, 18)).disableBackground().entry(stack.unwrap().normalize())))))));
             }

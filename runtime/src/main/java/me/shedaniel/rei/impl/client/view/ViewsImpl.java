@@ -26,10 +26,12 @@ package me.shedaniel.rei.impl.client.view;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import it.unimi.dsi.fastutil.longs.Long2LongMap;
 import it.unimi.dsi.fastutil.longs.Long2LongMaps;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import me.shedaniel.rei.api.client.REIRuntime;
 import me.shedaniel.rei.api.client.config.ConfigObject;
 import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
@@ -108,7 +110,7 @@ public class ViewsImpl implements Views {
         
         Stopwatch stopwatch = Stopwatch.createStarted();
         boolean processingVisibilityHandlers = builder.isProcessingVisibilityHandlers();
-        Set<CategoryIdentifier<?>> categories = builder.getCategories();
+        Set<CategoryIdentifier<?>> categories = new HashSet<>(builder.getCategories());
         Set<CategoryIdentifier<?>> filteringCategories = builder.getFilteringCategories();
         List<EntryStack<?>> recipesForStacks = builder.getRecipesFor();
         List<EntryStack<?>> usagesForStacks = builder.getUsagesFor();
@@ -122,27 +124,20 @@ public class ViewsImpl implements Views {
         DisplayRegistry displayRegistry = DisplayRegistry.getInstance();
         DisplaysHolder displaysHolder = ((DisplayRegistryImpl) displayRegistry).displaysHolder();
         
-        Map<DisplayCategory<?>, List<Display>> result = Maps.newLinkedHashMap();
-        for (CategoryRegistry.CategoryConfiguration<?> categoryConfiguration : CategoryRegistry.getInstance()) {
-            DisplayCategory<?> category = categoryConfiguration.getCategory();
-            if (processingVisibilityHandlers && CategoryRegistry.getInstance().isCategoryInvisible(category)) continue;
-            CategoryIdentifier<?> categoryId = categoryConfiguration.getCategoryIdentifier();
-            if (!filteringCategories.isEmpty() && !filteringCategories.contains(categoryId)) continue;
-            List<Display> allRecipesFromCategory = displayRegistry.get((CategoryIdentifier<Display>) categoryId);
-            
-            Set<Display> set = Sets.newLinkedHashSet();
-            if (categories.contains(categoryId)) {
-                for (Display display : allRecipesFromCategory) {
+        Map<DisplayCategory<?>, Set<Display>> result = Maps.newHashMap();
+        forCategories(processingVisibilityHandlers, filteringCategories, displayRegistry, result, (configuration, categoryId, displays, set) -> {
+            if (categories.contains(categoryId)) { // If the category is in the search, add all displays
+                for (Display display : displays) {
                     if (!processingVisibilityHandlers || displayRegistry.isDisplayVisible(display)) {
                         set.add(display);
                     }
                 }
                 if (!set.isEmpty()) {
-                    CollectionUtils.getOrPutEmptyList(result, category).addAll(set);
+                    getOrPutEmptyLinkedSet(result, configuration.getCategory()).addAll(set);
                 }
-                continue;
+                return;
             }
-            for (Display display : allRecipesFromCategory) {
+            for (Display display : displays) {
                 if (processingVisibilityHandlers && !displayRegistry.isDisplayVisible(display)) continue;
                 if (!recipesForStacks.isEmpty()) {
                     if (isRecipesFor(displaysHolder, recipesForStacks, display)) {
@@ -153,42 +148,12 @@ public class ViewsImpl implements Views {
                 if (!usagesForStacks.isEmpty()) {
                     if (isUsagesFor(displaysHolder, usagesForStacks, display)) {
                         set.add(display);
-                        continue;
                     }
                 }
             }
-            if (set.isEmpty() && (!recipesForStacksWildcard.isEmpty() || !usagesForStacksWildcard.isEmpty())) {
-                for (Display display : allRecipesFromCategory) {
-                    if (processingVisibilityHandlers && !displayRegistry.isDisplayVisible(display)) continue;
-                    if (!recipesForStacksWildcard.isEmpty()) {
-                        if (isRecipesFor(displaysHolder, recipesForStacksWildcard, display)) {
-                            set.add(display);
-                            continue;
-                        }
-                    }
-                    if (!usagesForStacksWildcard.isEmpty()) {
-                        if (isUsagesFor(displaysHolder, usagesForStacksWildcard, display)) {
-                            set.add(display);
-                            continue;
-                        }
-                    }
-                }
-            }
-            for (EntryStack<?> usagesFor : Iterables.concat(usagesForStacks, usagesForStacksWildcard)) {
-                if (isStackWorkStationOfCategory(categoryConfiguration, usagesFor)) {
-                    if (processingVisibilityHandlers) {
-                        set.addAll(CollectionUtils.filterToSet(allRecipesFromCategory, displayRegistry::isDisplayVisible));
-                    } else {
-                        set.addAll(allRecipesFromCategory);
-                    }
-                    break;
-                }
-            }
-            if (!set.isEmpty()) {
-                CollectionUtils.getOrPutEmptyList(result, category).addAll(set);
-            }
-        }
+        });
         
+        // Generate live displays per category
         int generatorsCount = 0;
         
         for (Map.Entry<CategoryIdentifier<?>, List<DynamicDisplayGenerator<?>>> entry : displayRegistry.getCategoryDisplayGenerators().entrySet()) {
@@ -204,91 +169,72 @@ public class ViewsImpl implements Views {
             }
             
             if (!set.isEmpty()) {
-                CollectionUtils.getOrPutEmptyList(result, category).addAll(set);
+                getOrPutEmptyLinkedSet(result, category).addAll(set);
             }
         }
         
         Consumer<Display> displayConsumer = display -> {
             CategoryIdentifier<?> categoryIdentifier = display.getCategoryIdentifier();
             if (!filteringCategories.isEmpty() && !filteringCategories.contains(categoryIdentifier)) return;
-            CollectionUtils.getOrPutEmptyList(result, CategoryRegistry.getInstance().get(categoryIdentifier).getCategory()).add(display);
+            getOrPutEmptyLinkedSet(result, CategoryRegistry.getInstance().get(categoryIdentifier).getCategory()).add(display);
         };
         for (DynamicDisplayGenerator<Display> generator : (List<DynamicDisplayGenerator<Display>>) (List<? extends DynamicDisplayGenerator<?>>) displayRegistry.getGlobalDisplayGenerators()) {
             generatorsCount++;
             generateLiveDisplays(displayRegistry, wrapForError(generator), builder, displayConsumer);
         }
         
-        Map<DisplayCategory<?>, List<DisplaySpec>> resultSpeced = (Map<DisplayCategory<?>, List<DisplaySpec>>) (Map) new LinkedHashMap<>(result);
-        // optimize displays
-        if (builder.isMergingDisplays() && ConfigObject.getInstance().doMergeDisplayUnderOne()) {
-            for (Map.Entry<DisplayCategory<?>, List<Display>> entry : result.entrySet()) {
-                DisplayMerger<Display> merger = (DisplayMerger<Display>) entry.getKey().getDisplayMerger();
-                
-                if (merger != null) {
-                    class Wrapped implements DisplaySpec {
-                        private final Display display;
-                        private List<ResourceLocation> ids = null;
-                        private final int hash;
-                        
-                        public Wrapped(Display display) {
-                            this.display = display;
-                            this.hash = merger.hashOf(display);
-                        }
-                        
-                        @Override
-                        public boolean equals(Object o) {
-                            if (this == o) return true;
-                            if (!(o instanceof Wrapped)) return false;
-                            Wrapped wrapped = (Wrapped) o;
-                            return hash == wrapped.hash && merger.canMerge(display, wrapped.display);
-                        }
-                        
-                        @Override
-                        public int hashCode() {
-                            return hash;
-                        }
-                        
-                        @Override
-                        public Display provideInternalDisplay() {
-                            return display;
-                        }
-                        
-                        @Override
-                        public Collection<ResourceLocation> provideInternalDisplayIds() {
-                            if (ids == null) {
-                                ids = new ArrayList<>();
-                                Optional<ResourceLocation> location = display.getDisplayLocation();
-                                if (location.isPresent()) {
-                                    ids.add(location.get());
-                                }
-                            }
-                            return ids;
-                        }
-                        
-                        public void add(Display display) {
-                            Optional<ResourceLocation> location = display.getDisplayLocation();
-                            if (location.isPresent()) {
-                                provideInternalDisplayIds().add(location.get());
-                            }
+        if (CollectionUtils.allMatch(result.values(), Set::isEmpty) && (!recipesForStacksWildcard.isEmpty() || !usagesForStacksWildcard.isEmpty())) {
+            // Run wildcard search because no displays were found
+            forCategories(processingVisibilityHandlers, filteringCategories, displayRegistry, result, (configuration, categoryId, displays, set) -> {
+                if (categories.contains(categoryId)) return;
+                for (Display display : displays) {
+                    if (processingVisibilityHandlers && !displayRegistry.isDisplayVisible(display)) continue;
+                    if (!recipesForStacksWildcard.isEmpty()) {
+                        if (isRecipesFor(displaysHolder, recipesForStacksWildcard, display)) {
+                            set.add(display);
+                            continue;
                         }
                     }
-                    Map<Wrapped, Wrapped> wrappedSet = new LinkedHashMap<>();
-                    List<Wrapped> wrappeds = new ArrayList<>();
-                    
-                    for (Display display : sortAutoCrafting(entry.getValue())) {
-                        Wrapped wrapped = new Wrapped(display);
-                        if (wrappedSet.containsKey(wrapped)) {
-                            wrappedSet.get(wrapped).add(display);
-                        } else {
-                            wrappedSet.put(wrapped, wrapped);
-                            wrappeds.add(wrapped);
+                    if (!usagesForStacksWildcard.isEmpty()) {
+                        if (isUsagesFor(displaysHolder, usagesForStacksWildcard, display)) {
+                            set.add(display);
                         }
                     }
-                    
-                    resultSpeced.put(entry.getKey(), (List<DisplaySpec>) (List) wrappeds);
+                }
+            });
+        }
+        
+        forCategories(processingVisibilityHandlers, filteringCategories, displayRegistry, result, (configuration, categoryId, displays, set) -> {
+            if (categories.contains(categoryId)) return;
+            for (EntryStack<?> usagesFor : Iterables.concat(usagesForStacks, usagesForStacksWildcard)) {
+                if (isStackWorkStationOfCategory(configuration, usagesFor)) {
+                    categories.add(categoryId);
+                    if (processingVisibilityHandlers) {
+                        set.addAll(CollectionUtils.filterToSet(displays, displayRegistry::isDisplayVisible));
+                    } else {
+                        set.addAll(displays);
+                    }
+                    break;
                 }
             }
+        });
+        
+        // Merging displays
+        Stopwatch mergingStopwatch = Stopwatch.createStarted(), sortingStopwatch = Stopwatch.createUnstarted();
+        Map<DisplayCategory<?>, List<DisplaySpec>> merged = (Map<DisplayCategory<?>, List<DisplaySpec>>) (Map) new LinkedHashMap<>();
+        for (Map.Entry<DisplayCategory<?>, Set<Display>> entry : result.entrySet()) {
+            merged.put(entry.getKey(), new ArrayList<>(entry.getValue()));
         }
+        
+        if (builder.isMergingDisplays() && ConfigObject.getInstance().doMergeDisplayUnderOne()) {
+            mergeAndOptimize(result, merged);
+        }
+        
+        mergingStopwatch.stop();
+        // Sorting displays
+        sortingStopwatch.start();
+        Map<DisplayCategory<?>, List<DisplaySpec>> sorted = sortDisplays(merged);
+        sortingStopwatch.stop();
         
         String message = String.format("Built Recipe View in %s for %d categories, %d recipes for, %d usages for and %d live recipe generators.",
                 stopwatch.stop(), categories.size(), recipesForStacks.size(), usagesForStacks.size(), generatorsCount);
@@ -297,7 +243,46 @@ public class ViewsImpl implements Views {
         } else {
             InternalLogger.getInstance().trace(message);
         }
-        return resultSpeced;
+        return sorted;
+    }
+    
+    private static Map<DisplayCategory<?>, List<DisplaySpec>> sortDisplays(Map<DisplayCategory<?>, List<DisplaySpec>> unsorted) {
+        Object2IntMap<CategoryIdentifier<?>> categoryOrder = new Object2IntOpenHashMap<>();
+        categoryOrder.defaultReturnValue(Integer.MAX_VALUE);
+        int i = 100000;
+        for (CategoryRegistry.CategoryConfiguration<?> configuration : CategoryRegistry.getInstance()) {
+            categoryOrder.put(configuration.getCategoryIdentifier(), i++);
+        }
+        i = 0;
+        for (CategoryIdentifier<?> identifier : ConfigObject.getInstance().getCategoryOrdering()) {
+            categoryOrder.put(identifier, i++);
+        }
+        Map<DisplayCategory<?>, List<DisplaySpec>> result = new TreeMap<>(Comparator.comparingInt(category -> categoryOrder.getInt(category.getCategoryIdentifier())));
+        result.putAll(unsorted);
+        return result;
+    }
+    
+    private static void forCategories(boolean processingVisibilityHandlers, Set<CategoryIdentifier<?>> filteringCategories, DisplayRegistry displayRegistry, Map<DisplayCategory<?>, Set<Display>> result, QuadConsumer<CategoryRegistry.CategoryConfiguration<?>, CategoryIdentifier<?>, List<Display>, Set<Display>> displayConsumer) {
+        for (CategoryRegistry.CategoryConfiguration<?> configuration : CategoryRegistry.getInstance()) {
+            if (processingVisibilityHandlers && CategoryRegistry.getInstance().isCategoryInvisible(configuration.getCategory())) continue;
+            CategoryIdentifier<?> categoryId = configuration.getCategoryIdentifier();
+            if (!filteringCategories.isEmpty() && !filteringCategories.contains(categoryId)) continue;
+            List<Display> allRecipesFromCategory = displayRegistry.get((CategoryIdentifier<Display>) categoryId);
+            Set<Display> set = new LinkedHashSet<>();
+            displayConsumer.accept(configuration, categoryId, allRecipesFromCategory, set);
+            if (!set.isEmpty()) {
+                getOrPutEmptyLinkedSet(result, configuration.getCategory()).addAll(set);
+            }
+        }
+    }
+    
+    public static <A, B> Set<B> getOrPutEmptyLinkedSet(Map<A, Set<B>> map, A key) {
+        Set<B> b = map.get(key);
+        if (b != null) {
+            return b;
+        }
+        map.put(key, new ReferenceOpenHashSet<>());
+        return map.get(key);
     }
     
     public static boolean isRecipesFor(@Nullable DisplaysHolder displaysHolder, List<EntryStack<?>> stacks, Display display) {
@@ -334,7 +319,7 @@ public class ViewsImpl implements Views {
         return false;
     }
     
-    private static Iterable<Display> sortAutoCrafting(List<Display> displays) {
+    private static Iterable<Display> sortAutoCrafting(Iterable<Display> displays) {
         Set<Display> successfulDisplays = new LinkedHashSet<>();
         Set<Display> applicableDisplays = new LinkedHashSet<>();
         
@@ -555,6 +540,84 @@ public class ViewsImpl implements Views {
     
     @Override
     public void startReload() {
+        
+    }
     
+    private static void mergeAndOptimize(Map<DisplayCategory<?>, Set<Display>> displays, Map<DisplayCategory<?>, List<DisplaySpec>> resultSpec) {
+        for (Map.Entry<DisplayCategory<?>, Set<Display>> entry : displays.entrySet()) {
+            DisplayMerger<Display> merger = (DisplayMerger<Display>) entry.getKey().getDisplayMerger();
+            
+            if (merger != null) {
+                Map<WrappedDisplaySpec, WrappedDisplaySpec> wrappedSet = new LinkedHashMap<>();
+                List<WrappedDisplaySpec> specs = new ArrayList<>();
+                
+                for (Display display : sortAutoCrafting(entry.getValue())) {
+                    WrappedDisplaySpec wrapped = new WrappedDisplaySpec(merger, display);
+                    if (wrappedSet.containsKey(wrapped)) {
+                        wrappedSet.get(wrapped).add(display);
+                    } else {
+                        wrappedSet.put(wrapped, wrapped);
+                        specs.add(wrapped);
+                    }
+                }
+                
+                resultSpec.put(entry.getKey(), (List<DisplaySpec>) (List) specs);
+            }
+        }
+    }
+    
+    private static class WrappedDisplaySpec implements DisplaySpec {
+        private final DisplayMerger<Display> merger;
+        private final Display display;
+        private List<ResourceLocation> ids = null;
+        private final int hash;
+        
+        public WrappedDisplaySpec(DisplayMerger<Display> merger, Display display) {
+            this.merger = merger;
+            this.display = display;
+            this.hash = merger.hashOf(display);
+        }
+        
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof WrappedDisplaySpec)) return false;
+            WrappedDisplaySpec wrapped = (WrappedDisplaySpec) o;
+            return hash == wrapped.hash && merger.canMerge(display, wrapped.display);
+        }
+        
+        @Override
+        public int hashCode() {
+            return hash;
+        }
+        
+        @Override
+        public Display provideInternalDisplay() {
+            return display;
+        }
+        
+        @Override
+        public Collection<ResourceLocation> provideInternalDisplayIds() {
+            if (ids == null) {
+                ids = new ArrayList<>();
+                Optional<ResourceLocation> location = display.getDisplayLocation();
+                if (location.isPresent()) {
+                    ids.add(location.get());
+                }
+            }
+            return ids;
+        }
+        
+        public void add(Display display) {
+            Optional<ResourceLocation> location = display.getDisplayLocation();
+            if (location.isPresent()) {
+                provideInternalDisplayIds().add(location.get());
+            }
+        }
+    }
+    
+    @FunctionalInterface
+    private interface QuadConsumer<P1, P2, P3, P4> {
+        void accept(P1 p1, P2 p2, P3 p3, P4 p4);
     }
 }

@@ -77,6 +77,7 @@ public class DefaultPlugin implements BuiltinPlugin, REIServerPlugin {
         registry.registerComponents(Items.SPLASH_POTION);
         registry.registerComponents(Items.LINGERING_POTION);
         registry.registerComponents(Items.TIPPED_ARROW);
+        registry.register((context, stack) -> 0, Items.FIREWORK_ROCKET, Items.FILLED_MAP);
     }
     
     @Override

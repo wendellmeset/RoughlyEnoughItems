@@ -44,7 +44,6 @@ import me.shedaniel.rei.api.client.search.SearchFilter;
 import me.shedaniel.rei.api.client.search.SearchProvider;
 import me.shedaniel.rei.api.common.entry.EntrySerializer;
 import me.shedaniel.rei.api.common.entry.EntryStack;
-import me.shedaniel.rei.impl.client.gui.InternalTextures;
 import me.shedaniel.rei.impl.client.gui.ScreenOverlayImpl;
 import me.shedaniel.rei.impl.client.gui.widget.BatchedEntryRendererManager;
 import me.shedaniel.rei.impl.client.gui.widget.EntryWidget;
@@ -93,14 +92,15 @@ public class FilteringScreen extends Screen {
     };
     
     Screen parent;
-    private FilteringEntry filteringEntry;
+    private Set<EntryStack<?>> configFiltered;
     private Tooltip tooltip = null;
     private List<EntryStack<?>> entryStacks = null;
     private Rectangle innerBounds;
     private List<FilteringListEntry> entries = Collections.emptyList();
     private List<GuiEventListener> elements = Collections.emptyList();
     
-    private record PointPair(Point firstPoint, @Nullable Point secondPoint) {}
+    private record PointPair(Point firstPoint, @Nullable Point secondPoint) {
+    }
     
     private List<PointPair> points = new ArrayList<>();
     
@@ -114,9 +114,9 @@ public class FilteringScreen extends Screen {
     
     private SearchFilter lastFilter = SearchFilter.matchAll();
     
-    public FilteringScreen(FilteringEntry filteringEntry) {
+    public FilteringScreen(Set<EntryStack<?>> configFiltered) {
         super(Component.translatable("config.roughlyenoughitems.filteringScreen"));
-        this.filteringEntry = filteringEntry;
+        this.configFiltered = configFiltered;
         this.searchField = new OverlaySearchField(0, 0, 0, 0);
         {
             Component selectAllText = Component.translatable("config.roughlyenoughitems.filteredEntries.selectAll");
@@ -143,8 +143,7 @@ public class FilteringScreen extends Screen {
                             FilteringListEntry entry = entries.get(i);
                             entry.getBounds().y = entry.backupY - scrolling.scrollAmountInt();
                             if (entry.isSelected() && !entry.isFiltered()) {
-                                filteringEntry.configFiltered.add(stack);
-                                filteringEntry.edited = true;
+                        configFiltered.add(stack);
                                 entry.dirty = true;
                             }
                         }
@@ -159,8 +158,7 @@ public class FilteringScreen extends Screen {
                             EntryStack<?> stack = entryStacks.get(i);
                             FilteringListEntry entry = entries.get(i);
                             entry.getBounds().y = entry.backupY - scrolling.scrollAmountInt();
-                            if (entry.isSelected() && filteringEntry.configFiltered.remove(stack)) {
-                                filteringEntry.edited = true;
+                    if (entry.isSelected() && configFiltered.remove(stack)) {
                                 entry.dirty = true;
                             }
                         }
@@ -178,6 +176,12 @@ public class FilteringScreen extends Screen {
                     .build();
         }
         this.searchField.isMain = false;
+    }
+    
+    @Override
+    public void onClose() {
+        this.minecraft.setScreen(parent);
+        this.parent = null;
     }
     
     private static Rectangle updateInnerBounds(Rectangle bounds) {
@@ -207,22 +211,6 @@ public class FilteringScreen extends Screen {
         this.backButton.setX(4);
         this.backButton.setY(4);
         this.searchField.setResponder(this::updateSearch);
-    }
-    
-    protected void renderHoleBackground(GuiGraphics graphics, int y1, int y2, int tint, int alpha1, int alpha2) {
-        Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder buffer = tesselator.getBuilder();
-        RenderSystem.setShaderTexture(0, InternalTextures.LEGACY_DIRT);
-        Matrix4f matrix = graphics.pose().last().pose();
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        float float_1 = 32.0F;
-        RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
-        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-        buffer.vertex(matrix, 0, y2, 0.0F).uv(0.0F, y2 / 32.0F).color(tint, tint, tint, alpha2).endVertex();
-        buffer.vertex(matrix, this.width, y2, 0.0F).uv(this.width / 32.0F, y2 / 32.0F).color(tint, tint, tint, alpha2).endVertex();
-        buffer.vertex(matrix, this.width, y1, 0.0F).uv(this.width / 32.0F, y1 / 32.0F).color(tint, tint, tint, alpha1).endVertex();
-        buffer.vertex(matrix, 0, y1, 0.0F).uv(0.0F, y1 / 32.0F).color(tint, tint, tint, alpha1).endVertex();
-        tesselator.end();
     }
     
     @Override
@@ -479,9 +467,10 @@ public class FilteringScreen extends Screen {
         @Override
         protected void drawExtra(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
             if (isSelected()) {
+                boolean filtered = isFiltered();
                 Rectangle bounds = getBounds();
                 RenderSystem.disableDepthTest();
-                graphics.fillGradient(bounds.x, bounds.y, bounds.getMaxX(), bounds.getMaxY(), 0x896b70fa, 0x896b70fa);
+                graphics.fillGradient(bounds.x, bounds.y, bounds.getMaxX(), bounds.getMaxY(), filtered ? 0x90ffffff : 0x55ffffff, filtered ? 0x90ffffff : 0x55ffffff);
                 RenderSystem.enableDepthTest();
             }
         }
@@ -492,7 +481,7 @@ public class FilteringScreen extends Screen {
         
         public boolean isFiltered() {
             if (dirty) {
-                filtered = filteringEntry.configFiltered.contains(getCurrentEntry());
+                filtered = configFiltered.contains(getCurrentEntry());
                 dirty = false;
             }
             return filtered;
