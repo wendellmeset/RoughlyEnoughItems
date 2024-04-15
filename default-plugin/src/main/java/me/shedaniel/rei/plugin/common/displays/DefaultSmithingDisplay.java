@@ -27,13 +27,19 @@ import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.util.EntryIngredients;
+import me.shedaniel.rei.api.common.util.EntryStacks;
 import me.shedaniel.rei.plugin.common.BuiltinPlugin;
+import net.minecraft.core.Holder;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.armortrim.*;
 import net.minecraft.world.item.crafting.SmithingRecipe;
 import net.minecraft.world.item.crafting.SmithingTransformRecipe;
 import net.minecraft.world.item.crafting.SmithingTrimRecipe;
 import org.jetbrains.annotations.ApiStatus;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,7 +56,7 @@ public class DefaultSmithingDisplay extends BasicDisplay {
         );
     }
     
-    @ApiStatus.Experimental
+    @Deprecated(forRemoval = true)
     public DefaultSmithingDisplay(SmithingTrimRecipe recipe) {
         this(
                 recipe,
@@ -62,44 +68,43 @@ public class DefaultSmithingDisplay extends BasicDisplay {
         );
     }
     
-//    @ApiStatus.Experimental
-//    public DefaultSmithingDisplay(SmithingTrimRecipe recipe) {
-//        this(
-//                List.of(
-//                        EntryIngredients.ofIngredient(recipe.template),
-//                        EntryIngredients.ofIngredient(recipe.base),
-//                        EntryIngredients.ofIngredient(recipe.addition)
-//                ),
-//                List.of(EntryIngredients.ofItemStacks(((Supplier<List<ItemStack>>) () -> {
-//                    RegistryAccess registryAccess = BasicDisplay.registryAccess();
-//                    ItemStack[] templateItems = recipe.template.getItems();
-//                    ItemStack[] baseItems = recipe.base.getItems();
-//                    if (templateItems.length != 0) {
-//                        Holder.Reference<TrimPattern> trimPattern = TrimPatterns.getFromTemplate(registryAccess, templateItems[0])
-//                                .orElse(null);
-//                        if (trimPattern != null) {
-//                            for (ItemStack additionItem : recipe.addition.getItems()) {
-//                                Holder.Reference<TrimMaterial> trimMaterial = TrimMaterials.getFromIngredient(registryAccess, additionItem)
-//                                        .orElse(null);
-//                                if (trimMaterial != null) {
-//                                    Optional<ArmorTrim> trim = ArmorTrim.getTrim(registryAccess, itemStack);
-//                                    if (trim.isEmpty() || !trim.get().hasPatternAndMaterial(trimPattern, trimMaterial)) {
-//                                        ItemStack itemStack2 = itemStack.copy();
-//                                        itemStack2.setCount(1);
-//                                        ArmorTrim armorTrim = new ArmorTrim((Holder) optional.get(), (Holder) optional2.get());
-//                                        if (ArmorTrim.setTrim(registryAccess, itemStack2, armorTrim)) {
-//                                            return itemStack2;
-//                                        }
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//                    return List.of(recipe.getResultItem(registryAccess));
-//                }).get())),
-//                Optional.ofNullable(recipe.getId())
-//        );
-//    }
+    @ApiStatus.Experimental
+    public static List<DefaultSmithingDisplay> from(SmithingTrimRecipe recipe) {
+        RegistryAccess registryAccess = BasicDisplay.registryAccess();
+        List<DefaultSmithingDisplay> displays = new ArrayList<>();
+        for (ItemStack templateItem : recipe.template.getItems()) {
+            Holder.Reference<TrimPattern> trimPattern = TrimPatterns.getFromTemplate(registryAccess, templateItem)
+                    .orElse(null);
+            if (trimPattern == null) continue;
+            
+            for (ItemStack additionStack : recipe.addition.getItems()) {
+                Holder.Reference<TrimMaterial> trimMaterial = TrimMaterials.getFromIngredient(registryAccess, additionStack)
+                        .orElse(null);
+                if (trimMaterial == null) continue;
+                
+                ArmorTrim armorTrim = new ArmorTrim(trimMaterial, trimPattern);
+                EntryIngredient.Builder baseItems = EntryIngredient.builder(), outputItems = EntryIngredient.builder();
+                for (ItemStack item : recipe.base.getItems()) {
+                    Optional<ArmorTrim> trim = ArmorTrim.getTrim(registryAccess, item);
+                    if (trim.isEmpty() || !trim.get().hasPatternAndMaterial(trimPattern, trimMaterial)) {
+                        ItemStack newItem = item.copy();
+                        newItem.setCount(1);
+                        if (ArmorTrim.setTrim(registryAccess, newItem, armorTrim)) {
+                            baseItems.add(EntryStacks.of(item.copy()));
+                            outputItems.add(EntryStacks.of(newItem));
+                        }
+                    }
+                }
+                displays.add(new DefaultSmithingDisplay(List.of(
+                        EntryIngredients.of(templateItem),
+                        baseItems.build(),
+                        EntryIngredients.of(additionStack)
+                ), List.of(outputItems.build()),
+                        Optional.ofNullable(recipe.getId())));
+            }
+        }
+        return displays;
+    }
     
     public DefaultSmithingDisplay(SmithingRecipe recipe, List<EntryIngredient> inputs) {
         this(
