@@ -23,7 +23,6 @@
 
 package me.shedaniel.rei.impl.client.gui.config.components;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import me.shedaniel.clothconfig2.api.ModifierKeyCode;
 import me.shedaniel.math.Point;
 import me.shedaniel.math.Rectangle;
@@ -42,6 +41,7 @@ import me.shedaniel.rei.impl.client.gui.modules.entries.ToggleMenuEntry;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
@@ -113,7 +113,7 @@ public class ConfigOptionValueWidget {
         
         return Widgets.concatWithBounds(() -> new Rectangle(-label.getBounds().width, 0, label.getBounds().width + 8, 14),
                 label,
-                Widgets.createDrawableWidget((helper, matrices, mouseX, mouseY, delta) -> matrix[0] = matrices.last().pose()),
+                Widgets.createDrawableWidget((graphics, mouseX, mouseY, delta) -> matrix[0] = graphics.pose().last().pose()),
                 Widgets.withTranslate(Widgets.createTexturedWidget(new ResourceLocation("roughlyenoughitems:textures/gui/config/selector.png"),
                         new Rectangle(1, 1, 4, 6), 0, 0, 1, 1, 1, 1), 0, 0.5, 0)
         );
@@ -151,7 +151,7 @@ public class ConfigOptionValueWidget {
             access.closeMenu();
             access.focusKeycode((CompositeOption<ModifierKeyCode>) option);
         });
-        BiConsumer<PoseStack, Label> render = label.getOnRender();
+        BiConsumer<GuiGraphics, Label> render = label.getOnRender();
         label.onRender((poses, $) -> {
             render.accept(poses, $);
             setText.accept(((ModifierKeyCode) access.get(option)).getLocalizedName());

@@ -199,36 +199,36 @@ public class EntryStacksRegionWidget<T extends RegionEntry<T>> extends WidgetWit
     public static <T, E extends RegionEntry<E>> DraggableComponent<T> wrapDraggable(DraggableComponent<T> component, EntryStacksRegionWidget<E> region, RealRegionEntry<E> entry) {
         return new DraggableComponent<>() {
             private int previousIndex = -1;
-        
+            
             @Override
             public T get() {
                 return component.get();
             }
-        
+            
             @Override
             public int getWidth() {
                 return component.getWidth();
             }
-        
+            
             @Override
             public int getHeight() {
                 return component.getHeight();
             }
-        
+            
             @Override
             public void drag() {
                 if (region.listener.removeOnDrag()) {
                     previousIndex = region.indexOf(entry);
                     region.remove(entry, EntryStacksRegionWidget.RemovalMode.MIGRATED);
                 }
-            
+                
                 component.drag();
             }
-        
+            
             @Override
             public void release(DraggedAcceptorResult result) {
                 component.release(result);
-            
+                
                 if (result != DraggedAcceptorResult.CONSUMED) {
                     if (!entry.region.listener.removeOnDrag()) {
                         DraggingContext.getInstance().renderBack(this, DraggingContext.getInstance().getCurrentPosition(),
@@ -245,15 +245,15 @@ public class EntryStacksRegionWidget<T extends RegionEntry<T>> extends WidgetWit
                     entry.region.listener.onConsumed(entry);
                 }
             }
-        
+            
             @Override
-            public void render(PoseStack matrices, Point position, int mouseX, int mouseY, float delta) {
-                component.render(matrices, position, mouseX, mouseY, delta);
+            public void render(GuiGraphics graphics, Point position, int mouseX, int mouseY, float delta) {
+                component.render(graphics, position, mouseX, mouseY, delta);
             }
-        
+            
             @Override
-            public void render(PoseStack matrices, Rectangle bounds, int mouseX, int mouseY, float delta) {
-                component.render(matrices, bounds, mouseX, mouseY, delta);
+            public void render(GuiGraphics graphics, Rectangle bounds, int mouseX, int mouseY, float delta) {
+                component.render(graphics, bounds, mouseX, mouseY, delta);
             }
         };
     }

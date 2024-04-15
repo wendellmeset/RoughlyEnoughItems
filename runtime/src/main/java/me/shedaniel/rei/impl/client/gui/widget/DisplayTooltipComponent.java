@@ -97,7 +97,7 @@ public class DisplayTooltipComponent implements TooltipComponent, ClientTooltipC
         AutoCraftingEvaluator.AutoCraftingResult craftingResult = autoCraftingResult.get();
         if (craftingResult.hasApplicable && craftingResult.renderer != null) {
             graphics.pose().pushPose();
-            Rectangle transformedBounds = MatrixUtils.transform(MatrixUtils.inverse(matrices.last().pose()), new Rectangle(x + 2, y + 2, bounds.width, bounds.height));
+            Rectangle transformedBounds = MatrixUtils.transform(MatrixUtils.inverse(graphics.pose().last().pose()), new Rectangle(x + 2, y + 2, bounds.width, bounds.height));
             Point mouse = MatrixUtils.transform(graphics.pose().last().pose(), PointHelper.ofMouse());
             craftingResult.renderer.render(graphics, mouse.x, mouse.y, Minecraft.getInstance().getDeltaFrameTime(),
                     widgets, transformedBounds, display.provideInternalDisplay());

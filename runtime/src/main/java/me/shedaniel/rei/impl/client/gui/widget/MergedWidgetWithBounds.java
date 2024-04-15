@@ -23,11 +23,11 @@
 
 package me.shedaniel.rei.impl.client.gui.widget;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.gui.widgets.Widget;
 import me.shedaniel.rei.api.client.gui.widgets.WidgetWithBounds;
 import me.shedaniel.rei.api.common.util.CollectionUtils;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 
 import java.util.Comparator;
@@ -44,10 +44,9 @@ public class MergedWidgetWithBounds extends WidgetWithBounds {
     }
     
     @Override
-    public void render(PoseStack matrices, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
         for (Widget widget : widgets) {
-            widget.setZ(getZ());
-            widget.render(matrices, mouseX, mouseY, delta);
+            widget.render(graphics, mouseX, mouseY, delta);
         }
     }
     
@@ -123,10 +122,10 @@ public class MergedWidgetWithBounds extends WidgetWithBounds {
     
     @Deprecated
     @Override
-    public void render(PoseStack matrices, Rectangle bounds, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics graphics, Rectangle bounds, int mouseX, int mouseY, float delta) {
         Rectangle clone = getBounds().clone();
         getBounds().setBounds(bounds);
-        render(matrices, mouseX, mouseY, delta);
+        render(graphics, mouseX, mouseY, delta);
         getBounds().setBounds(clone);
     }
 }

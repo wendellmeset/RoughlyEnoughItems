@@ -188,7 +188,7 @@ public class DisplayCompositeWidget extends DelegateWidgetWithBounds implements 
                 this.onFavoritesRegion = false;
             }
             
-            matrices.pushPose();
+            graphics.pose().pushPose();
             if (bounds.width <= Math.max(18, this.bounds.width / 2 - 6) && bounds.height <= Math.max(18, this.bounds.height / 2 - 6) && this.onFavoritesRegion) {
                 this.panel.yTextureOffset(RecipeBorderType.LIGHTER.getYOffset());
                 this.panel.getBounds().setBounds(bounds);
@@ -212,7 +212,7 @@ public class DisplayCompositeWidget extends DelegateWidgetWithBounds implements 
                 graphics.pose().translate(-this.bounds.getX(), -this.bounds.getY(), 0);
                 widget.render(graphics, -1000, -1000, delta);
             }
-            matrices.popPose();
+            graphics.pose().popPose();
         }
         
         @Override
