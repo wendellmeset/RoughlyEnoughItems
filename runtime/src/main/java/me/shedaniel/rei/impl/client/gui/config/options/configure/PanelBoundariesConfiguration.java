@@ -79,7 +79,7 @@ public enum PanelBoundariesConfiguration implements OptionValueEntry.Configurato
         public void init() {
             super.init();
             PanelBoundary boundary = access.get(option);
-            addRenderableWidget(horizontalLimit = Checkbox.builder(literal("config.rei.options.layout.boundaries.desc.limit_by_percentage"), font).pos(0, 0).selected(this.horizontalUsePercentage).onValueChange((checkbox, opt) -> {
+            addRenderableWidget(horizontalLimit = Checkbox.builder(Component.empty(), font).pos(0, 0).selected(this.horizontalUsePercentage).onValueChange((checkbox, opt) -> {
                 horizontalUsePercentage = opt;
                 PanelBoundary newBoundary = access.get(option);
                 access.set(option, new PanelBoundary(1.0, newBoundary.verticalPercentage(), 50, newBoundary.verticalLimit(), 1.0, newBoundary.verticalAlign()));
@@ -141,8 +141,8 @@ public enum PanelBoundariesConfiguration implements OptionValueEntry.Configurato
                     if (!isReducedMotion()) innerAlphaAnimator.setTo(-1.0F, 200);
                 }
             });
-            addRenderableWidget(verticalLimit = Checkbox.builder(literal("config.rei.options.layout.boundaries.desc.limit_by_percentage"), font).pos(0, 0).selected(this.verticalUsePercentage).onValueChange((checkbox, opt) -> {
-                verticalUsePercentage = !opt;
+            addRenderableWidget(verticalLimit = Checkbox.builder(Component.empty(), font).pos(0, 0).selected(this.verticalUsePercentage).onValueChange((checkbox, opt) -> {
+                verticalUsePercentage = opt;
                 PanelBoundary newBoundary = access.get(option);
                 access.set(option, new PanelBoundary(newBoundary.horizontalPercentage(), 1.0, newBoundary.horizontalLimit(), 1000, newBoundary.horizontalAlign(), 0.5));
                 if (!isReducedMotion()) innerAlphaAnimator.setTo(-1.0F, 200);
@@ -262,12 +262,18 @@ public enum PanelBoundariesConfiguration implements OptionValueEntry.Configurato
         }
         
         @Override
+        public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+            super.renderBackground(graphics, mouseX, mouseY, delta);
+            Rectangle panelBounds = new Rectangle(this.width * 3 / 10, this.height * 4 / 40, this.width * 4 / 10, this.height * 32 / 40);
+            Widgets.createCategoryBase(panelBounds).render(graphics, mouseX, mouseY, delta);
+        }
+        
+        @Override
         public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
             this.innerAlphaAnimator.setTarget(this.innerAlphaAnimator.target() + (1.0F - this.innerAlphaAnimator.target()) * 0.06F);
             this.innerAlphaAnimator.update(delta);
             super.render(graphics, mouseX, mouseY, delta);
             Rectangle panelBounds = new Rectangle(this.width * 3 / 10, this.height * 4 / 40, this.width * 4 / 10, this.height * 32 / 40);
-            Widgets.createCategoryBase(panelBounds).render(graphics, mouseX, mouseY, delta);
             int y = panelBounds.y + 6;
             graphics.drawString(this.font, translatable("config.rei.options.layout.boundaries.desc.configure").withStyle(ChatFormatting.UNDERLINE), panelBounds.x + 6, y, 0xff404040, false);
             y += 14;
