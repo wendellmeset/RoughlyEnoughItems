@@ -122,8 +122,8 @@ public class CollapsibleEntryWidget extends WidgetWithBounds {
                 CollapsibleEntriesScreen.setupCustom(this.id, this.component.getString(), new ArrayList<>(stacks), this.configObject, markDirty);
             }, Supplier::get) {
                 @Override
-                public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-                    super.render(graphics, mouseX, mouseY, delta);
+                protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+                    super.renderWidget(graphics, mouseX, mouseY, delta);
                     RenderSystem.setShaderTexture(0, InternalTextures.CHEST_GUI_TEXTURE);
                     graphics.blit(InternalTextures.CHEST_GUI_TEXTURE, x + 3, y + 3, 0, 0, 14, 14);
                 }

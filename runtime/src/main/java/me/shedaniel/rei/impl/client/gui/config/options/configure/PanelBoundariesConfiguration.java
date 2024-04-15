@@ -79,16 +79,13 @@ public enum PanelBoundariesConfiguration implements OptionValueEntry.Configurato
         public void init() {
             super.init();
             PanelBoundary boundary = access.get(option);
-            addRenderableWidget(horizontalLimit = new Checkbox(0, 0, 20, 20, literal("config.rei.options.layout.boundaries.desc.limit_by_percentage"), this.horizontalUsePercentage, false) {
-                @Override
-                public void onPress() {
-                    horizontalUsePercentage = !horizontalUsePercentage;
-                    PanelBoundary boundary = access.get(option);
-                    access.set(option, new PanelBoundary(1.0, boundary.verticalPercentage(), 50, boundary.verticalLimit(), 1.0, boundary.verticalAlign()));
-                    if (!isReducedMotion()) innerAlphaAnimator.setTo(-1.0F, 200);
-                    init(minecraft, BoundariesScreen.this.width, BoundariesScreen.this.height);
-                }
-            });
+            addRenderableWidget(horizontalLimit = Checkbox.builder(literal("config.rei.options.layout.boundaries.desc.limit_by_percentage"), font).pos(0, 0).selected(this.horizontalUsePercentage).onValueChange((checkbox, opt) -> {
+                horizontalUsePercentage = opt;
+                PanelBoundary newBoundary = access.get(option);
+                access.set(option, new PanelBoundary(1.0, newBoundary.verticalPercentage(), 50, newBoundary.verticalLimit(), 1.0, newBoundary.verticalAlign()));
+                if (!isReducedMotion()) innerAlphaAnimator.setTo(-1.0F, 200);
+                init(minecraft, BoundariesScreen.this.width, BoundariesScreen.this.height);
+            }).build());
             double v = horizontalUsePercentage ? boundary.horizontalPercentage() : boundary.horizontalLimit() / 50.0;
             addRenderableWidget(horizontalSlider = new AbstractSliderButton(0, 0, 20, 20, getSliderMessage("config.rei.options.layout.boundaries.desc.limit", horizontalUsePercentage, v, 50), v) {
                 @Override
@@ -144,16 +141,13 @@ public enum PanelBoundariesConfiguration implements OptionValueEntry.Configurato
                     if (!isReducedMotion()) innerAlphaAnimator.setTo(-1.0F, 200);
                 }
             });
-            addRenderableWidget(verticalLimit = new Checkbox(0, 0, 20, 20, literal("config.rei.options.layout.boundaries.desc.limit_by_percentage"), this.verticalUsePercentage, false) {
-                @Override
-                public void onPress() {
-                    verticalUsePercentage = !verticalUsePercentage;
-                    PanelBoundary boundary = access.get(option);
-                    access.set(option, new PanelBoundary(boundary.horizontalPercentage(), 1.0, boundary.horizontalLimit(), 1000, boundary.horizontalAlign(), 0.5));
-                    if (!isReducedMotion()) innerAlphaAnimator.setTo(-1.0F, 200);
-                    init(minecraft, BoundariesScreen.this.width, BoundariesScreen.this.height);
-                }
-            });
+            addRenderableWidget(verticalLimit = Checkbox.builder(literal("config.rei.options.layout.boundaries.desc.limit_by_percentage"), font).pos(0, 0).selected(this.verticalUsePercentage).onValueChange((checkbox, opt) -> {
+                verticalUsePercentage = !opt;
+                PanelBoundary newBoundary = access.get(option);
+                access.set(option, new PanelBoundary(newBoundary.horizontalPercentage(), 1.0, newBoundary.horizontalLimit(), 1000, newBoundary.horizontalAlign(), 0.5));
+                if (!isReducedMotion()) innerAlphaAnimator.setTo(-1.0F, 200);
+                init(minecraft, BoundariesScreen.this.width, BoundariesScreen.this.height);
+            }).build());
             v = verticalUsePercentage ? boundary.verticalPercentage() : boundary.verticalLimit() / 1000.0;
             addRenderableWidget(verticalSlider = new AbstractSliderButton(0, 0, 20, 20, getSliderMessage("config.rei.options.layout.boundaries.desc.limit", verticalUsePercentage, v, 1000), v) {
                 @Override
