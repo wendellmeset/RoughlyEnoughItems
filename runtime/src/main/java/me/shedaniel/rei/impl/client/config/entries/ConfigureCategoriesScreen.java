@@ -52,7 +52,8 @@ public class ConfigureCategoriesScreen extends Screen {
     private final Set<CategoryIdentifier<?>> hiddenCategories;
     private final List<CategoryIdentifier<?>> categoryOrdering;
     private ListWidget listWidget;
-    public Runnable editedSink = () -> {};
+    public Runnable editedSink = () -> {
+    };
     public Screen parent;
     
     public ConfigureCategoriesScreen(Map<CategoryIdentifier<?>, Boolean> filteringQuickCraftCategories, Set<CategoryIdentifier<?>> hiddenCategories, List<CategoryIdentifier<?>> categoryOrdering) {
@@ -87,7 +88,8 @@ public class ConfigureCategoriesScreen extends Screen {
             addRenderableWidget(new Button(4, 4, Minecraft.getInstance().font.width(backText) + 10, 20, backText, button -> {
                 minecraft.setScreen(parent);
                 this.parent = null;
-            }, Supplier::get) {});
+            }, Supplier::get) {
+            });
         }
         listWidget = addWidget(new ListWidget(minecraft, width, height, 30, height, BACKGROUND_LOCATION));
         this.resetListEntries();
@@ -190,7 +192,7 @@ public class ConfigureCategoriesScreen extends Screen {
                         // set to true
                         hiddenCategories.remove(configuration.getCategoryIdentifier());
                     }
-        
+                    
                     editedSink.run();
                 }).leftAligned();
                 quickCraftToggleButton = Widgets.createClickableLabel(new Point(), toggleText, $ -> {
@@ -224,7 +226,8 @@ public class ConfigureCategoriesScreen extends Screen {
                         editedSink.run();
                         resetListEntries();
                     }
-                }, Supplier::get);
+                }, Supplier::get) {
+                };
                 this.downButton = new Button(0, 0, 20, 20, Component.literal("↓"), button -> {
                     int index = categoryOrdering.indexOf(configuration.getCategoryIdentifier());
                     if (index < categoryOrdering.size() - 1) {
@@ -233,7 +236,8 @@ public class ConfigureCategoriesScreen extends Screen {
                         editedSink.run();
                         resetListEntries();
                     }
-                }, Supplier::get);
+                }, Supplier::get) {
+                };
                 this.upButton.active = categoryOrdering.indexOf(configuration.getCategoryIdentifier()) > 0;
                 this.downButton.active = categoryOrdering.indexOf(configuration.getCategoryIdentifier()) < categoryOrdering.size() - 1;
             }
@@ -289,11 +293,11 @@ public class ConfigureCategoriesScreen extends Screen {
             } else {
                 quickCraftToggleButton.getPoint().setLocation(-12390, -12390);
             }
-            upButton.x = x + entryWidth - 20;
-            upButton.y = y + entryHeight / 2 - 21;
+            upButton.setX(x + entryWidth - 20);
+            upButton.setY(y + entryHeight / 2 - 21);
             upButton.render(matrices, mouseX, mouseY, delta);
-            downButton.x = x + entryWidth - 20;
-            downButton.y = y + entryHeight / 2 + 1;
+            downButton.setX(x + entryWidth - 20);
+            downButton.setY(y + entryHeight / 2 + 1);
             downButton.render(matrices, mouseX, mouseY, delta);
         }
         
