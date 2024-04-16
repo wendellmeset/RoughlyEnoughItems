@@ -125,7 +125,7 @@ public class CollapsibleEntryWidget extends WidgetWithBounds {
                 public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
                     super.render(graphics, mouseX, mouseY, delta);
                     RenderSystem.setShaderTexture(0, InternalTextures.CHEST_GUI_TEXTURE);
-                    graphics.blit(InternalTextures.CHEST_GUI_TEXTURE, x + 3, y + 3, 0, 0, 14, 14);
+                    graphics.blit(InternalTextures.CHEST_GUI_TEXTURE, getX() + 3, getY() + 3, 0, 0, 14, 14);
                 }
             };
         } else {
