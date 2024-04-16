@@ -34,6 +34,9 @@ import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.util.EntryStacks;
 import me.shedaniel.rei.plugin.common.BuiltinPlugin;
 import me.shedaniel.rei.plugin.common.displays.anvil.DefaultAnvilDisplay;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.Blocks;
 
@@ -57,7 +60,7 @@ public class DefaultAnvilCategory implements DisplayCategory<DefaultAnvilDisplay
     
     @Override
     public List<Widget> setupDisplay(DefaultAnvilDisplay display, Rectangle bounds) {
-        Point startPoint = new Point(bounds.getCenterX() - 31, bounds.getCenterY() - 13);
+        Point startPoint = new Point(bounds.getCenterX() - 31, bounds.getCenterY() - (display.getCost().isPresent() ? 20 : 13));
         List<Widget> widgets = Lists.newArrayList();
         widgets.add(Widgets.createRecipeBase(bounds));
         widgets.add(Widgets.createArrow(new Point(startPoint.x + 27, startPoint.y + 4)));
@@ -65,11 +68,20 @@ public class DefaultAnvilCategory implements DisplayCategory<DefaultAnvilDisplay
         widgets.add(Widgets.createSlot(new Point(startPoint.x + 4 - 22, startPoint.y + 5)).entries(display.getInputEntries().get(0)).markInput());
         widgets.add(Widgets.createSlot(new Point(startPoint.x + 4, startPoint.y + 5)).entries(display.getInputEntries().get(1)).markInput());
         widgets.add(Widgets.createSlot(new Point(startPoint.x + 61, startPoint.y + 5)).entries(display.getOutputEntries().get(0)).disableBackground().markOutput());
+        if (display.getCost().isPresent()) {
+            widgets.add(Widgets.createDrawableWidget((helper, matrices, mouseX, mouseY, delta) -> {
+                Font font = Minecraft.getInstance().font;
+                Component component = Component.translatable("container.repair.cost", display.getCost().getAsInt());
+                int x = startPoint.x + 102 - font.width(component) - 2;
+                GuiComponent.fill(matrices, x - 2, startPoint.y + 28, startPoint.x + 102, startPoint.y + 28 + 12, 0x4f000000);
+                font.drawShadow(matrices, component, x, startPoint.y + 28 + 2, 0x80ff20);
+            }));
+        }
         return widgets;
     }
     
     @Override
     public int getDisplayHeight() {
-        return 36;
+        return 48;
     }
 }

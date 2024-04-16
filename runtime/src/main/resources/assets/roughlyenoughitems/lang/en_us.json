@@ -137,6 +137,7 @@
   "text.rei.left_arrow": "<",
   "text.rei.right_arrow": ">",
   "text.rei.view_all_categories": "View All Categories",
+  "text.rei.view_all_categories.tooltip": "%d categories",
   "text.rei.go_back_first_page": "Back to Page 1",
   "text.rei.choose_page": "Choose Page",
   "text.rei.shift_click_to": "Shift-Click to %s",

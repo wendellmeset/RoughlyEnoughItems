@@ -34,6 +34,7 @@ import me.shedaniel.rei.api.client.gui.widgets.Widgets;
 import me.shedaniel.rei.api.client.registry.display.DisplayCategory;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
+import me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes;
 import me.shedaniel.rei.api.common.util.EntryStacks;
 import me.shedaniel.rei.plugin.common.BuiltinPlugin;
 import me.shedaniel.rei.plugin.common.displays.DefaultCompostingDisplay;
@@ -94,8 +95,8 @@ public class DefaultCompostingCategory implements DisplayCategory<DefaultCompost
         for (int y = 0; y < 5; y++)
             for (int x = 0; x < 7; x++) {
                 EntryIngredient entryIngredient = stacks.size() > i ? stacks.get(i) : EntryIngredient.empty();
-                if (!entryIngredient.isEmpty()) {
-                    ItemStack firstStack = (ItemStack) entryIngredient.get(0).getValue();
+                if (!entryIngredient.isEmpty() && entryIngredient.get(0).getType() == VanillaEntryTypes.ITEM) {
+                    ItemStack firstStack = entryIngredient.get(0).castValue();
                     float chance = ComposterBlock.COMPOSTABLES.getFloat(firstStack.getItem());
                     if (chance > 0.0f) {
                         entryIngredient = entryIngredient.map(stack -> stack.copy().tooltip(Component.translatable("text.rei.composting.chance", Mth.clamp(Mth.floor(chance * 100), 0, 100)).withStyle(ChatFormatting.YELLOW)));
