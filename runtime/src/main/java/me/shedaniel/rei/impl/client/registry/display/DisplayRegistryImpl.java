@@ -80,7 +80,9 @@ public class DisplayRegistryImpl extends RecipeManagerContextImpl<REIClientPlugi
             lastAddWarning = System.currentTimeMillis();
         }
         
-        this.displaysHolder.add(display, origin);
+        if (DisplayValidator.validate(display)) {
+            this.displaysHolder.add(display, origin);
+        }
     }
     
     @Override
@@ -198,6 +200,10 @@ public class DisplayRegistryImpl extends RecipeManagerContextImpl<REIClientPlugi
             if (CategoryRegistry.getInstance().tryGet(identifier).isEmpty()) {
                 InternalLogger.getInstance().error("Found displays registered for unknown registry", new IllegalStateException(identifier.toString()));
             }
+        }
+        
+        for (List<Display> displays : getAll().values()) {
+            displays.removeIf(display -> !DisplayValidator.validate(display));
         }
         
         this.displaysHolder.endReload();
