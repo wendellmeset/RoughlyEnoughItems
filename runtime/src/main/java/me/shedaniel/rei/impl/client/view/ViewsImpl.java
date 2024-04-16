@@ -31,7 +31,7 @@ import it.unimi.dsi.fastutil.longs.Long2LongMaps;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 import me.shedaniel.rei.api.client.REIRuntime;
 import me.shedaniel.rei.api.client.config.ConfigObject;
 import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
@@ -281,7 +281,7 @@ public class ViewsImpl implements Views {
         if (b != null) {
             return b;
         }
-        map.put(key, new ReferenceOpenHashSet<>());
+        map.put(key, new ReferenceLinkedOpenHashSet<>());
         return map.get(key);
     }
     
