@@ -28,14 +28,20 @@ import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.util.EntryIngredients;
 import me.shedaniel.rei.plugin.common.BuiltinPlugin;
+import net.minecraft.client.Minecraft;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.AnvilMenu;
+import net.minecraft.world.item.ItemStack;
+import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.ApiStatus;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class DefaultAnvilDisplay extends BasicDisplay {
+    private final OptionalInt cost;
+    
     public DefaultAnvilDisplay(AnvilRecipe recipe) {
         this(
                 Arrays.asList(
@@ -43,12 +49,22 @@ public class DefaultAnvilDisplay extends BasicDisplay {
                         EntryIngredients.ofItemStacks(recipe.getRightInputs())
                 ),
                 Collections.singletonList(EntryIngredients.ofItemStacks(recipe.getOutputs())),
-                Optional.ofNullable(recipe.getId())
+                Optional.ofNullable(recipe.getId()),
+                recipe.getCost()
         );
     }
     
     public DefaultAnvilDisplay(List<EntryIngredient> inputs, List<EntryIngredient> outputs, Optional<ResourceLocation> location) {
+        this(inputs, outputs, location, OptionalInt.empty());
+    }
+    
+    public DefaultAnvilDisplay(List<EntryIngredient> inputs, List<EntryIngredient> outputs, Optional<ResourceLocation> location, CompoundTag tag) {
+        this(inputs, outputs, location, tag.contains("Cost") ? OptionalInt.of(tag.getInt("Cost")) : OptionalInt.empty());
+    }
+    
+    public DefaultAnvilDisplay(List<EntryIngredient> inputs, List<EntryIngredient> outputs, Optional<ResourceLocation> location, OptionalInt cost) {
         super(inputs, outputs, location);
+        this.cost = cost;
     }
     
     @Override
@@ -56,7 +72,34 @@ public class DefaultAnvilDisplay extends BasicDisplay {
         return BuiltinPlugin.ANVIL;
     }
     
+    public OptionalInt getCost() {
+        return cost;
+    }
+    
     public static BasicDisplay.Serializer<DefaultAnvilDisplay> serializer() {
-        return BasicDisplay.Serializer.ofSimple(DefaultAnvilDisplay::new);
+        return BasicDisplay.Serializer.of(DefaultAnvilDisplay::new, (display, tag) -> {
+            if (display.getCost().isPresent()) {
+                tag.putInt("Cost", display.getCost().getAsInt());
+            }
+        });
+    }
+    
+    @ApiStatus.Experimental
+    @ApiStatus.Internal
+    public static Optional<Pair<ItemStack, Integer>> calculateOutput(ItemStack left, ItemStack right) {
+        try {
+            if (Minecraft.getInstance().player == null) return Optional.empty();
+            AnvilMenu menu = new AnvilMenu(0, new Inventory(Minecraft.getInstance().player));
+            menu.setItem(0, menu.incrementStateId(), left);
+            menu.setItem(1, menu.incrementStateId(), right);
+            ItemStack output = menu.getSlot(2).getItem().copy();
+            if (!output.isEmpty()) {
+                return Optional.of(Pair.of(output, menu.getCost()));
+            } else {
+                return Optional.empty();
+            }
+        } catch (Throwable ignored) {
+            return Optional.empty();
+        }
     }
 }
