@@ -86,7 +86,7 @@ public class DisplayRegistryImpl extends RecipeManagerContextImpl<REIClientPlugi
     
     @Override
     public Map<CategoryIdentifier<?>, List<Display>> getAll() {
-        return this.displaysHolder.get();
+        return this.displaysHolder.getUnmodifiable();
     }
     
     @Override
@@ -201,8 +201,16 @@ public class DisplayRegistryImpl extends RecipeManagerContextImpl<REIClientPlugi
             }
         }
         
+        List<Display> failedDisplays = new ArrayList<>();
         for (List<Display> displays : getAll().values()) {
-            displays.removeIf(display -> !DisplayValidator.validate(display));
+            for (Display display : displays) {
+                if (!DisplayValidator.validate(display)) {
+                    failedDisplays.add(display);
+                }
+            }
+        }
+        for (Display display : failedDisplays) {
+            this.displaysHolder.remove(display);
         }
         
         this.displaysHolder.endReload();
