@@ -23,27 +23,24 @@
 
 package me.shedaniel.rei.impl.client.registry.display;
 
-import com.google.common.collect.Iterables;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.display.Display;
-import me.shedaniel.rei.api.common.entry.EntryStack;
-import me.shedaniel.rei.api.common.util.CollectionUtils;
-import me.shedaniel.rei.impl.client.view.ViewsImpl;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public interface DisplaysHolder {
-    boolean doesCache();
+    DisplayCache cache();
     
     void add(Display display, @Nullable Object origin);
     
+    boolean remove(Display display);
+    
     int size();
     
-    Map<CategoryIdentifier<?>, List<Display>> get();
+    Map<CategoryIdentifier<?>, List<Display>> getUnmodifiable();
     
     @Nullable
     Object getDisplayOrigin(Display display);
@@ -51,48 +48,4 @@ public interface DisplaysHolder {
     void endReload();
     
     Set<Display> getDisplaysByKey(DisplayKey key);
-    
-    boolean isCached(Display display);
-    
-    Set<Display> getDisplaysNotCached();
-    
-    Set<Display> getDisplaysByInput(EntryStack<?> stack);
-    
-    Set<Display> getDisplaysByOutput(EntryStack<?> stack);
-    
-    default Iterable<Display> getAllDisplaysByInputs(List<EntryStack<?>> stacks) {
-        if (stacks.isEmpty()) return List.of();
-        Iterable<Display> inputCached = null;
-        if (doesCache()) {
-            for (EntryStack<?> stack : stacks) {
-                Set<Display> set = getDisplaysByInput(stack);
-                inputCached = inputCached == null ? set : Iterables.concat(inputCached, set);
-            }
-            if (stacks.size() > 1) inputCached = CollectionUtils.distinctReferenceOf(inputCached);
-        }
-        Collection<Display> notCached = this.getDisplaysNotCached();
-        if (notCached.isEmpty()) return inputCached == null ? List.of() : inputCached;
-        Iterable<Display> filteredNotCached = Iterables.filter(notCached, display ->
-                ViewsImpl.isUsagesFor(null, stacks, display));
-        if (inputCached == null) return filteredNotCached;
-        return Iterables.concat(inputCached, filteredNotCached);
-    }
-    
-    default Iterable<Display> getAllDisplaysByOutputs(List<EntryStack<?>> stacks) {
-        if (stacks.isEmpty()) return List.of();
-        Iterable<Display> outputCached = null;
-        if (doesCache()) {
-            for (EntryStack<?> stack : stacks) {
-                Set<Display> set = getDisplaysByOutput(stack);
-                outputCached = outputCached == null ? set : Iterables.concat(outputCached, set);
-            }
-            if (stacks.size() > 1) outputCached = CollectionUtils.distinctReferenceOf(outputCached);
-        }
-        Collection<Display> notCached = this.getDisplaysNotCached();
-        if (notCached.isEmpty()) return outputCached == null ? List.of() : outputCached;
-        Iterable<Display> filteredNotCached = Iterables.filter(notCached, display ->
-                ViewsImpl.isRecipesFor(null, stacks, display));
-        if (outputCached == null) return filteredNotCached;
-        return Iterables.concat(outputCached, filteredNotCached);
-    }
 }

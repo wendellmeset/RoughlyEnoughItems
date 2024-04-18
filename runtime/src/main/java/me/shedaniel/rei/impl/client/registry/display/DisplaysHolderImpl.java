@@ -23,21 +23,13 @@
 
 package me.shedaniel.rei.impl.client.registry.display;
 
-import com.google.common.base.Stopwatch;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import me.shedaniel.rei.api.client.config.ConfigObject;
 import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.display.Display;
-import me.shedaniel.rei.api.common.entry.EntryIngredient;
-import me.shedaniel.rei.api.common.entry.EntryStack;
-import me.shedaniel.rei.api.common.util.EntryStacks;
 import me.shedaniel.rei.impl.client.gui.widget.favorites.history.DisplayHistoryManager;
-import me.shedaniel.rei.impl.common.InternalLogger;
 import net.minecraft.resources.ResourceLocation;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.jetbrains.annotations.Nullable;
@@ -46,33 +38,26 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DisplaysHolderImpl implements DisplaysHolder {
-    private final boolean cache;
+    private final DisplayCache cache;
     private final SetMultimap<DisplayKey, Display> displaysByKey = Multimaps.newSetMultimap(new IdentityHashMap<>(), ReferenceOpenHashSet::new);
     private final Map<CategoryIdentifier<?>, DisplaysList> displays = new ConcurrentHashMap<>();
-    private final Map<CategoryIdentifier<?>, List<Display>> unmodifiableDisplays;
-    private final WeakHashMap<Display, Object> displaysBase = new WeakHashMap<>();
-    private Set<Display> displaysCached = new ReferenceOpenHashSet<>();
-    private Set<Display> displaysNotCached = Collections.synchronizedSet(new ReferenceOpenHashSet<>());
-    private boolean preprocessed = false;
-    private SetMultimap<EntryStack<?>, Display> displaysByInput;
-    private SetMultimap<EntryStack<?>, Display> displaysByOutput;
+    private final Map<CategoryIdentifier<?>, List<Display>> unmodifiableDisplays = new RemappingMap<>(
+            Collections.unmodifiableMap(displays), list -> {
+        if (list == null) {
+            return null;
+        } else {
+            return ((DisplaysList) list).synchronizedList;
+        }
+    }, key -> CategoryRegistry.getInstance().tryGet(key).isPresent());
+    private final WeakHashMap<Display, Object> originsMap = new WeakHashMap<>();
     private final MutableInt displayCount = new MutableInt(0);
     
     public DisplaysHolderImpl(boolean init) {
-        this.cache = init && ConfigObject.getInstance().doesCacheDisplayLookup();
-        this.unmodifiableDisplays = new RemappingMap<>(Collections.unmodifiableMap(displays), list -> {
-            if (list == null) {
-                return null;
-            } else {
-                return ((DisplaysList) list).synchronizedList;
-            }
-        }, key -> CategoryRegistry.getInstance().tryGet(key).isPresent());
-        this.displaysByInput = createSetMultimap();
-        this.displaysByOutput = createSetMultimap();
+        this.cache = new DisplayCacheImpl(init);
     }
     
     @Override
-    public boolean doesCache() {
+    public DisplayCache cache() {
         return this.cache;
     }
     
@@ -86,20 +71,36 @@ public class DisplaysHolderImpl implements DisplaysHolder {
         }
         this.displayCount.increment();
         if (origin != null) {
-            synchronized (this.displaysBase) {
-                this.displaysBase.put(display, origin);
+            synchronized (this.originsMap) {
+                this.originsMap.put(display, origin);
             }
         }
-        if (this.cache) {
-            if (!preprocessed) {
-                this.displaysNotCached.add(display);
-            } else {
-                this.process(display);
-                this.displaysCached.add(display);
+        this.cache.add(display);
+    }
+    
+    @Override
+    public boolean remove(Display display) {
+        if (this.displays.get(display.getCategoryIdentifier()).remove(display)) {
+            removeFallout(display);
+            if (this.displays.get(display.getCategoryIdentifier()).isEmpty()) {
+                this.displays.remove(display.getCategoryIdentifier());
             }
-        } else {
-            this.displaysNotCached.add(display);
+            return true;
         }
+        
+        return false;
+    }
+    
+    private void removeFallout(Display display) {
+        Optional<ResourceLocation> location = display.getDisplayLocation();
+        if (location.isPresent()) {
+            this.displaysByKey.remove(DisplayKey.create(display.getCategoryIdentifier(), location.get()), display);
+        }
+        this.displayCount.decrement();
+        synchronized (this.originsMap) {
+            this.originsMap.remove(display);
+        }
+        this.cache.remove(display);
     }
     
     @Override
@@ -108,39 +109,13 @@ public class DisplaysHolderImpl implements DisplaysHolder {
     }
     
     @Override
-    public Map<CategoryIdentifier<?>, List<Display>> get() {
+    public Map<CategoryIdentifier<?>, List<Display>> getUnmodifiable() {
         return this.unmodifiableDisplays;
     }
     
     @Override
     public void endReload() {
-        if (this.cache) {
-            InternalLogger.getInstance().debug("Processing %d displays for optimal lookup performance...", this.size());
-            Stopwatch stopwatch = Stopwatch.createStarted();
-            this.displaysCached = new ReferenceOpenHashSet<>(this.size());
-            this.displaysByInput = createSetMultimap();
-            this.displaysByOutput = createSetMultimap();
-            for (Display display : this.displaysNotCached) {
-                this.process(display);
-            }
-            this.displaysCached.addAll(this.displaysNotCached);
-            this.displaysNotCached = Set.of();
-            this.preprocessed = true;
-            InternalLogger.getInstance().debug("Processed displays for optimal lookup performance in %s.", stopwatch.stop());
-        }
-    }
-    
-    private void process(Display display) {
-        for (EntryIngredient input : display.getInputEntries()) {
-            for (EntryStack<?> stack : input) {
-                this.displaysByInput.put(stack, display);
-            }
-        }
-        for (EntryIngredient output : display.getOutputEntries()) {
-            for (EntryStack<?> stack : output) {
-                this.displaysByOutput.put(stack, display);
-            }
-        }
+        this.cache.endReload();
     }
     
     @Override
@@ -149,30 +124,10 @@ public class DisplaysHolderImpl implements DisplaysHolder {
     }
     
     @Override
-    public boolean isCached(Display display) {
-        return this.cache && this.displaysCached.contains(display);
-    }
-    
-    @Override
-    public Set<Display> getDisplaysNotCached() {
-        return this.displaysNotCached;
-    }
-    
-    @Override
-    public Set<Display> getDisplaysByInput(EntryStack<?> stack) {
-        return this.displaysByInput.get(stack);
-    }
-    
-    @Override
-    public Set<Display> getDisplaysByOutput(EntryStack<?> stack) {
-        return this.displaysByOutput.get(stack);
-    }
-    
-    @Override
     @Nullable
     public Object getDisplayOrigin(Display display) {
-        synchronized (this.displaysBase) {
-            Object origin = this.displaysBase.get(display);
+        synchronized (this.originsMap) {
+            Object origin = this.originsMap.get(display);
             
             if (origin != null) {
                 return origin;
@@ -189,22 +144,5 @@ public class DisplaysHolderImpl implements DisplaysHolder {
             List<Display> unmodifiableList = Collections.unmodifiableList(this);
             this.synchronizedList = Collections.synchronizedList(unmodifiableList);
         }
-    }
-    
-    private SetMultimap<EntryStack<?>, Display> createSetMultimap() {
-        return Multimaps.newSetMultimap(
-                new Object2ObjectOpenCustomHashMap<>(Math.max(10000, this.size() * 5 / 2), new Hash.Strategy<>() {
-                    @Override
-                    public int hashCode(EntryStack<?> stack) {
-                        return Long.hashCode(EntryStacks.hashFuzzy(stack));
-                    }
-                    
-                    @Override
-                    public boolean equals(EntryStack<?> o1, EntryStack<?> o2) {
-                        return EntryStacks.equalsFuzzy(o1, o2);
-                    }
-                }),
-                ReferenceOpenHashSet::new
-        );
     }
 }
