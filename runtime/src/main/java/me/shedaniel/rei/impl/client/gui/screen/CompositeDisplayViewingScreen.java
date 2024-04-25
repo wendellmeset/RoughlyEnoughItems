@@ -38,6 +38,7 @@ import me.shedaniel.rei.api.client.gui.widgets.*;
 import me.shedaniel.rei.api.client.registry.category.ButtonArea;
 import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
 import me.shedaniel.rei.api.client.registry.display.DisplayCategory;
+import me.shedaniel.rei.api.client.registry.display.DisplayRegistry;
 import me.shedaniel.rei.api.client.view.ViewSearchBuilder;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.display.Display;
@@ -46,6 +47,7 @@ import me.shedaniel.rei.impl.client.REIRuntimeImpl;
 import me.shedaniel.rei.impl.client.gui.widget.EntryWidget;
 import me.shedaniel.rei.impl.client.gui.widget.InternalWidgets;
 import me.shedaniel.rei.impl.display.DisplaySpec;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -180,7 +182,7 @@ public class CompositeDisplayViewingScreen extends AbstractDisplayViewingScreen 
         
         this.widgets.add(Widgets.createClickableLabel(new Point(bounds.x + 4 + scrollListBounds.width / 2, bounds.y + 6), categories.get(selectedCategoryIndex).getTitle(), label -> {
             ViewSearchBuilder.builder().addAllCategories().open();
-        }).tooltip(Component.translatable("text.rei.view_all_categories")).noShadow().color(0xFF404040, 0xFFBBBBBB).hoveredColor(0xFF0041FF, 0xFFFFBD4D));
+        }).tooltip(Component.translatable("text.rei.view_all_categories"), Component.translatable("text.rei.view_all_categories.tooltip", CategoryRegistry.getInstance().stream().filter(config -> !DisplayRegistry.getInstance().get(config.getCategoryIdentifier()).isEmpty()).count()).withStyle(ChatFormatting.DARK_GRAY)).noShadow().color(0xFF404040, 0xFFBBBBBB).hoveredColor(0xFF0041FF, 0xFFFFBD4D));
         
         this.widgets.add(new ButtonListWidget(buttonList));
         this.children().addAll(widgets);

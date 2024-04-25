@@ -97,6 +97,7 @@ import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionBrewing;
 import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.crafting.*;
+import net.minecraft.world.item.enchantment.EnchantmentInstance;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.ComposterBlock;
@@ -105,12 +106,14 @@ import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 @Environment(EnvType.CLIENT)
@@ -393,6 +396,66 @@ public class DefaultClientPlugin implements REIClientPlugin, BuiltinClientPlugin
         } else {
             registerForgePotions(registry, this);
         }
+        
+        for (Item item : BuiltInRegistries.ITEM) {
+            ItemStack stack = item.getDefaultInstance();
+            if (!stack.isDamageableItem()) continue;
+            EntryIngredient repairMaterialBase = null;
+            if (item instanceof TieredItem tieredItem) {
+                Tier tier = tieredItem.getTier();
+                repairMaterialBase = EntryIngredients.ofIngredient(tier.getRepairIngredient());
+            } else if (item instanceof ArmorItem armorItem) {
+                ArmorMaterial material = armorItem.getMaterial();
+                repairMaterialBase = EntryIngredients.ofIngredient(material.getRepairIngredient());
+            } else if (item instanceof ShieldItem shieldItem) {
+                repairMaterialBase = EntryIngredients.ofItemTag(ItemTags.PLANKS);
+                repairMaterialBase.filter(s -> shieldItem.isValidRepairItem(stack, s.castValue()));
+            } else if (item instanceof ElytraItem elytraItem) {
+                repairMaterialBase = EntryIngredients.of(Items.PHANTOM_MEMBRANE);
+                repairMaterialBase.filter(s -> elytraItem.isValidRepairItem(stack, s.castValue()));
+            }
+            if (repairMaterialBase == null || repairMaterialBase.isEmpty()) continue;
+            for (int[] i = {1}; i[0] <= 4; i[0]++) {
+                ItemStack baseStack = item.getDefaultInstance();
+                int toRepair = i[0] == 4 ? item.getMaxDamage() : baseStack.getMaxDamage() / 4 * i[0];
+                baseStack.setDamageValue(toRepair);
+                EntryIngredient repairMaterial = repairMaterialBase.map(s -> {
+                    EntryStack<?> newStack = s.copy();
+                    newStack.<ItemStack>castValue().setCount(i[0]);
+                    return newStack;
+                });
+                Optional<Pair<ItemStack, Integer>> output = DefaultAnvilDisplay.calculateOutput(baseStack, repairMaterial.get(0).castValue());
+                if (output.isEmpty()) continue;
+                registry.add(new DefaultAnvilDisplay(List.of(EntryIngredients.of(baseStack), repairMaterial),
+                        Collections.singletonList(EntryIngredients.of(output.get().getLeft())), Optional.empty(), OptionalInt.of(output.get().getRight())));
+            }
+        }
+        List<Pair<EnchantmentInstance, ItemStack>> enchantmentBooks = BuiltInRegistries.ENCHANTMENT.stream()
+                .flatMap(enchantment -> {
+                    if (enchantment.getMaxLevel() - enchantment.getMinLevel() >= 10) {
+                        return IntStream.of(enchantment.getMinLevel(), enchantment.getMaxLevel())
+                                .mapToObj(lvl -> new EnchantmentInstance(enchantment, lvl));
+                    } else {
+                        return IntStream.rangeClosed(enchantment.getMinLevel(), enchantment.getMaxLevel())
+                                .mapToObj(lvl -> new EnchantmentInstance(enchantment, lvl));
+                    }
+                })
+                .map(instance -> {
+                    return Pair.of(instance, EnchantedBookItem.createForEnchantment(instance));
+                })
+                .toList();
+        EntryRegistry.getInstance().getEntryStacks().forEach(stack -> {
+            if (stack.getType() != VanillaEntryTypes.ITEM) return;
+            ItemStack itemStack = stack.castValue();
+            if (!itemStack.isEnchantable()) return;
+            for (Pair<EnchantmentInstance, ItemStack> pair : enchantmentBooks) {
+                if (!pair.getKey().enchantment.canEnchant(itemStack)) continue;
+                Optional<Pair<ItemStack, Integer>> output = DefaultAnvilDisplay.calculateOutput(itemStack, pair.getValue());
+                if (output.isEmpty()) continue;
+                registry.add(new DefaultAnvilDisplay(List.of(EntryIngredients.of(itemStack), EntryIngredients.of(pair.getValue())),
+                        Collections.singletonList(EntryIngredients.of(output.get().getLeft())), Optional.empty(), OptionalInt.of(output.get().getRight())));
+            }
+        });
         
         for (Registry<?> reg : BuiltInRegistries.REGISTRY) {
             reg.getTags().forEach(tagPair -> registry.add(tagPair.getFirst()));

@@ -28,6 +28,7 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.OptionalInt;
 
 public class AnvilRecipe {
     @Nullable
@@ -35,12 +36,18 @@ public class AnvilRecipe {
     private final List<ItemStack> leftInput;
     private final List<ItemStack> rightInputs;
     private final List<ItemStack> outputs;
+    private final OptionalInt cost;
     
     public AnvilRecipe(@Nullable ResourceLocation id, List<ItemStack> leftInput, List<ItemStack> rightInputs, List<ItemStack> outputs) {
+        this(id, leftInput, rightInputs, outputs, OptionalInt.empty());
+    }
+    
+    public AnvilRecipe(@Nullable ResourceLocation id, List<ItemStack> leftInput, List<ItemStack> rightInputs, List<ItemStack> outputs, OptionalInt cost) {
         this.id = id;
         this.leftInput = leftInput;
         this.rightInputs = rightInputs;
         this.outputs = outputs;
+        this.cost = cost;
     }
     
     public ResourceLocation getId() {
@@ -57,5 +64,9 @@ public class AnvilRecipe {
     
     public List<ItemStack> getOutputs() {
         return outputs;
+    }
+    
+    public OptionalInt getCost() {
+        return cost;
     }
 }
