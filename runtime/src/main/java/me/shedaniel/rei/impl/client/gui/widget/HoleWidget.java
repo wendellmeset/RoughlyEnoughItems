@@ -32,7 +32,7 @@ import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.gui.widgets.Widget;
 import me.shedaniel.rei.api.client.gui.widgets.Widgets;
 import me.shedaniel.rei.impl.client.gui.InternalTextures;
-import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.resources.ResourceLocation;
 import org.joml.Matrix4f;
@@ -41,6 +41,7 @@ import java.util.function.IntSupplier;
 
 public class HoleWidget {
     // 32 for list background, 64 for header and footer
+    @Deprecated(forRemoval = true)
     public static Widget create(Rectangle bounds, IntSupplier yOffset, int colorIntensity) {
         return Widgets.withBounds(
                 Widgets.concat(
@@ -51,6 +52,7 @@ public class HoleWidget {
         );
     }
     
+    @Deprecated(forRemoval = true)
     public static Widget create(Rectangle bounds, ResourceLocation backgroundLocation, IntSupplier yOffset, int colorIntensity) {
         return Widgets.withBounds(
                 Widgets.concat(
@@ -61,10 +63,22 @@ public class HoleWidget {
         );
     }
     
+    public static Widget create(Rectangle bounds) {
+        return Widgets.withBounds(
+                Widgets.concat(
+                        createMenuBackground(bounds),
+                        createListBorders(bounds)
+                ),
+                bounds
+        );
+    }
+    
+    @Deprecated(forRemoval = true)
     public static Widget createBackground(Rectangle bounds, IntSupplier yOffset, int colorIntensity) {
         return createBackground(bounds, InternalTextures.LEGACY_DIRT, yOffset, colorIntensity);
     }
     
+    @Deprecated(forRemoval = true)
     public static Widget createBackground(Rectangle bounds, ResourceLocation backgroundLocation, IntSupplier yOffset, int colorIntensity) {
         return Widgets.withBounds(Widgets.createDrawableWidget((graphics, mouseX, mouseY, delta) -> {
             Tesselator tesselator = Tesselator.getInstance();
@@ -73,6 +87,15 @@ public class HoleWidget {
         }), bounds);
     }
     
+    public static Widget createMenuBackground(Rectangle bounds) {
+        return Widgets.withBounds(Widgets.createDrawableWidget((graphics, mouseX, mouseY, delta) -> {
+            RenderSystem.enableBlend();
+            graphics.blit(new ResourceLocation("textures/gui/menu_list_background.png"), bounds.x, bounds.y, bounds.getMaxX(), bounds.getMaxY(), bounds.width, bounds.height, 32, 32);
+            RenderSystem.disableBlend();
+        }), bounds);
+    }
+    
+    @Deprecated(forRemoval = true)
     public static Widget createInnerShadow(Rectangle bounds) {
         return Widgets.withBounds(Widgets.createDrawableWidget((graphics, mouseX, mouseY, delta) -> {
             Tesselator tesselator = Tesselator.getInstance();
@@ -93,6 +116,15 @@ public class HoleWidget {
             buffer.vertex(matrix, bounds.getMaxX(), bounds.getMaxY() - 4, 0.0F).uv(1, 0).color(0, 0, 0, 0).endVertex();
             buffer.vertex(matrix, bounds.x, bounds.getMaxY() - 4, 0.0F).uv(0, 0).color(0, 0, 0, 0).endVertex();
             tesselator.end();
+            RenderSystem.disableBlend();
+        }), bounds);
+    }
+    
+    public static Widget createListBorders(Rectangle bounds) {
+        return Widgets.withBounds(Widgets.createDrawableWidget((graphics, mouseX, mouseY, delta) -> {
+            RenderSystem.enableBlend();
+            graphics.blit(CreateWorldScreen.HEADER_SEPARATOR, bounds.x, bounds.y - 2, 0.0F, 0.0F, bounds.width, 2, 32, 2);
+            graphics.blit(CreateWorldScreen.FOOTER_SEPARATOR, bounds.x, bounds.getMaxY(), 0.0F, 0.0F, bounds.width, 2, 32, 2);
             RenderSystem.disableBlend();
         }), bounds);
     }

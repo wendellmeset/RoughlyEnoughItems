@@ -363,8 +363,9 @@ public class DefaultClientPlugin implements REIClientPlugin, BuiltinClientPlugin
         });
         if (Platform.isFabric()) {
             Set<Holder<Potion>> potions = Collections.newSetFromMap(new LinkedTreeMap<>(Comparator.comparing(Holder::getRegisteredName), false));
-            for (Ingredient container : PotionBrewing.ALLOWED_CONTAINERS) {
-                for (PotionBrewing.Mix<Potion> mix : PotionBrewing.POTION_MIXES) {
+            PotionBrewing brewing = Minecraft.getInstance().level.potionBrewing();
+            for (Ingredient container : brewing.containers) {
+                for (PotionBrewing.Mix<Potion> mix : brewing.potionMixes) {
                     Holder<Potion> from = mix.from();
                     Ingredient ingredient = mix.ingredient();
                     Holder<Potion> to = mix.to();
@@ -381,7 +382,7 @@ public class DefaultClientPlugin implements REIClientPlugin, BuiltinClientPlugin
                 }
             }
             for (Holder<Potion> potion : potions) {
-                for (PotionBrewing.Mix<Item> mix : PotionBrewing.CONTAINER_MIXES) {
+                for (PotionBrewing.Mix<Item> mix : brewing.containerMixes) {
                     Holder<Item> from = mix.from();
                     Ingredient ingredient = mix.ingredient();
                     Holder<Item> to = mix.to();
@@ -405,8 +406,8 @@ public class DefaultClientPlugin implements REIClientPlugin, BuiltinClientPlugin
                 Tier tier = tieredItem.getTier();
                 repairMaterialBase = EntryIngredients.ofIngredient(tier.getRepairIngredient());
             } else if (item instanceof ArmorItem armorItem) {
-                ArmorMaterial material = armorItem.getMaterial();
-                repairMaterialBase = EntryIngredients.ofIngredient(material.getRepairIngredient());
+                Holder<ArmorMaterial> material = armorItem.getMaterial();
+                repairMaterialBase = EntryIngredients.ofIngredient(material.value().repairIngredient().get());
             } else if (item instanceof ShieldItem shieldItem) {
                 repairMaterialBase = EntryIngredients.ofItemTag(ItemTags.PLANKS);
                 repairMaterialBase.filter(s -> shieldItem.isValidRepairItem(stack, s.castValue()));
@@ -417,7 +418,7 @@ public class DefaultClientPlugin implements REIClientPlugin, BuiltinClientPlugin
             if (repairMaterialBase == null || repairMaterialBase.isEmpty()) continue;
             for (int[] i = {1}; i[0] <= 4; i[0]++) {
                 ItemStack baseStack = item.getDefaultInstance();
-                int toRepair = i[0] == 4 ? item.getMaxDamage() : baseStack.getMaxDamage() / 4 * i[0];
+                int toRepair = i[0] == 4 ? baseStack.getMaxDamage() : baseStack.getMaxDamage() / 4 * i[0];
                 baseStack.setDamageValue(toRepair);
                 EntryIngredient repairMaterial = repairMaterialBase.map(s -> {
                     EntryStack<?> newStack = s.copy();

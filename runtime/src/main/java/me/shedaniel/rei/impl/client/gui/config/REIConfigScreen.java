@@ -138,7 +138,7 @@ public class REIConfigScreen extends Screen implements ConfigAccess {
         if (this.searching) {
             this.widgets.add(Widgets.createButton(new Rectangle(8, 32, sideWidth, 20), literal("↩ ").append(translatable("gui.back")))
                     .onClick(button -> setSearching(false)));
-            this.widgets.add(HoleWidget.createBackground(new Rectangle(8 + sideWidth + 4, 32, width - 16 - sideWidth - 4, 20), () -> 0, 32));
+            this.widgets.add(HoleWidget.createMenuBackground(new Rectangle(8 + sideWidth + 4, 32, width - 16 - sideWidth - 4, 20)));
             TextFieldWidget textField = new TextFieldWidget(new Rectangle(8 + sideWidth + 4 + 6, 32 + 6, width - 16 - sideWidth - 4 - 10, 12)) {
                 @Override
                 protected void renderSuggestion(GuiGraphics graphics, int x, int y) {

@@ -58,7 +58,7 @@ public class ScrollableViewWidget {
         List<Widget> widgets = new ArrayList<>();
         
         if (background) {
-            widgets.add(HoleWidget.create(bounds, scrollingRef[0]::scrollAmountInt, 32));
+            widgets.add(HoleWidget.create(bounds));
         }
         
         widgets.add(Widgets.scissored(scrollingRef[0].getScissorBounds(), Widgets.withTranslate(inner,

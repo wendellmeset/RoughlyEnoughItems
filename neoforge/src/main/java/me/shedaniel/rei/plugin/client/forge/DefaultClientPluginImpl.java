@@ -27,6 +27,7 @@ import com.google.gson.internal.LinkedTreeMap;
 import me.shedaniel.rei.api.client.registry.display.DisplayRegistry;
 import me.shedaniel.rei.plugin.client.BuiltinClientPlugin;
 import me.shedaniel.rei.plugin.client.DefaultClientPlugin;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.Item;
@@ -36,9 +37,7 @@ import net.minecraft.world.item.alchemy.PotionBrewing;
 import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.neoforged.neoforge.common.brewing.BrewingRecipe;
-import net.neoforged.neoforge.common.brewing.BrewingRecipeRegistry;
 import net.neoforged.neoforge.common.brewing.IBrewingRecipe;
-import net.neoforged.neoforge.common.brewing.VanillaBrewingRecipe;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -48,20 +47,20 @@ import java.util.Set;
 public class DefaultClientPluginImpl extends DefaultClientPlugin {
     @Override
     public void registerForgePotions(DisplayRegistry registry, BuiltinClientPlugin clientPlugin) {
-        for (IBrewingRecipe recipe : BrewingRecipeRegistry.getRecipes()) {
-            if (recipe instanceof VanillaBrewingRecipe) {
-                registerVanillaPotions(registry, clientPlugin);
-            } else if (recipe instanceof BrewingRecipe) {
+        PotionBrewing brewing = Minecraft.getInstance().level.potionBrewing();
+        registerVanillaPotions(brewing, registry, clientPlugin);
+        for (IBrewingRecipe recipe : brewing.getRecipes()) {
+            if (recipe instanceof BrewingRecipe) {
                 BrewingRecipe brewingRecipe = (BrewingRecipe) recipe;
                 clientPlugin.registerBrewingRecipe(brewingRecipe.getInput(), brewingRecipe.getIngredient(), brewingRecipe.getOutput().copy());
             }
         }
     }
     
-    private static void registerVanillaPotions(DisplayRegistry registry, BuiltinClientPlugin clientPlugin) {
+    private static void registerVanillaPotions(PotionBrewing brewing, DisplayRegistry registry, BuiltinClientPlugin clientPlugin) {
         Set<Holder<Potion>> potions = Collections.newSetFromMap(new LinkedTreeMap<>(Comparator.comparing(Holder::getRegisteredName), false));
-        for (Ingredient container : PotionBrewing.ALLOWED_CONTAINERS) {
-            for (PotionBrewing.Mix<Potion> mix : PotionBrewing.POTION_MIXES) {
+        for (Ingredient container : brewing.containers) {
+            for (PotionBrewing.Mix<Potion> mix : brewing.potionMixes) {
                 Holder<Potion> from = mix.from();
                 Ingredient ingredient = mix.ingredient;
                 Holder<Potion> to = mix.to();
@@ -78,7 +77,7 @@ public class DefaultClientPluginImpl extends DefaultClientPlugin {
             }
         }
         for (Holder<Potion> potion : potions) {
-            for (PotionBrewing.Mix<Item> mix : PotionBrewing.CONTAINER_MIXES) {
+            for (PotionBrewing.Mix<Item> mix : brewing.containerMixes) {
                 Holder<Item> from = mix.from();
                 Ingredient ingredient = mix.ingredient();
                 Holder<Item> to = mix.to();
