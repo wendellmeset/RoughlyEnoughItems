@@ -39,6 +39,8 @@ public interface AllREIConfigGroups {
     OptionGroup APPEARANCE_TOOLTIPS = make("appearance.tooltips")
             .add(APPEND_MOD_NAMES)
             .add(APPEND_FAVORITES_HINT);
+    OptionGroup APPEARANCE_ADVANCED = make("appearance.advanced")
+            .add(RAINBOW);
     OptionGroup INPUT_KEYBINDS = make("input.keybinds")
             .add(RECIPE_KEYBIND)
             .add(USAGE_KEYBIND)

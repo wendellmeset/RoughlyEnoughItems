@@ -40,7 +40,8 @@ public interface AllREIConfigCategories {
     
     OptionCategory APPEARANCE = make("appearance")
             .add(APPEARANCE_INTERFACE)
-            .add(APPEARANCE_TOOLTIPS);
+            .add(APPEARANCE_TOOLTIPS)
+            .add(APPEARANCE_ADVANCED);
     OptionCategory INPUT = make("input")
             .add(INPUT_KEYBINDS)
             /*.add(KEYBINDS_ADVANCED)*/;
