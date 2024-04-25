@@ -35,6 +35,7 @@ import me.shedaniel.rei.api.client.gui.widgets.WidgetWithBounds;
 import me.shedaniel.rei.api.client.gui.widgets.Widgets;
 import me.shedaniel.rei.api.client.util.MatrixUtils;
 import me.shedaniel.rei.impl.client.gui.config.ConfigAccess;
+import me.shedaniel.rei.impl.client.gui.config.options.AllREIConfigOptions;
 import me.shedaniel.rei.impl.client.gui.config.options.CompositeOption;
 import me.shedaniel.rei.impl.client.gui.config.options.ConfigUtils;
 import me.shedaniel.rei.impl.client.gui.text.TextTransformations;
@@ -48,6 +49,7 @@ import org.joml.Matrix4f;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static me.shedaniel.rei.impl.client.gui.config.options.ConfigUtils.literal;
 import static me.shedaniel.rei.impl.client.gui.config.options.ConfigUtils.translatable;
@@ -59,7 +61,8 @@ public class ConfigOptionWidget {
         int[] height = {12};
         Label fieldNameLabel;
         widgets.add(fieldNameLabel = Widgets.createLabel(new Point(0, 0), TextTransformations.highlightText(option.getName().copy(), option.getOptionNameHighlight(), style -> style.withColor(0xFFC0C0C0)))
-                .leftAligned());
+                .leftAligned()
+                .rainbow(Objects.equals(option.getId(), AllREIConfigOptions.RAINBOW.getId())));
         WidgetWithBounds optionValue = ConfigOptionValueWidget.create(access, option, width - 10 - fieldNameLabel.getBounds().width);
         widgets.add(Widgets.withTranslate(optionValue, () -> new Matrix4f().translate(width - optionValue.getBounds().width - optionValue.getBounds().x, 0, 0)));
         widgets.add(new WidgetWithBounds() {
