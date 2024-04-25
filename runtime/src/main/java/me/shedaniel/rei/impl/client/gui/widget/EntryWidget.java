@@ -329,7 +329,7 @@ public class EntryWidget extends Slot implements DraggableStackProviderWidget {
             Map<CategoryIdentifier<?>, Boolean> filteringQuickCraftCategories = ConfigObject.getInstance().getFilteringQuickCraftCategories();
             boolean shouldFilterDisplays = ConfigObject.getInstance().shouldFilterDisplays();
             
-            for (Display display : displaysHolder.getAllDisplaysByOutputs(getEntries())) {
+            for (Display display : displaysHolder.cache().getAllDisplaysByOutputs(getEntries())) {
                 CategoryIdentifier<?> categoryIdentifier = display.getCategoryIdentifier();
                 Optional<? extends CategoryRegistry.CategoryConfiguration<?>> configuration;
                 if ((configuration = categoryRegistry.tryGet(categoryIdentifier)).isEmpty()
