@@ -37,6 +37,7 @@ import me.shedaniel.rei.api.client.gui.widgets.Widgets;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.util.CollectionUtils;
 import me.shedaniel.rei.impl.client.ClientHelperImpl;
+import me.shedaniel.rei.impl.client.config.ConfigManagerImpl;
 import me.shedaniel.rei.impl.client.gui.InternalTextures;
 import me.shedaniel.rei.impl.client.gui.ScreenOverlayImpl;
 import me.shedaniel.rei.impl.client.gui.widget.BatchedEntryRendererManager;
@@ -242,7 +243,7 @@ public class PaginatedEntryListWidget extends CollapsingEntryListWidget {
         }).tooltip(Component.translatable("text.rei.go_back_first_page"), Component.literal(" "), Component.translatable("text.rei.shift_click_to", Component.translatable("text.rei.choose_page")).withStyle(ChatFormatting.GRAY)).focusable(false).onRender((matrices, label) -> {
             label.setClickable(getTotalPages() > 1);
             label.setMessage(Component.literal(String.format("%s/%s", getPage() + 1, Math.max(getTotalPages(), 1))));
-        }).rainbow(new Random().nextFloat() < 1.0E-4D || ClientHelperImpl.getInstance().isAprilFools.get()));
+        }).rainbow(new Random().nextFloat() < 1.0E-4D || ClientHelperImpl.getInstance().isAprilFools.get() || ConfigManagerImpl.getInstance().getConfig().appearance.rainbow));
     }
     
     @Override

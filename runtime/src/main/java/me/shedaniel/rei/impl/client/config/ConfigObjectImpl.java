@@ -625,6 +625,7 @@ public class ConfigObjectImpl implements ConfigObject, ConfigData {
         public boolean scrollingEntryListWidget = false;
         @Comment("Declares whether entry panel should be invisible when not searching")
         public boolean hideEntryPanelIfIdle = false;
+        public boolean rainbow = false;
         
         public static class Layout {
             @Comment("Declares the position of the search field.")
