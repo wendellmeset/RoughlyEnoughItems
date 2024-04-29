@@ -150,7 +150,7 @@ unifiedPublishing {
                 token = project.hasProperty("modrinth_key") ? project.property("modrinth_key") : System.getenv("modrinth_key")
                 id = "nfn13YXA"
                 version = "$project.version+$project.name"
-                gameVersions.addAll project.minecraft_version
+                gameVersions.addAll project.minecraft_version, "1.20.6"
             }
         }
     }
