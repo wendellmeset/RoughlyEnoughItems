@@ -25,6 +25,7 @@ package me.shedaniel.rei.impl.client.gui.config.components;
 
 import me.shedaniel.math.Point;
 import me.shedaniel.math.Rectangle;
+import me.shedaniel.rei.api.client.REIRuntime;
 import me.shedaniel.rei.api.client.gui.widgets.Widget;
 import me.shedaniel.rei.api.client.gui.widgets.WidgetWithBounds;
 import me.shedaniel.rei.api.client.gui.widgets.Widgets;
@@ -37,6 +38,7 @@ import me.shedaniel.rei.impl.client.gui.config.options.preview.AccessibilityDisp
 import me.shedaniel.rei.impl.client.gui.config.options.preview.InterfacePreviewer;
 import me.shedaniel.rei.impl.client.gui.config.options.preview.TooltipPreviewer;
 import me.shedaniel.rei.impl.client.gui.text.TextTransformations;
+import net.minecraft.client.Minecraft;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -64,6 +66,10 @@ public class ConfigGroupWidget {
                 .leftAligned()
                 .withPadding(0, 0, 0, 6);
         WidgetWithBounds contents;
+        
+        if (applyPreview) {
+            applyPreview = REIRuntime.getInstance().getPreviousContainerScreen() != null && Minecraft.getInstance().getConnection() != null && Minecraft.getInstance().getConnection().getRecipeManager() != null;
+        }
         
         if (applyPreview && SPECIAL_GROUPS.containsKey(entry.getId())) {
             Pair<PreviewLocation, SpecialGroupConstructor> pair = SPECIAL_GROUPS.get(entry.getId());
