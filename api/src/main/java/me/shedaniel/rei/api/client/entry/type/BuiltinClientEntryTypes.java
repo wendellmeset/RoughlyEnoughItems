@@ -33,7 +33,7 @@ import org.jetbrains.annotations.ApiStatus;
 @ApiStatus.NonExtendable
 @Environment(EnvType.CLIENT)
 public interface BuiltinClientEntryTypes {
-    ResourceLocation RENDERING_ID = new ResourceLocation("rendering");
+    ResourceLocation RENDERING_ID = ResourceLocation.withDefaultNamespace("rendering");
     
     EntryType<Renderer> RENDERING = EntryType.deferred(RENDERING_ID);
 }

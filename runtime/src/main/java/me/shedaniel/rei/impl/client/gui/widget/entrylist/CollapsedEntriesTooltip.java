@@ -72,10 +72,9 @@ public class CollapsedEntriesTooltip implements ClientTooltipComponent, TooltipC
             i++;
             if (i / w > 3 - 1) {
                 graphics.pose().translate(0, 0, 200);
-                MultiBufferSource.BufferSource source = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
                 Component text = Component.literal("+" + (stack.getIngredient().size() - w * 3 + 1)).withStyle(ChatFormatting.GRAY);
-                font.drawInBatch(text, x1 + entrySize / 2 - font.width(text) / 2, y1 + entrySize / 2 - 1, -1, true, graphics.pose().last().pose(), source, Font.DisplayMode.NORMAL, 0, 15728880);
-                source.endBatch();
+                font.drawInBatch(text, x1 + entrySize / 2 - font.width(text) / 2, y1 + entrySize / 2 - 1, -1, true, graphics.pose().last().pose(), graphics.bufferSource(), Font.DisplayMode.NORMAL, 0, 15728880);
+                graphics.flush();
                 break;
             } else {
                 entry.render(graphics, new Rectangle(x1, y1, entrySize, entrySize), -1000, -1000, 0);

@@ -64,10 +64,10 @@ public class CachingEntryRenderer implements BatchedEntryRenderer<Object, Cached
     public void renderBase(EntryStack<Object> entry, CachedEntryListRender.Sprite extraData, GuiGraphics graphics, MultiBufferSource.BufferSource immediate, Rectangle bounds, int mouseX, int mouseY, float delta) {
         VertexConsumer consumer = immediate.getBuffer(CachedEntryListRender.renderType.get());
         Matrix4f pose = graphics.pose().last().pose();
-        consumer.vertex(pose, bounds.x, bounds.getMaxY(), 0).uv(extraData.u0, extraData.v1).endVertex();
-        consumer.vertex(pose, bounds.getMaxX(), bounds.getMaxY(), 0).uv(extraData.u1, extraData.v1).endVertex();
-        consumer.vertex(pose, bounds.getMaxX(), bounds.y, 0).uv(extraData.u1, extraData.v0).endVertex();
-        consumer.vertex(pose, bounds.x, bounds.y, 0).uv(extraData.u0, extraData.v0).endVertex();
+        consumer.addVertex(pose, bounds.x, bounds.getMaxY(), 0).setUv(extraData.u0, extraData.v1);
+        consumer.addVertex(pose, bounds.getMaxX(), bounds.getMaxY(), 0).setUv(extraData.u1, extraData.v1);
+        consumer.addVertex(pose, bounds.getMaxX(), bounds.y, 0).setUv(extraData.u1, extraData.v0);
+        consumer.addVertex(pose, bounds.x, bounds.y, 0).setUv(extraData.u0, extraData.v0);
     }
     
     @Override

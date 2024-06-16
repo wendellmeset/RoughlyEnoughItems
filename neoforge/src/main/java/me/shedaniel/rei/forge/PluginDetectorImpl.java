@@ -39,7 +39,6 @@ import me.shedaniel.rei.plugin.common.forge.DefaultPluginImpl;
 import me.shedaniel.rei.plugin.common.runtime.DefaultRuntimePlugin;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.neoforged.fml.loading.FMLEnvironment;
 import org.jetbrains.annotations.NotNull;
 

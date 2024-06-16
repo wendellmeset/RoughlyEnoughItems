@@ -79,9 +79,8 @@ public class TooltipPreviewer {
             
             graphics.pose().translate(0, 0, -400);
             Tesselator tesselator = Tesselator.getInstance();
-            BufferBuilder bufferBuilder = tesselator.getBuilder();
             RenderSystem.setShader(GameRenderer::getPositionColorShader);
-            bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+            BufferBuilder bufferBuilder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
             Matrix4f matrix4f = graphics.pose().last().pose();
             fillGradient(matrix4f, bufferBuilder, tX - 3, tY - 4, tX + tWidth + 3, tY - 3, 400, -267386864, -267386864);
             fillGradient(matrix4f, bufferBuilder, tX - 3, tY + tHeight + 3, tX + tWidth + 3, tY + tHeight + 4, 400, -267386864, -267386864);
@@ -95,7 +94,7 @@ public class TooltipPreviewer {
             RenderSystem.enableDepthTest();
             RenderSystem.enableBlend();
             RenderSystem.defaultBlendFunc();
-            BufferUploader.drawWithShader(bufferBuilder.end());
+            BufferUploader.drawWithShader(bufferBuilder.buildOrThrow());
             RenderSystem.disableBlend();
             
             graphics.pose().translate(0, 0, 400);
@@ -118,9 +117,9 @@ public class TooltipPreviewer {
         float k = (float) (color2 >> 16 & 0xFF) / 255.0F;
         float l = (float) (color2 >> 8 & 0xFF) / 255.0F;
         float m = (float) (color2 & 0xFF) / 255.0F;
-        builder.vertex(pose, (float) x2, (float) y1, (float) blitOffset).color(g, h, i, f).endVertex();
-        builder.vertex(pose, (float) x1, (float) y1, (float) blitOffset).color(g, h, i, f).endVertex();
-        builder.vertex(pose, (float) x1, (float) y2, (float) blitOffset).color(k, l, m, j).endVertex();
-        builder.vertex(pose, (float) x2, (float) y2, (float) blitOffset).color(k, l, m, j).endVertex();
+        builder.addVertex(pose, (float) x2, (float) y1, (float) blitOffset).setColor(g, h, i, f);
+        builder.addVertex(pose, (float) x1, (float) y1, (float) blitOffset).setColor(g, h, i, f);
+        builder.addVertex(pose, (float) x1, (float) y2, (float) blitOffset).setColor(k, l, m, j);
+        builder.addVertex(pose, (float) x2, (float) y2, (float) blitOffset).setColor(k, l, m, j);
     }
 }

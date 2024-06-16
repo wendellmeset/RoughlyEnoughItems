@@ -78,14 +78,14 @@ public class InputMethodRegistryImpl implements InputMethodRegistry {
         String languageCode = Minecraft.getInstance().options.languageCode;
         if (!CollectionUtils.anyMatch(active.getMatchingLocales(), locale -> locale.code().equals(languageCode))) {
             InternalLogger.getInstance().error("Reset active input method because the language code {} is not supported by the active input method.", languageCode);
-            ConfigManagerImpl.getInstance().getConfig().setInputMethodId(new ResourceLocation("rei:default"));
+            ConfigManagerImpl.getInstance().getConfig().setInputMethodId(ResourceLocation.parse("rei:default"));
             return;
         }
         ExecutorService service = Executors.newSingleThreadExecutor();
         active.prepare(service).whenComplete((unused, throwable) -> {
             if (throwable != null) {
                 InternalLogger.getInstance().error("Failed to prepare input method", throwable);
-                ConfigManagerImpl.getInstance().getConfig().setInputMethodId(new ResourceLocation("rei:default"));
+                ConfigManagerImpl.getInstance().getConfig().setInputMethodId(ResourceLocation.parse("rei:default"));
                 
                 ExecutorService service2 = Executors.newSingleThreadExecutor();
                 active.dispose(service2).whenComplete((unused2, throwable2) -> {

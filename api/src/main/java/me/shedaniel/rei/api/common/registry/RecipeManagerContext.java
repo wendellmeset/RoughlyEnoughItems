@@ -57,7 +57,7 @@ public interface RecipeManagerContext<P extends REIPlugin<?>> extends Reloadable
     @Nullable
     default RecipeHolder<?> byId(CompoundTag tag, String key) {
         if (tag.contains(key, Tag.TAG_STRING)) {
-            return getRecipeManager().byKey(new ResourceLocation(tag.getString(key))).orElse(null);
+            return getRecipeManager().byKey(ResourceLocation.parse(tag.getString(key))).orElse(null);
         }
         return null;
     }

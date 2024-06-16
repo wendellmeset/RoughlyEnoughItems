@@ -30,6 +30,6 @@ import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.NonExtendable
 public interface VanillaEntryTypes {
-    EntryType<ItemStack> ITEM = EntryType.deferred(new ResourceLocation("item"));
-    EntryType<FluidStack> FLUID = EntryType.deferred(new ResourceLocation("fluid"));
+    EntryType<ItemStack> ITEM = EntryType.deferred(ResourceLocation.withDefaultNamespace("item"));
+    EntryType<FluidStack> FLUID = EntryType.deferred(ResourceLocation.withDefaultNamespace("fluid"));
 }

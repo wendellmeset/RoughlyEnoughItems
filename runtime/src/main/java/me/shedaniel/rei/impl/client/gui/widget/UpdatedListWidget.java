@@ -48,7 +48,7 @@ public class UpdatedListWidget<E extends UpdatedListWidget.Entry<E>> extends Dyn
     @Override
     protected void renderBackBackground(GuiGraphics graphics, BufferBuilder buffer, Tesselator tessellator) {
         RenderSystem.enableBlend();
-        graphics.blit(new ResourceLocation("textures/gui/menu_list_background.png"), this.left, this.top, this.right, this.bottom, this.width, this.bottom - this.top, 32, 32);
+        graphics.blit(ResourceLocation.withDefaultNamespace("textures/gui/menu_list_background.png"), this.left, this.top, this.right, this.bottom, this.width, this.bottom - this.top, 32, 32);
         RenderSystem.disableBlend();
     }
     

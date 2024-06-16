@@ -48,7 +48,7 @@ import java.util.stream.Stream;
 
 @ApiStatus.Internal
 public class DefaultRuntimePlugin implements REIServerPlugin {
-    public static final ResourceLocation PLUGIN = new ResourceLocation("roughlyenoughitems", "default_runtime_plugin");
+    public static final ResourceLocation PLUGIN = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "default_runtime_plugin");
     
     @Override
     public void registerEntryTypes(EntryTypeRegistry registry) {
@@ -66,7 +66,7 @@ public class DefaultRuntimePlugin implements REIServerPlugin {
     
     @Override
     public void registerSlotAccessors(SlotAccessorRegistry registry) {
-        registry.register(new ResourceLocation("roughlyenoughitems", "vanilla"),
+        registry.register(ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "vanilla"),
                 slotAccessor -> slotAccessor instanceof VanillaSlotAccessor,
                 new SlotAccessorRegistry.Serializer() {
                     @Override
@@ -86,7 +86,7 @@ public class DefaultRuntimePlugin implements REIServerPlugin {
                         return tag;
                     }
                 });
-        registry.register(new ResourceLocation("roughlyenoughitems", "player"),
+        registry.register(ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "player"),
                 slotAccessor -> slotAccessor instanceof PlayerInventorySlotAccessor,
                 new SlotAccessorRegistry.Serializer() {
                     @Override

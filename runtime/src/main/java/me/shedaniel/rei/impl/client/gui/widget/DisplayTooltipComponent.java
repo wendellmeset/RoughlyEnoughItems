@@ -99,7 +99,7 @@ public class DisplayTooltipComponent implements TooltipComponent, ClientTooltipC
             graphics.pose().pushPose();
             Rectangle transformedBounds = MatrixUtils.transform(MatrixUtils.inverse(graphics.pose().last().pose()), new Rectangle(x + 2, y + 2, bounds.width, bounds.height));
             Point mouse = MatrixUtils.transform(graphics.pose().last().pose(), PointHelper.ofMouse());
-            craftingResult.renderer.render(graphics, mouse.x, mouse.y, Minecraft.getInstance().getDeltaFrameTime(),
+            craftingResult.renderer.render(graphics, mouse.x, mouse.y, Minecraft.getInstance().getTimer().getRealtimeDeltaTicks(),
                     widgets, transformedBounds, display.provideInternalDisplay());
             graphics.pose().popPose();
         }

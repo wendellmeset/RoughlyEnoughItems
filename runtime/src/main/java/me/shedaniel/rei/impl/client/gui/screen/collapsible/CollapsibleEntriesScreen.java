@@ -118,7 +118,7 @@ public class CollapsibleEntriesScreen extends Screen {
         {
             Component addText = Component.literal(" + ");
             addRenderableWidget(new Button(width - 4 - 20, 4, 20, 20, addText, $ -> {
-                setupCustom(new ResourceLocation("custom:" + UUID.randomUUID()), "", new ArrayList<>(), this.configObject, () -> {
+                setupCustom(ResourceLocation.parse("custom:" + UUID.randomUUID()), "", new ArrayList<>(), this.configObject, () -> {
                     this.prepareWidgets(configObject);
                     this.dirty = true;
                 });
@@ -185,11 +185,10 @@ public class CollapsibleEntriesScreen extends Screen {
             Component debugText = Component.literal(String.format("%s fps", minecraft.fpsString.split(" ")[0]));
             int stringWidth = font.width(debugText);
             graphics.fillGradient(minecraft.screen.width - stringWidth - 2, 32, minecraft.screen.width, 32 + font.lineHeight + 2, -16777216, -16777216);
-            MultiBufferSource.BufferSource immediate = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
             graphics.pose().pushPose();
             Matrix4f matrix = graphics.pose().last().pose();
-            font.drawInBatch(debugText.getVisualOrderText(), minecraft.screen.width - stringWidth, 32 + 2, -1, false, matrix, immediate, Font.DisplayMode.NORMAL, 0, 15728880);
-            immediate.endBatch();
+            font.drawInBatch(debugText.getVisualOrderText(), minecraft.screen.width - stringWidth, 32 + 2, -1, false, matrix, graphics.bufferSource(), Font.DisplayMode.NORMAL, 0, 15728880);
+            graphics.flush();
             graphics.pose().popPose();
         }
     }

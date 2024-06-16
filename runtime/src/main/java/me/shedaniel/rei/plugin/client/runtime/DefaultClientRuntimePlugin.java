@@ -113,7 +113,7 @@ public class DefaultClientRuntimePlugin implements REIClientPlugin {
     public void registerEntries(EntryRegistry registry) {
         if (ClientHelperImpl.getInstance().isAprilFools.get()) {
             registry.addEntry(ClientEntryStacks.of(new Renderer() {
-                private final ResourceLocation id = new ResourceLocation("roughlyenoughitems", "textures/gui/kirb.png");
+                private final ResourceLocation id = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "textures/gui/kirb.png");
                 
                 @Override
                 public void render(GuiGraphics graphics, Rectangle bounds, int mouseX, int mouseY, float delta) {
@@ -185,10 +185,10 @@ public class DefaultClientRuntimePlugin implements REIClientPlugin {
     public void registerInputMethods(InputMethodRegistry registry) {
         registry.add(DefaultInputMethod.ID, DefaultInputMethod.INSTANCE);
         UniHanManager manager = new UniHanManager(Platform.getConfigFolder().resolve("roughlyenoughitems/unihan.zip"));
-        registry.add(new ResourceLocation("rei:pinyin"), new PinyinInputMethod(manager));
-        registry.add(new ResourceLocation("rei:jyutping"), new JyutpingInputMethod(manager));
-        registry.add(new ResourceLocation("rei:bomopofo"), new BomopofoInputMethod(manager));
-        registry.add(new ResourceLocation("rei:double_pinyin"), new DoublePinyinInputMethod(manager));
+        registry.add(ResourceLocation.parse("rei:pinyin"), new PinyinInputMethod(manager));
+        registry.add(ResourceLocation.parse("rei:jyutping"), new JyutpingInputMethod(manager));
+        registry.add(ResourceLocation.parse("rei:bomopofo"), new BomopofoInputMethod(manager));
+        registry.add(ResourceLocation.parse("rei:double_pinyin"), new DoublePinyinInputMethod(manager));
     }
     
     private enum EntryStackFavoriteType implements FavoriteEntryType<EntryStackFavoriteEntry> {

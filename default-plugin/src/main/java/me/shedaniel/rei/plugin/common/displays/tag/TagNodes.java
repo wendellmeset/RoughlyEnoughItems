@@ -55,8 +55,8 @@ import java.util.function.Consumer;
 
 @ApiStatus.Internal
 public class TagNodes {
-    public static final ResourceLocation REQUEST_TAGS_PACKET_C2S = new ResourceLocation("roughlyenoughitems", "request_tags_c2s");
-    public static final ResourceLocation REQUEST_TAGS_PACKET_S2C = new ResourceLocation("roughlyenoughitems", "request_tags_s2c");
+    public static final ResourceLocation REQUEST_TAGS_PACKET_C2S = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "request_tags_c2s");
+    public static final ResourceLocation REQUEST_TAGS_PACKET_S2C = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "request_tags_s2c");
     
     public static final Map<String, ResourceKey<? extends Registry<?>>> TAG_DIR_MAP = new HashMap<>();
     public static final ThreadLocal<String> CURRENT_TAG_DIR = new ThreadLocal<>();

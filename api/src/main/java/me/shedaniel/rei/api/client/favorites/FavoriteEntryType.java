@@ -44,12 +44,12 @@ public interface FavoriteEntryType<T extends FavoriteEntry> {
     /**
      * A builtin type of favorites, wrapping a {@link EntryStack}.
      */
-    ResourceLocation ENTRY_STACK = new ResourceLocation("roughlyenoughitems", "entry_stack");
+    ResourceLocation ENTRY_STACK = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "entry_stack");
     /**
      * A builtin type of favorites, wrapping a {@link Display}.
      */
     @ApiStatus.Experimental
-    ResourceLocation DISPLAY = new ResourceLocation("roughlyenoughitems", "display");
+    ResourceLocation DISPLAY = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "display");
     
     static Registry registry() {
         return PluginManager.getClientInstance().get(FavoriteEntryType.Registry.class);

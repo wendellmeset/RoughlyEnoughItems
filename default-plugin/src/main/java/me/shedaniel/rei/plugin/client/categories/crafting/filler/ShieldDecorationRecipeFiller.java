@@ -52,7 +52,7 @@ public class ShieldDecorationRecipeFiller implements CraftingRecipeFiller<Shield
         Random random = new Random();
         
         for (DyeColor color : colors) {
-            Optional<Item> bannerOptional = BuiltInRegistries.ITEM.getOptional(new ResourceLocation(color.getName() + "_banner"));
+            Optional<Item> bannerOptional = BuiltInRegistries.ITEM.getOptional(ResourceLocation.parse(color.getName() + "_banner"));
             if (bannerOptional.isEmpty()) continue;
             out.add(Pair.of(color, new ItemStack(bannerOptional.get())));
             

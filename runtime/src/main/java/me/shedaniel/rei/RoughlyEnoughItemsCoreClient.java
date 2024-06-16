@@ -148,7 +148,7 @@ public class RoughlyEnoughItemsCoreClient {
         ClientInternals.attachInstance((BiFunction<Supplier<DataResult<FavoriteEntry>>, Supplier<CompoundTag>, FavoriteEntry>) DelegatingFavoriteEntryProviderImpl::new, "delegateFavoriteEntry");
         ClientInternals.attachInstance((Function<CompoundTag, DataResult<FavoriteEntry>>) (object) -> {
             String type = object.getString(FavoriteEntry.TYPE_KEY);
-            ResourceLocation id = new ResourceLocation(type);
+            ResourceLocation id = ResourceLocation.parse(type);
             FavoriteEntryType<FavoriteEntry> entryType = FavoriteEntryType.registry().get(id);
             if (entryType == null) return DataResult.error(() -> "Unknown favorite type: " + id + ", json: " + object);
             return entryType.read(object);
@@ -314,7 +314,7 @@ public class RoughlyEnoughItemsCoreClient {
     
     private void registerEvents() {
         Minecraft client = Minecraft.getInstance();
-        final ResourceLocation recipeButtonTex = new ResourceLocation("textures/gui/recipe_button.png");
+        final ResourceLocation recipeButtonTex = ResourceLocation.withDefaultNamespace("textures/gui/recipe_button.png");
         MutableLong startReload = new MutableLong(-1);
         MutableLong endReload = new MutableLong(-1);
         PRE_UPDATE_RECIPES.register(recipeManager -> {

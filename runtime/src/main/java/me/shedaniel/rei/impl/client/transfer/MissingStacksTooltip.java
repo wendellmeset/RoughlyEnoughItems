@@ -23,7 +23,6 @@
 
 package me.shedaniel.rei.impl.client.transfer;
 
-import com.mojang.blaze3d.vertex.Tesselator;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.gui.SimpleDisplayRenderer;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
@@ -80,10 +79,9 @@ public class MissingStacksTooltip implements ClientTooltipComponent, TooltipComp
             int y1 = y + 13 + (i / w) * entrySize;
             i++;
             if (i / w > 5) {
-                MultiBufferSource.BufferSource source = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
                 Component text = Component.literal("+" + (stacks.size() - w * 6 + 1)).withStyle(ChatFormatting.GRAY);
-                font.drawInBatch(text, x1 + entrySize / 2 - font.width(text) / 2, y1 + entrySize / 2 - 1, -1, true, graphics.pose().last().pose(), source, Font.DisplayMode.NORMAL, 0, 15728880);
-                source.endBatch();
+                font.drawInBatch(text, x1 + entrySize / 2 - font.width(text) / 2, y1 + entrySize / 2 - 1, -1, true, graphics.pose().last().pose(), graphics.bufferSource(), Font.DisplayMode.NORMAL, 0, 15728880);
+                graphics.flush();
                 break;
             } else {
                 EntryStack<?> stack;

@@ -82,7 +82,7 @@ public class CollapsibleConfigManager {
     }
     
     public static final class CustomGroup {
-        public ResourceLocation id = new ResourceLocation("missingno");
+        public ResourceLocation id = ResourceLocation.withDefaultNamespace("missingno");
         public String name = "Invalid";
         public List<EntryStackProvider<?>> stacks = new ArrayList<>();
         

@@ -63,12 +63,11 @@ public final class TexturedDrawableConsumer implements DrawableConsumer {
     
     protected static void innerBlit(Matrix4f matrix, int xStart, int xEnd, int yStart, int yEnd, int z, float uStart, float uEnd, float vStart, float vEnd) {
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
-        bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        bufferBuilder.vertex(matrix, xStart, yEnd, z).uv(uStart, vEnd).endVertex();
-        bufferBuilder.vertex(matrix, xEnd, yEnd, z).uv(uEnd, vEnd).endVertex();
-        bufferBuilder.vertex(matrix, xEnd, yStart, z).uv(uEnd, vStart).endVertex();
-        bufferBuilder.vertex(matrix, xStart, yStart, z).uv(uStart, vStart).endVertex();
-        BufferUploader.drawWithShader(bufferBuilder.end());
+        BufferBuilder bufferBuilder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+        bufferBuilder.addVertex(matrix, xStart, yEnd, z).setUv(uStart, vEnd);
+        bufferBuilder.addVertex(matrix, xEnd, yEnd, z).setUv(uEnd, vEnd);
+        bufferBuilder.addVertex(matrix, xEnd, yStart, z).setUv(uEnd, vStart);
+        bufferBuilder.addVertex(matrix, xStart, yStart, z).setUv(uStart, vStart);
+        BufferUploader.drawWithShader(bufferBuilder.buildOrThrow());
     }
 }

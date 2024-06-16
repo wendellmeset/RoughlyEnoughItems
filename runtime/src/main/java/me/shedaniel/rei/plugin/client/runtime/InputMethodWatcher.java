@@ -97,7 +97,7 @@ public class InputMethodWatcher implements HintProvider {
                             () -> CraftableFilterButtonWidget.createInputMethodEntries(access, CraftableFilterButtonWidget.getApplicableInputMethods()));
                 }),
                 new HintButton(Component.translatable("text.rei.hint.ignore"), bounds -> {
-                    ConfigManagerImpl.getInstance().getConfig().setInputMethodId(new ResourceLocation("rei:default"));
+                    ConfigManagerImpl.getInstance().getConfig().setInputMethodId(ResourceLocation.parse("rei:default"));
                     ConfigManager.getInstance().saveConfig();
                 })
         );

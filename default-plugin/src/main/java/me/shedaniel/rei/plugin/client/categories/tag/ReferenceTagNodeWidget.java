@@ -71,7 +71,7 @@ public class ReferenceTagNodeWidget<S, T> extends TagNodeWidget<S, T> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
         if (this.overflowBounds.intersects(MatrixUtils.transform(graphics.pose().last().pose(), getBounds()))) {
             RenderSystem.setShader(GameRenderer::getPositionTexShader);
-            graphics.innerBlit(new ResourceLocation("textures/gui/sprites/advancements/task_frame_unobtained.png"),
+            graphics.innerBlit(ResourceLocation.withDefaultNamespace("textures/gui/sprites/advancements/task_frame_unobtained.png"),
                     bounds.x - 1, bounds.x - 1 + 26, bounds.y - 1, bounds.y - 1 + 26, 0,
                     0, 1, 0, 1);
             this.slot.getBounds().setLocation(bounds.getCenterX() - this.slot.getBounds().getWidth() / 2, bounds.y + (bounds.height - this.slot.getBounds().getHeight()) / 2 + 1);

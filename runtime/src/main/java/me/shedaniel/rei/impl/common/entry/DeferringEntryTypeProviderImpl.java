@@ -43,7 +43,7 @@ import java.util.function.Function;
 
 public enum DeferringEntryTypeProviderImpl implements Function<ResourceLocation, EntryType<?>> {
     INSTANCE;
-    ResourceLocation RENDERING_ID = new ResourceLocation("rendering");
+    ResourceLocation RENDERING_ID = ResourceLocation.withDefaultNamespace("rendering");
     private Map<ResourceLocation, EntryType<?>> typeCache = new ConcurrentHashMap<>();
     private EntryType<Unit> empty;
     @Environment(EnvType.CLIENT)

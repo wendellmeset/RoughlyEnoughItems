@@ -253,7 +253,7 @@ public abstract class BasicDisplay implements Display {
             List<EntryIngredient> output = EntryIngredients.read(tag.getList("output", Tag.TAG_LIST));
             ResourceLocation location;
             if (tag.contains("location", Tag.TAG_STRING)) {
-                location = new ResourceLocation(tag.getString("location"));
+                location = ResourceLocation.parse(tag.getString("location"));
             } else {
                 location = null;
             }

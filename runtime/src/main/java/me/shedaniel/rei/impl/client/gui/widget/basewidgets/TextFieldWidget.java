@@ -24,10 +24,7 @@
 package me.shedaniel.rei.impl.client.gui.widget.basewidgets;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.*;
 import me.shedaniel.clothconfig2.api.TickableWidget;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.gui.widgets.TextField;
@@ -492,17 +489,16 @@ public class TextFieldWidget extends WidgetWithBounds implements TickableWidget,
         int g = (color >> 8 & 255);
         int b = (color & 255);
         Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder buffer = tesselator.getBuilder();
+        BufferBuilder buffer = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
         RenderSystem.enableBlend();
         RenderSystem.blendFuncSeparate(770, 771, 1, 0);
         Matrix4f matrix = graphics.pose().last().pose();
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
-        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        buffer.vertex(matrix, x1, y2, 50f).color(r, g, b, 120).endVertex();
-        buffer.vertex(matrix, x2, y2, 50f).color(r, g, b, 120).endVertex();
-        buffer.vertex(matrix, x2, y1, 50f).color(r, g, b, 120).endVertex();
-        buffer.vertex(matrix, x1, y1, 50f).color(r, g, b, 120).endVertex();
-        tesselator.end();
+        buffer.addVertex(matrix, x1, y2, 50f).setColor(r, g, b, 120);
+        buffer.addVertex(matrix, x2, y2, 50f).setColor(r, g, b, 120);
+        buffer.addVertex(matrix, x2, y1, 50f).setColor(r, g, b, 120);
+        buffer.addVertex(matrix, x1, y1, 50f).setColor(r, g, b, 120);
+        BufferUploader.drawWithShader(buffer.buildOrThrow());
         RenderSystem.disableBlend();
     }
     

@@ -41,7 +41,6 @@ import me.shedaniel.rei.api.client.search.SearchFilter;
 import me.shedaniel.rei.api.client.search.SearchProvider;
 import me.shedaniel.rei.api.common.entry.EntrySerializer;
 import me.shedaniel.rei.api.common.entry.EntryStack;
-import me.shedaniel.rei.impl.client.gui.InternalTextures;
 import me.shedaniel.rei.impl.client.gui.ScreenOverlayImpl;
 import me.shedaniel.rei.impl.client.gui.widget.BatchedEntryRendererManager;
 import me.shedaniel.rei.impl.client.gui.widget.EntryWidget;
@@ -247,17 +246,16 @@ public class CustomCollapsibleEntrySelectionScreen extends Screen {
         
         ScissorsHandler.INSTANCE.removeLastScissor();
         Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder buffer = tesselator.getBuilder();
         RenderSystem.enableBlend();
         RenderSystem.blendFuncSeparate(770, 771, 0, 1);
         RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
         Matrix4f matrix = graphics.pose().last().pose();
-        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-        buffer.vertex(matrix, 0, bounds.y + 4, 0.0F).uv(0.0F, 1.0F).color(0, 0, 0, 0).endVertex();
-        buffer.vertex(matrix, width, bounds.y + 4, 0.0F).uv(1.0F, 1.0F).color(0, 0, 0, 0).endVertex();
-        buffer.vertex(matrix, width, bounds.y, 0.0F).uv(1.0F, 0.0F).color(0, 0, 0, 255).endVertex();
-        buffer.vertex(matrix, 0, bounds.y, 0.0F).uv(0.0F, 0.0F).color(0, 0, 0, 255).endVertex();
-        tesselator.end();
+        BufferBuilder buffer = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+        buffer.addVertex(matrix, 0, bounds.y + 4, 0.0F).setUv(0.0F, 1.0F).setColor(0, 0, 0, 0);
+        buffer.addVertex(matrix, width, bounds.y + 4, 0.0F).setUv(1.0F, 1.0F).setColor(0, 0, 0, 0);
+        buffer.addVertex(matrix, width, bounds.y, 0.0F).setUv(1.0F, 0.0F).setColor(0, 0, 0, 255);
+        buffer.addVertex(matrix, 0, bounds.y, 0.0F).setUv(0.0F, 0.0F).setColor(0, 0, 0, 255);
+        BufferUploader.drawWithShader(buffer.buildOrThrow());
         RenderSystem.disableBlend();
         
         this.backButton.render(graphics, mouseX, mouseY, delta);

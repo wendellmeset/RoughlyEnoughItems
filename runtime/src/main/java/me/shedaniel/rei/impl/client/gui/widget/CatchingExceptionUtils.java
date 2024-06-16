@@ -27,6 +27,7 @@ import me.shedaniel.rei.impl.client.gui.error.ErrorsEntryListWidget;
 import me.shedaniel.rei.impl.client.gui.error.ErrorsScreen;
 import me.shedaniel.rei.impl.client.util.CrashReportUtils;
 import net.minecraft.CrashReport;
+import net.minecraft.ReportType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
@@ -45,13 +46,13 @@ public class CatchingExceptionUtils {
         File reportsFolder = new File(Minecraft.getInstance().gameDirectory, "crash-reports");
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");
         File crashReportFile = new File(reportsFolder, "crash-" + format.format(new Date()) + "-client.txt");
-        report.saveToFile(crashReportFile);
-        Bootstrap.realStdoutPrintln(report.getFriendlyReport());
+        report.saveToFile(crashReportFile.toPath(), ReportType.CRASH);
+        Bootstrap.realStdoutPrintln(report.getFriendlyReport(ReportType.CRASH));
         List<Object> components = new ArrayList<>();
         components.add(Component.literal(I18n.get("text.rei.crash.description", report.getTitle())));
         components.add((Function<Integer, ErrorsEntryListWidget.Entry>) width -> new ErrorsEntryListWidget.LinkEntry(Component.translatable("text.rei.crash.crash_report"), crashReportFile.toURI().toString(), width));
         components.add(Component.empty());
-        components.add(Component.literal(report.getFriendlyReport().replace("\t", "    ")));
+        components.add(Component.literal(report.getFriendlyReport(ReportType.CRASH).replace("\t", "    ")));
         Minecraft.getInstance().setScreen(new ErrorsScreen(Component.translatable("text.rei.crash.title"), components, null, false));
     }
 }

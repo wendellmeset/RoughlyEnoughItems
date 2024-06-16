@@ -58,15 +58,14 @@ import java.util.Objects;
 
 @Environment(EnvType.CLIENT)
 public class DefaultInformationCategory implements DisplayCategory<DefaultInformationDisplay> {
-    protected static void innerBlit(Matrix4f matrix4f, int xStart, int xEnd, int yStart, int yEnd, int z, float uStart, float uEnd, float vStart, float vEnd) {
+    protected static void innerBlit(GuiGraphics graphics, Matrix4f matrix4f, int xStart, int xEnd, int yStart, int yEnd, int z, float uStart, float uEnd, float vStart, float vEnd) {
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
-        bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        bufferBuilder.vertex(matrix4f, xStart, yEnd, z).uv(uStart, vEnd).endVertex();
-        bufferBuilder.vertex(matrix4f, xEnd, yEnd, z).uv(uEnd, vEnd).endVertex();
-        bufferBuilder.vertex(matrix4f, xEnd, yStart, z).uv(uEnd, vStart).endVertex();
-        bufferBuilder.vertex(matrix4f, xStart, yStart, z).uv(uStart, vStart).endVertex();
-        BufferUploader.drawWithShader(bufferBuilder.end());
+        BufferBuilder bufferBuilder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+        bufferBuilder.addVertex(matrix4f, xStart, yEnd, z).setUv(uStart, vEnd);
+        bufferBuilder.addVertex(matrix4f, xEnd, yEnd, z).setUv(uEnd, vEnd);
+        bufferBuilder.addVertex(matrix4f, xEnd, yStart, z).setUv(uEnd, vStart);
+        bufferBuilder.addVertex(matrix4f, xStart, yStart, z).setUv(uStart, vStart);
+        BufferUploader.drawWithShader(bufferBuilder.buildOrThrow());
     }
     
     @Override
@@ -104,7 +103,7 @@ public class DefaultInformationCategory implements DisplayCategory<DefaultInform
                 graphics.pose().pushPose();
                 graphics.pose().translate(-1.2f, -1, 0);
                 Matrix4f matrix = graphics.pose().last().pose();
-                DefaultInformationCategory.innerBlit(matrix, bounds.getCenterX() - 8, bounds.getCenterX() + 8, bounds.getCenterY() - 8, bounds.getCenterY() + 8, 0, 116f / 256f, (116f + 16f) / 256f, 0f, 16f / 256f);
+                DefaultInformationCategory.innerBlit(graphics, matrix, bounds.getCenterX() - 8, bounds.getCenterX() + 8, bounds.getCenterY() - 8, bounds.getCenterY() + 8, 0, 116f / 256f, (116f + 16f) / 256f, 0f, 16f / 256f);
                 graphics.pose().popPose();
             }
         };

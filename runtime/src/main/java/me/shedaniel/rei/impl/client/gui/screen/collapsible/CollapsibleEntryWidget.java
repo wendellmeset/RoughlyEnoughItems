@@ -24,10 +24,7 @@
 package me.shedaniel.rei.impl.client.gui.screen.collapsible;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.*;
 import me.shedaniel.clothconfig2.ClothConfigInitializer;
 import me.shedaniel.clothconfig2.api.animator.ProgressValueAnimator;
 import me.shedaniel.clothconfig2.api.animator.ValueAnimator;
@@ -260,18 +257,17 @@ public class CollapsibleEntryWidget extends WidgetWithBounds {
             
             if (this.stacks.size() > rowSize * 3) {
                 Tesselator tesselator = Tesselator.getInstance();
-                BufferBuilder buffer = tesselator.getBuilder();
                 RenderSystem.enableBlend();
                 RenderSystem.defaultBlendFunc();
                 RenderSystem.setShader(GameRenderer::getPositionColorShader);
                 RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
                 Matrix4f matrix = graphics.pose().last().pose();
-                buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-                buffer.vertex(matrix, this.x + 1, this.y + this.height - 1, 0.0F).color(0xFF000000).endVertex();
-                buffer.vertex(matrix, this.x + this.width - 1, this.y + this.height - 1, 0.0F).color(0xFF000000).endVertex();
-                buffer.vertex(matrix, this.x + this.width - 1, this.y + this.height - 40, 0.0F).color(0x00000000).endVertex();
-                buffer.vertex(matrix, this.x + 1, this.y + this.height - 40, 0.0F).color(0x00000000).endVertex();
-                tesselator.end();
+                BufferBuilder buffer = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+                buffer.addVertex(matrix, this.x + 1, this.y + this.height - 1, 0.0F).setColor(0xFF000000);
+                buffer.addVertex(matrix, this.x + this.width - 1, this.y + this.height - 1, 0.0F).setColor(0xFF000000);
+                buffer.addVertex(matrix, this.x + this.width - 1, this.y + this.height - 40, 0.0F).setColor(0x00000000);
+                buffer.addVertex(matrix, this.x + 1, this.y + this.height - 40, 0.0F).setColor(0x00000000);
+                BufferUploader.drawWithShader(buffer.buildOrThrow());
                 RenderSystem.disableBlend();
             }
         }

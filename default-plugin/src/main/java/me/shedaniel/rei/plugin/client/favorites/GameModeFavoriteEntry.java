@@ -56,7 +56,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class GameModeFavoriteEntry extends FavoriteEntry {
-    public static final ResourceLocation ID = new ResourceLocation("roughlyenoughitems", "gamemode");
+    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "gamemode");
     public static final String TRANSLATION_KEY = "favorite.section.gamemode";
     public static final String KEY = "mode";
     @Nullable

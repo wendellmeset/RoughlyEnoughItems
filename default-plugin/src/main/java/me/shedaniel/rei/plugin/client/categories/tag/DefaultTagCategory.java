@@ -182,12 +182,12 @@ public class DefaultTagCategory implements DisplayCategory<DefaultTagDisplay<?, 
         widgets.add(Widgets.withTranslate(new DelegateWidget(Widgets.noOp()) {
             @Override
             protected Widget delegate() {
-                ResourceLocation expandTexture = !expanded[0] ? new ResourceLocation("roughlyenoughitems", "textures/gui/expand.png")
-                        : new ResourceLocation("roughlyenoughitems", "textures/gui/shrink.png");
+                ResourceLocation expandTexture = !expanded[0] ? ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "textures/gui/expand.png")
+                        : ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "textures/gui/shrink.png");
                 return Widgets.concat(
                         Widgets.createTexturedWidget(expandTexture,
                                 new Rectangle(recipeBounds.x + 5 + 2, recipeBounds.y + 6 + 2, 13 - 4, 13 - 4), 0, 0, 9, 9),
-                        Widgets.createTexturedWidget(new ResourceLocation("roughlyenoughitems", "textures/gui/clipboard.png"),
+                        Widgets.createTexturedWidget(ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "textures/gui/clipboard.png"),
                                 new Rectangle(recipeBounds.x + 5 + 2, recipeBounds.getMaxY() - 6 - 13 + 2, 13 - 4, 13 - 4), 0, 0, 9, 9)
                 );
             }

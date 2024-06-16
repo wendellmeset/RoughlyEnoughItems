@@ -114,7 +114,7 @@ public class ConfigOptionValueWidget {
         return Widgets.concatWithBounds(() -> new Rectangle(-label.getBounds().width, 0, label.getBounds().width + 8, 14),
                 label,
                 Widgets.createDrawableWidget((graphics, mouseX, mouseY, delta) -> matrix[0] = graphics.pose().last().pose()),
-                Widgets.withTranslate(Widgets.createTexturedWidget(new ResourceLocation("roughlyenoughitems:textures/gui/config/selector.png"),
+                Widgets.withTranslate(Widgets.createTexturedWidget(ResourceLocation.parse("roughlyenoughitems:textures/gui/config/selector.png"),
                         new Rectangle(1, 1, 4, 6), 0, 0, 1, 1, 1, 1), 0, 0.5, 0)
         );
     }

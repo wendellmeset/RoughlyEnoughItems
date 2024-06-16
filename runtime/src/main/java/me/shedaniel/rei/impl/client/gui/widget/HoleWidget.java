@@ -24,10 +24,7 @@
 package me.shedaniel.rei.impl.client.gui.widget;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.*;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.gui.widgets.Widget;
 import me.shedaniel.rei.api.client.gui.widgets.Widgets;
@@ -82,15 +79,14 @@ public class HoleWidget {
     public static Widget createBackground(Rectangle bounds, ResourceLocation backgroundLocation, IntSupplier yOffset, int colorIntensity) {
         return Widgets.withBounds(Widgets.createDrawableWidget((graphics, mouseX, mouseY, delta) -> {
             Tesselator tesselator = Tesselator.getInstance();
-            BufferBuilder buffer = tesselator.getBuilder();
-            DynamicErrorFreeEntryListWidget.renderBackBackground(graphics, buffer, tesselator, backgroundLocation, bounds.x, bounds.y, bounds.getMaxX(), bounds.getMaxY(), yOffset.getAsInt(), colorIntensity);
+            DynamicErrorFreeEntryListWidget.renderBackBackground(graphics, backgroundLocation, bounds.x, bounds.y, bounds.getMaxX(), bounds.getMaxY(), yOffset.getAsInt(), colorIntensity);
         }), bounds);
     }
     
     public static Widget createMenuBackground(Rectangle bounds) {
         return Widgets.withBounds(Widgets.createDrawableWidget((graphics, mouseX, mouseY, delta) -> {
             RenderSystem.enableBlend();
-            graphics.blit(new ResourceLocation("textures/gui/menu_list_background.png"), bounds.x, bounds.y, bounds.getMaxX(), bounds.getMaxY(), bounds.width, bounds.height, 32, 32);
+            graphics.blit(ResourceLocation.withDefaultNamespace("textures/gui/menu_list_background.png"), bounds.x, bounds.y, bounds.getMaxX(), bounds.getMaxY(), bounds.width, bounds.height, 32, 32);
             RenderSystem.disableBlend();
         }), bounds);
     }
@@ -99,23 +95,22 @@ public class HoleWidget {
     public static Widget createInnerShadow(Rectangle bounds) {
         return Widgets.withBounds(Widgets.createDrawableWidget((graphics, mouseX, mouseY, delta) -> {
             Tesselator tesselator = Tesselator.getInstance();
-            BufferBuilder buffer = tesselator.getBuilder();
             RenderSystem.disableDepthTest();
             RenderSystem.setShader(GameRenderer::getPositionTexShader);
             RenderSystem.enableBlend();
             RenderSystem.blendFuncSeparate(770, 771, 0, 1);
             RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
             Matrix4f matrix = graphics.pose().last().pose();
-            buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-            buffer.vertex(matrix, bounds.x, bounds.y + 4, 0.0F).uv(0, 1).color(0, 0, 0, 0).endVertex();
-            buffer.vertex(matrix, bounds.getMaxX(), bounds.y + 4, 0.0F).uv(1, 1).color(0, 0, 0, 0).endVertex();
-            buffer.vertex(matrix, bounds.getMaxX(), bounds.y, 0.0F).uv(1, 0).color(0, 0, 0, 255).endVertex();
-            buffer.vertex(matrix, bounds.x, bounds.y, 0.0F).uv(0, 0).color(0, 0, 0, 255).endVertex();
-            buffer.vertex(matrix, bounds.x, bounds.getMaxY(), 0.0F).uv(0, 1).color(0, 0, 0, 255).endVertex();
-            buffer.vertex(matrix, bounds.getMaxX(), bounds.getMaxY(), 0.0F).uv(1, 1).color(0, 0, 0, 255).endVertex();
-            buffer.vertex(matrix, bounds.getMaxX(), bounds.getMaxY() - 4, 0.0F).uv(1, 0).color(0, 0, 0, 0).endVertex();
-            buffer.vertex(matrix, bounds.x, bounds.getMaxY() - 4, 0.0F).uv(0, 0).color(0, 0, 0, 0).endVertex();
-            tesselator.end();
+            BufferBuilder buffer = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+            buffer.addVertex(matrix, bounds.x, bounds.y + 4, 0.0F).setUv(0, 1).setColor(0, 0, 0, 0);
+            buffer.addVertex(matrix, bounds.getMaxX(), bounds.y + 4, 0.0F).setUv(1, 1).setColor(0, 0, 0, 0);
+            buffer.addVertex(matrix, bounds.getMaxX(), bounds.y, 0.0F).setUv(1, 0).setColor(0, 0, 0, 255);
+            buffer.addVertex(matrix, bounds.x, bounds.y, 0.0F).setUv(0, 0).setColor(0, 0, 0, 255);
+            buffer.addVertex(matrix, bounds.x, bounds.getMaxY(), 0.0F).setUv(0, 1).setColor(0, 0, 0, 255);
+            buffer.addVertex(matrix, bounds.getMaxX(), bounds.getMaxY(), 0.0F).setUv(1, 1).setColor(0, 0, 0, 255);
+            buffer.addVertex(matrix, bounds.getMaxX(), bounds.getMaxY() - 4, 0.0F).setUv(1, 0).setColor(0, 0, 0, 0);
+            buffer.addVertex(matrix, bounds.x, bounds.getMaxY() - 4, 0.0F).setUv(0, 0).setColor(0, 0, 0, 0);
+            BufferUploader.drawWithShader(buffer.buildOrThrow());
             RenderSystem.disableBlend();
         }), bounds);
     }

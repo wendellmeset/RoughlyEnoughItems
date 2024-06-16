@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Internal
 public class CopyRecipeIdentifierToast implements Toast {
     
-    protected static final ResourceLocation TEXTURE = new ResourceLocation("roughlyenoughitems", "textures/gui/toasts.png");
+    protected static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "textures/gui/toasts.png");
     private String title;
     private String subtitle;
     private long startTime;

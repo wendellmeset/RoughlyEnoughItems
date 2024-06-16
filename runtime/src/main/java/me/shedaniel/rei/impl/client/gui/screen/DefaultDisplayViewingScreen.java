@@ -345,12 +345,11 @@ public class DefaultDisplayViewingScreen extends AbstractDisplayViewingScreen {
                     if (bounds.contains(mouseX, mouseY)) {
                         graphics.fillGradient(bounds.x, bounds.y, bounds.getMaxX(), bounds.getMaxY(), 1744822402, 1744822402);
                         Component text = Component.translatable("text.rei.release_export", export.getLocalizedName().plainCopy().getString());
-                        MultiBufferSource.BufferSource immediate = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
                         graphics.pose().pushPose();
                         graphics.pose().translate(0.0D, 0.0D, 10.0D);
                         Matrix4f matrix4f = graphics.pose().last().pose();
-                        font.drawInBatch(text.getVisualOrderText(), bounds.getCenterX() - font.width(text) / 2f, bounds.getCenterY() - 4.5f, 0xff000000, false, matrix4f, immediate, Font.DisplayMode.NORMAL, 0, 15728880);
-                        immediate.endBatch();
+                        font.drawInBatch(text.getVisualOrderText(), bounds.getCenterX() - font.width(text) / 2f, bounds.getCenterY() - 4.5f, 0xff000000, false, matrix4f, graphics.bufferSource(), Font.DisplayMode.NORMAL, 0, 15728880);
+                        graphics.flush();
                         graphics.pose().popPose();
                     } else {
                         graphics.fillGradient(bounds.x, bounds.y, bounds.getMaxX(), bounds.getMaxY(), 1744830463, 1744830463);

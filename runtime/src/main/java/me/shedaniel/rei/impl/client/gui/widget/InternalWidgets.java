@@ -265,7 +265,7 @@ public final class InternalWidgets {
                 magnification = 4;
             }
             Rectangle bounds = new Rectangle(point.getX() - 9, point.getY() + 1, 8, 8);
-            Widget widget = Widgets.createTexturedWidget(new ResourceLocation("roughlyenoughitems:textures/gui/shapeless_icon_" + magnification + "x.png"), bounds.getX(), bounds.getY(), 0, 0, bounds.getWidth(), bounds.getHeight(), 1, 1, 1, 1);
+            Widget widget = Widgets.createTexturedWidget(ResourceLocation.parse("roughlyenoughitems:textures/gui/shapeless_icon_" + magnification + "x.png"), bounds.getX(), bounds.getY(), 0, 0, bounds.getWidth(), bounds.getHeight(), 1, 1, 1, 1);
             return Widgets.withTooltip(Widgets.withBounds(widget, bounds),
                     Component.translatable("text.rei.shapeless"));
         }

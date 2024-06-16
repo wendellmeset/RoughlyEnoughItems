@@ -49,7 +49,7 @@ public class DefaultRecipeBookHandler implements TransferHandler {
         if (context.getDisplay() instanceof SimpleGridMenuDisplay && ClientHelper.getInstance().canUseMovePackets())
             return ApplicabilityResult.createNotApplicable();
         Display display = context.getDisplay();
-        if (!(context.getMenu() instanceof RecipeBookMenu<?> container))
+        if (!(context.getMenu() instanceof RecipeBookMenu<?, ?> container))
             return ApplicabilityResult.createNotApplicable();
         if (container == null)
             return ApplicabilityResult.createNotApplicable();
@@ -58,7 +58,7 @@ public class DefaultRecipeBookHandler implements TransferHandler {
     
     @Override
     public Result handle(Context context) {
-        RecipeBookMenu<?> container = (RecipeBookMenu<?>) context.getMenu();
+        RecipeBookMenu<?, ?> container = (RecipeBookMenu<?, ?>) context.getMenu();
         Display display = context.getDisplay();
         if (display instanceof DefaultCraftingDisplay<?> craftingDisplay) {
             if (craftingDisplay.getOptionalRecipe().isPresent()) {

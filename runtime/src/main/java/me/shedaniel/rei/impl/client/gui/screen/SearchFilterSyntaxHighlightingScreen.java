@@ -24,10 +24,7 @@
 package me.shedaniel.rei.impl.client.gui.screen;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.*;
 import me.shedaniel.rei.impl.client.gui.InternalTextures;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -50,16 +47,15 @@ public class SearchFilterSyntaxHighlightingScreen extends Screen {
     
     protected void renderHoleBackground(GuiGraphics graphics, int y1, int y2, int tint, int alpha1, int alpha2) {
         Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder buffer = tesselator.getBuilder();
         RenderSystem.setShaderTexture(0, InternalTextures.LEGACY_DIRT);
         Matrix4f matrix = graphics.pose().last().pose();
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
-        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-        buffer.vertex(matrix, 0, y2, 0.0F).uv(0.0F, y2 / 32.0F).color(tint, tint, tint, alpha2).endVertex();
-        buffer.vertex(matrix, this.width, y2, 0.0F).uv(this.width / 32.0F, y2 / 32.0F).color(tint, tint, tint, alpha2).endVertex();
-        buffer.vertex(matrix, this.width, y1, 0.0F).uv(this.width / 32.0F, y1 / 32.0F).color(tint, tint, tint, alpha1).endVertex();
-        buffer.vertex(matrix, 0, y1, 0.0F).uv(0.0F, y1 / 32.0F).color(tint, tint, tint, alpha1).endVertex();
-        tesselator.end();
+        BufferBuilder buffer = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+        buffer.addVertex(matrix, 0, y2, 0.0F).setUv(0.0F, y2 / 32.0F).setColor(tint, tint, tint, alpha2);
+        buffer.addVertex(matrix, this.width, y2, 0.0F).setUv(this.width / 32.0F, y2 / 32.0F).setColor(tint, tint, tint, alpha2);
+        buffer.addVertex(matrix, this.width, y1, 0.0F).setUv(this.width / 32.0F, y1 / 32.0F).setColor(tint, tint, tint, alpha1);
+        buffer.addVertex(matrix, 0, y1, 0.0F).setUv(0.0F, y1 / 32.0F).setColor(tint, tint, tint, alpha1);
+        BufferUploader.drawWithShader(buffer.buildOrThrow());
     }
 }

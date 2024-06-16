@@ -56,9 +56,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class WeatherFavoriteEntry extends FavoriteEntry {
-    public static final ResourceLocation ID = new ResourceLocation("roughlyenoughitems", "weather");
+    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "weather");
     public static final String TRANSLATION_KEY = "favorite.section.weather";
-    private static final ResourceLocation CHEST_GUI_TEXTURE = new ResourceLocation("roughlyenoughitems", "textures/gui/recipecontainer.png");
+    private static final ResourceLocation CHEST_GUI_TEXTURE = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "textures/gui/recipecontainer.png");
     public static final String KEY = "weather";
     @Nullable
     private final Weather weather;

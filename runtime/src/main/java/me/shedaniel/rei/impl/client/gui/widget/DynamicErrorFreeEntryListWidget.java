@@ -25,10 +25,7 @@ package me.shedaniel.rei.impl.client.gui.widget;
 
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.*;
 import me.shedaniel.rei.api.client.gui.AbstractContainerEventHandler;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -221,7 +218,18 @@ public abstract class DynamicErrorFreeEntryListWidget<E extends DynamicErrorFree
     protected void clickedHeader(int int_1, int int_2) {
     }
     
-    protected void renderHeader(GuiGraphics graphics, int rowLeft, int startY, Tesselator tessellator) {
+    public static void renderBackBackground(GuiGraphics graphics, ResourceLocation backgroundLocation,
+                                            int left, int top, int right, int bottom, int yOffset, int color) {
+        RenderSystem.setShaderTexture(0, backgroundLocation);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
+        Matrix4f matrix = graphics.pose().last().pose();
+        BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+        buffer.addVertex(matrix, left, bottom, 0.0F).setUv(left / 32.0F, ((bottom + yOffset) / 32.0F)).setColor(color, color, color, 255);
+        buffer.addVertex(matrix, right, bottom, 0.0F).setUv(right / 32.0F, ((bottom + yOffset) / 32.0F)).setColor(color, color, color, 255);
+        buffer.addVertex(matrix, right, top, 0.0F).setUv(right / 32.0F, ((top + yOffset) / 32.0F)).setColor(color, color, color, 255);
+        buffer.addVertex(matrix, left, top, 0.0F).setUv(left / 32.0F, ((top + yOffset) / 32.0F)).setColor(color, color, color, 255);
+        BufferUploader.drawWithShader(buffer.buildOrThrow());
     }
     
     protected void drawBackground() {
@@ -230,24 +238,13 @@ public abstract class DynamicErrorFreeEntryListWidget<E extends DynamicErrorFree
     protected void renderDecorations(GuiGraphics graphics, int mouseX, int mouseY) {
     }
     
-    @Deprecated
-    protected void renderBackBackground(GuiGraphics graphics, BufferBuilder buffer, Tesselator tessellator) {
-        DynamicErrorFreeEntryListWidget.renderBackBackground(graphics, buffer, tessellator, backgroundLocation,
-                left, top, right, bottom, (int) getScroll(), 32);
+    protected void renderHeader(GuiGraphics graphics, int rowLeft, int startY) {
     }
     
-    public static void renderBackBackground(GuiGraphics graphics, BufferBuilder buffer, Tesselator tesselator,
-            ResourceLocation backgroundLocation, int left, int top, int right, int bottom, int yOffset, int color) {
-        RenderSystem.setShaderTexture(0, backgroundLocation);
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
-        Matrix4f matrix = graphics.pose().last().pose();
-        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-        buffer.vertex(matrix, left, bottom, 0.0F).uv(left / 32.0F, ((bottom + yOffset) / 32.0F)).color(color, color, color, 255).endVertex();
-        buffer.vertex(matrix, right, bottom, 0.0F).uv(right / 32.0F, ((bottom + yOffset) / 32.0F)).color(color, color, color, 255).endVertex();
-        buffer.vertex(matrix, right, top, 0.0F).uv(right / 32.0F, ((top + yOffset) / 32.0F)).color(color, color, color, 255).endVertex();
-        buffer.vertex(matrix, left, top, 0.0F).uv(left / 32.0F, ((top + yOffset) / 32.0F)).color(color, color, color, 255).endVertex();
-        tesselator.end();
+    @Deprecated
+    protected void renderBackBackground(GuiGraphics graphics) {
+        DynamicErrorFreeEntryListWidget.renderBackBackground(graphics, backgroundLocation,
+                left, top, right, bottom, (int) getScroll(), 32);
     }
     
     @Override
@@ -255,13 +252,11 @@ public abstract class DynamicErrorFreeEntryListWidget<E extends DynamicErrorFree
         this.drawBackground();
         int scrollbarPosition = this.getScrollbarPosition();
         int int_4 = scrollbarPosition + 6;
-        Tesselator tessellator = Tesselator.getInstance();
-        BufferBuilder buffer = tessellator.getBuilder();
-        renderBackBackground(graphics, buffer, tessellator);
+        renderBackBackground(graphics);
         int rowLeft = this.getRowLeft();
         int startY = this.top + 4 - (int) this.getScroll();
         if (this.renderSelection)
-            this.renderHeader(graphics, rowLeft, startY, tessellator);
+            this.renderHeader(graphics, rowLeft, startY);
         this.renderList(graphics, rowLeft, startY, mouseX, mouseY, delta);
         RenderSystem.disableDepthTest();
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
@@ -270,24 +265,24 @@ public abstract class DynamicErrorFreeEntryListWidget<E extends DynamicErrorFree
         RenderSystem.enableBlend();
         RenderSystem.blendFuncSeparate(770, 771, 0, 1);
         Matrix4f matrix = graphics.pose().last().pose();
-        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-        buffer.vertex(matrix, this.left, this.top + 4, 0.0F).uv(0, 1).color(0, 0, 0, 0).endVertex();
-        buffer.vertex(matrix, this.right, this.top + 4, 0.0F).uv(1, 1).color(0, 0, 0, 0).endVertex();
-        buffer.vertex(matrix, this.right, this.top, 0.0F).uv(1, 0).color(0, 0, 0, 255).endVertex();
-        buffer.vertex(matrix, this.left, this.top, 0.0F).uv(0, 0).color(0, 0, 0, 255).endVertex();
-        buffer.vertex(matrix, this.left, this.bottom, 0.0F).uv(0, 1).color(0, 0, 0, 255).endVertex();
-        buffer.vertex(matrix, this.right, this.bottom, 0.0F).uv(1, 1).color(0, 0, 0, 255).endVertex();
-        buffer.vertex(matrix, this.right, this.bottom - 4, 0.0F).uv(1, 0).color(0, 0, 0, 0).endVertex();
-        buffer.vertex(matrix, this.left, this.bottom - 4, 0.0F).uv(0, 0).color(0, 0, 0, 0).endVertex();
-        tessellator.end();
+        BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+        buffer.addVertex(matrix, this.left, this.top + 4, 0.0F).setUv(0, 1).setColor(0, 0, 0, 0);
+        buffer.addVertex(matrix, this.right, this.top + 4, 0.0F).setUv(1, 1).setColor(0, 0, 0, 0);
+        buffer.addVertex(matrix, this.right, this.top, 0.0F).setUv(1, 0).setColor(0, 0, 0, 255);
+        buffer.addVertex(matrix, this.left, this.top, 0.0F).setUv(0, 0).setColor(0, 0, 0, 255);
+        buffer.addVertex(matrix, this.left, this.bottom, 0.0F).setUv(0, 1).setColor(0, 0, 0, 255);
+        buffer.addVertex(matrix, this.right, this.bottom, 0.0F).setUv(1, 1).setColor(0, 0, 0, 255);
+        buffer.addVertex(matrix, this.right, this.bottom - 4, 0.0F).setUv(1, 0).setColor(0, 0, 0, 0);
+        buffer.addVertex(matrix, this.left, this.bottom - 4, 0.0F).setUv(0, 0).setColor(0, 0, 0, 0);
+        BufferUploader.drawWithShader(buffer.buildOrThrow());
         int maxScroll = this.getMaxScroll();
-        renderScrollBar(graphics, tessellator, buffer, maxScroll, scrollbarPosition, int_4);
+        renderScrollBar(graphics, maxScroll, scrollbarPosition, int_4);
         
         this.renderDecorations(graphics, mouseX, mouseY);
         RenderSystem.disableBlend();
     }
     
-    protected void renderScrollBar(GuiGraphics graphics, Tesselator tessellator, BufferBuilder buffer, int maxScroll, int scrollbarPositionMinX, int scrollbarPositionMaxX) {
+    protected void renderScrollBar(GuiGraphics graphics, int maxScroll, int scrollbarPositionMinX, int scrollbarPositionMaxX) {
         if (maxScroll > 0) {
             int int_9 = ((this.bottom - this.top) * (this.bottom - this.top)) / this.getMaxScrollPosition();
             int_9 = Mth.clamp(int_9, 32, this.bottom - this.top - 8);
@@ -298,20 +293,20 @@ public abstract class DynamicErrorFreeEntryListWidget<E extends DynamicErrorFree
             
             RenderSystem.setShader(GameRenderer::getPositionColorShader);
             Matrix4f matrix = graphics.pose().last().pose();
-            buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-            buffer.vertex(matrix, scrollbarPositionMinX, this.bottom, 0.0F).color(0, 0, 0, 255).endVertex();
-            buffer.vertex(matrix, scrollbarPositionMaxX, this.bottom, 0.0F).color(0, 0, 0, 255).endVertex();
-            buffer.vertex(matrix, scrollbarPositionMaxX, this.top, 0.0F).color(0, 0, 0, 255).endVertex();
-            buffer.vertex(matrix, scrollbarPositionMinX, this.top, 0.0F).color(0, 0, 0, 255).endVertex();
-            buffer.vertex(matrix, scrollbarPositionMinX, int_10 + int_9, 0.0F).color(128, 128, 128, 255).endVertex();
-            buffer.vertex(matrix, scrollbarPositionMaxX, int_10 + int_9, 0.0F).color(128, 128, 128, 255).endVertex();
-            buffer.vertex(matrix, scrollbarPositionMaxX, int_10, 0.0F).color(128, 128, 128, 255).endVertex();
-            buffer.vertex(matrix, scrollbarPositionMinX, int_10, 0.0F).color(128, 128, 128, 255).endVertex();
-            buffer.vertex(scrollbarPositionMinX, (int_10 + int_9 - 1), 0.0F).color(192, 192, 192, 255).endVertex();
-            buffer.vertex((scrollbarPositionMaxX - 1), (int_10 + int_9 - 1), 0.0F).color(192, 192, 192, 255).endVertex();
-            buffer.vertex((scrollbarPositionMaxX - 1), int_10, 0.0F).color(192, 192, 192, 255).endVertex();
-            buffer.vertex(scrollbarPositionMinX, int_10, 0.0F).color(192, 192, 192, 255).endVertex();
-            tessellator.end();
+            BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+            buffer.addVertex(matrix, scrollbarPositionMinX, this.bottom, 0.0F).setColor(0, 0, 0, 255);
+            buffer.addVertex(matrix, scrollbarPositionMaxX, this.bottom, 0.0F).setColor(0, 0, 0, 255);
+            buffer.addVertex(matrix, scrollbarPositionMaxX, this.top, 0.0F).setColor(0, 0, 0, 255);
+            buffer.addVertex(matrix, scrollbarPositionMinX, this.top, 0.0F).setColor(0, 0, 0, 255);
+            buffer.addVertex(matrix, scrollbarPositionMinX, int_10 + int_9, 0.0F).setColor(128, 128, 128, 255);
+            buffer.addVertex(matrix, scrollbarPositionMaxX, int_10 + int_9, 0.0F).setColor(128, 128, 128, 255);
+            buffer.addVertex(matrix, scrollbarPositionMaxX, int_10, 0.0F).setColor(128, 128, 128, 255);
+            buffer.addVertex(matrix, scrollbarPositionMinX, int_10, 0.0F).setColor(128, 128, 128, 255);
+            buffer.addVertex(scrollbarPositionMinX, (int_10 + int_9 - 1), 0.0F).setColor(192, 192, 192, 255);
+            buffer.addVertex((scrollbarPositionMaxX - 1), (int_10 + int_9 - 1), 0.0F).setColor(192, 192, 192, 255);
+            buffer.addVertex((scrollbarPositionMaxX - 1), int_10, 0.0F).setColor(192, 192, 192, 255);
+            buffer.addVertex(scrollbarPositionMinX, int_10, 0.0F).setColor(192, 192, 192, 255);
+            BufferUploader.drawWithShader(buffer.buildOrThrow());
         }
     }
     
@@ -456,7 +451,6 @@ public abstract class DynamicErrorFreeEntryListWidget<E extends DynamicErrorFree
         this.hoveredItem = this.isMouseOver(int_3, int_4) ? this.getItemAtPosition(int_3, int_4) : null;
         int itemCount = this.getItemCount();
         Tesselator tessellator = Tesselator.getInstance();
-        BufferBuilder buffer = tessellator.getBuilder();
         
         for (int renderIndex = 0; renderIndex < itemCount; ++renderIndex) {
             E item = this.getItem(renderIndex);
@@ -473,16 +467,16 @@ public abstract class DynamicErrorFreeEntryListWidget<E extends DynamicErrorFree
                 Matrix4f matrix = graphics.pose().last().pose();
                 RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
                 RenderSystem.setShader(GameRenderer::getPositionColorShader);
-                buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-                buffer.vertex(matrix, itemMinX, itemY + itemHeight + 2, 0.0F).color(float_2, float_2, float_2, 1.0F).endVertex();
-                buffer.vertex(matrix, itemMaxX, itemY + itemHeight + 2, 0.0F).color(float_2, float_2, float_2, 1.0F).endVertex();
-                buffer.vertex(matrix, itemMaxX, itemY - 2, 0.0F).color(float_2, float_2, float_2, 1.0F).endVertex();
-                buffer.vertex(matrix, itemMinX, itemY - 2, 0.0F).color(float_2, float_2, float_2, 1.0F).endVertex();
-                buffer.vertex(matrix, itemMinX + 1, itemY + itemHeight + 1, 0.0F).color(0.0F, 0.0F, 0.0F, 1.0F).endVertex();
-                buffer.vertex(matrix, itemMaxX - 1, itemY + itemHeight + 1, 0.0F).color(0.0F, 0.0F, 0.0F, 1.0F).endVertex();
-                buffer.vertex(matrix, itemMaxX - 1, itemY - 1, 0.0F).color(0.0F, 0.0F, 0.0F, 1.0F).endVertex();
-                buffer.vertex(matrix, itemMinX + 1, itemY - 1, 0.0F).color(0.0F, 0.0F, 0.0F, 1.0F).endVertex();
-                tessellator.end();
+                BufferBuilder buffer = tessellator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+                buffer.addVertex(matrix, itemMinX, itemY + itemHeight + 2, 0.0F).setColor(float_2, float_2, float_2, 1.0F);
+                buffer.addVertex(matrix, itemMaxX, itemY + itemHeight + 2, 0.0F).setColor(float_2, float_2, float_2, 1.0F);
+                buffer.addVertex(matrix, itemMaxX, itemY - 2, 0.0F).setColor(float_2, float_2, float_2, 1.0F);
+                buffer.addVertex(matrix, itemMinX, itemY - 2, 0.0F).setColor(float_2, float_2, float_2, 1.0F);
+                buffer.addVertex(matrix, itemMinX + 1, itemY + itemHeight + 1, 0.0F).setColor(0.0F, 0.0F, 0.0F, 1.0F);
+                buffer.addVertex(matrix, itemMaxX - 1, itemY + itemHeight + 1, 0.0F).setColor(0.0F, 0.0F, 0.0F, 1.0F);
+                buffer.addVertex(matrix, itemMaxX - 1, itemY - 1, 0.0F).setColor(0.0F, 0.0F, 0.0F, 1.0F);
+                buffer.addVertex(matrix, itemMinX + 1, itemY - 1, 0.0F).setColor(0.0F, 0.0F, 0.0F, 1.0F);
+                BufferUploader.drawWithShader(buffer.buildOrThrow());
             }
             
             int y = this.getRowTop(renderIndex);
@@ -513,18 +507,17 @@ public abstract class DynamicErrorFreeEntryListWidget<E extends DynamicErrorFree
     
     protected void renderHoleBackground(GuiGraphics graphics, int y1, int y2, int alpha1, int alpha2) {
         Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder buffer = tesselator.getBuilder();
         RenderSystem.setShaderTexture(0, backgroundLocation);
         Matrix4f matrix = graphics.pose().last().pose();
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
         float float_1 = 32.0F;
-        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-        buffer.vertex(matrix, this.left, y2, 0.0F).uv(0, ((float) y2 / 32.0F)).color(64, 64, 64, alpha2).endVertex();
-        buffer.vertex(matrix, this.left + this.width, y2, 0.0F).uv(((float) this.width / 32.0F), ((float) y2 / 32.0F)).color(64, 64, 64, alpha2).endVertex();
-        buffer.vertex(matrix, this.left + this.width, y1, 0.0F).uv(((float) this.width / 32.0F), ((float) y1 / 32.0F)).color(64, 64, 64, alpha1).endVertex();
-        buffer.vertex(matrix, this.left, y1, 0.0F).uv(0, ((float) y1 / 32.0F)).color(64, 64, 64, alpha1).endVertex();
-        tesselator.end();
+        BufferBuilder buffer = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+        buffer.addVertex(matrix, this.left, y2, 0.0F).setUv(0, ((float) y2 / 32.0F)).setColor(64, 64, 64, alpha2);
+        buffer.addVertex(matrix, this.left + this.width, y2, 0.0F).setUv(((float) this.width / 32.0F), ((float) y2 / 32.0F)).setColor(64, 64, 64, alpha2);
+        buffer.addVertex(matrix, this.left + this.width, y1, 0.0F).setUv(((float) this.width / 32.0F), ((float) y1 / 32.0F)).setColor(64, 64, 64, alpha1);
+        buffer.addVertex(matrix, this.left, y1, 0.0F).setUv(0, ((float) y1 / 32.0F)).setColor(64, 64, 64, alpha1);
+        BufferUploader.drawWithShader(buffer.buildOrThrow());
     }
     
     protected E remove(int int_1) {

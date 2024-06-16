@@ -25,10 +25,12 @@ package me.shedaniel.rei.forge;
 
 import me.shedaniel.rei.impl.init.RoughlyEnoughItemsInitializer;
 import net.neoforged.api.distmarker.Dist;
-import net.neoforged.fml.DistExecutor;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.data.loading.DatagenModLoader;
 import org.jetbrains.annotations.ApiStatus;
+
+import java.util.function.Supplier;
 
 @Mod("roughlyenoughitems")
 @ApiStatus.Internal
@@ -36,7 +38,14 @@ public class RoughlyEnoughItemsForge {
     public RoughlyEnoughItemsForge() {
         if (!DatagenModLoader.isRunningDataGen()) {
             RoughlyEnoughItemsInitializer.onInitialize();
-            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> RoughlyEnoughItemsInitializer::onInitializeClient);
+            
+            if (FMLEnvironment.dist == Dist.CLIENT) {
+                run(() -> RoughlyEnoughItemsInitializer::onInitializeClient);
+            }
         }
+    }
+    
+    public static void run(Supplier<Runnable> runnableSupplier) {
+        runnableSupplier.get().run();
     }
 }

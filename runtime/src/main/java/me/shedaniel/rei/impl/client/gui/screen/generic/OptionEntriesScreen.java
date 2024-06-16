@@ -270,7 +270,7 @@ public abstract class OptionEntriesScreen extends Screen {
     }
     
     public static class SubListEntry extends ListEntry {
-        private static final ResourceLocation CONFIG_TEX = new ResourceLocation("cloth-config2", "textures/gui/cloth_config.png");
+        private static final ResourceLocation CONFIG_TEX = ResourceLocation.fromNamespaceAndPath("cloth-config2", "textures/gui/cloth_config.png");
         private final CategoryLabelWidget widget;
         private final List<ListEntry> rules;
         private final List<GuiEventListener> children;

@@ -23,11 +23,9 @@
 
 package me.shedaniel.rei.impl.client.gui.widget.region;
 
-import com.mojang.blaze3d.vertex.Tesselator;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.chat.Component;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.lang3.mutable.MutableLong;
@@ -62,12 +60,11 @@ public class RegionRenderingDebugger {
             Component debugText = Component.literal(String.format("%d entries, avg. %.0fns, ttl. %.2fms, %s fps", size.getValue(), lastAverageDebugTime, lastTotalDebugTime, minecraft.fpsString.split(" ")[0]));
             int stringWidth = font.width(debugText);
             graphics.fillGradient(Math.min(x, minecraft.screen.width - stringWidth - 2), y, x + stringWidth + 2, y + font.lineHeight + 2, -16777216, -16777216);
-            MultiBufferSource.BufferSource immediate = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
             graphics.pose().pushPose();
             graphics.pose().translate(0.0D, 0.0D, 500.0D);
             Matrix4f matrix = graphics.pose().last().pose();
-            font.drawInBatch(debugText.getVisualOrderText(), Math.min(x + 2, minecraft.screen.width - stringWidth), y + 2, -1, false, matrix, immediate, Font.DisplayMode.NORMAL, 0, 15728880);
-            immediate.endBatch();
+            font.drawInBatch(debugText.getVisualOrderText(), Math.min(x + 2, minecraft.screen.width - stringWidth), y + 2, -1, false, matrix, graphics.bufferSource(), Font.DisplayMode.NORMAL, 0, 15728880);
+            graphics.flush();
             graphics.pose().popPose();
         }
         

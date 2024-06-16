@@ -64,8 +64,8 @@ import static me.shedaniel.rei.impl.client.gui.widget.entrylist.EntryListWidget.
 @ApiStatus.Internal
 @Environment(EnvType.CLIENT)
 public class REIRuntimeImpl implements REIRuntime {
-    private static final ResourceLocation DISPLAY_TEXTURE = new ResourceLocation("roughlyenoughitems", "textures/gui/display.png");
-    private static final ResourceLocation DISPLAY_TEXTURE_DARK = new ResourceLocation("roughlyenoughitems", "textures/gui/display_dark.png");
+    private static final ResourceLocation DISPLAY_TEXTURE = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "textures/gui/display.png");
+    private static final ResourceLocation DISPLAY_TEXTURE_DARK = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "textures/gui/display_dark.png");
     @ApiStatus.Internal
     public static boolean isWithinRecipeViewingScreen = false;
     private ScreenOverlayImpl overlay;

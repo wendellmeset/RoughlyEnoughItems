@@ -26,10 +26,7 @@ package me.shedaniel.rei.impl.client.config.entries;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.*;
 import me.shedaniel.clothconfig2.ClothConfigInitializer;
 import me.shedaniel.clothconfig2.api.ScissorsHandler;
 import me.shedaniel.clothconfig2.api.scroll.ScrollingContainer;
@@ -253,17 +250,16 @@ public class FilteringScreen extends Screen {
         
         ScissorsHandler.INSTANCE.removeLastScissor();
         Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder buffer = tesselator.getBuilder();
+        BufferBuilder buffer = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
         RenderSystem.enableBlend();
         RenderSystem.blendFuncSeparate(770, 771, 0, 1);
         RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
         Matrix4f matrix = graphics.pose().last().pose();
-        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-        buffer.vertex(matrix, 0, bounds.y + 4, 0.0F).uv(0.0F, 1.0F).color(0, 0, 0, 0).endVertex();
-        buffer.vertex(matrix, width, bounds.y + 4, 0.0F).uv(1.0F, 1.0F).color(0, 0, 0, 0).endVertex();
-        buffer.vertex(matrix, width, bounds.y, 0.0F).uv(1.0F, 0.0F).color(0, 0, 0, 255).endVertex();
-        buffer.vertex(matrix, 0, bounds.y, 0.0F).uv(0.0F, 0.0F).color(0, 0, 0, 255).endVertex();
-        tesselator.end();
+        buffer.addVertex(matrix, 0, bounds.y + 4, 0.0F).setUv(0.0F, 1.0F).setColor(0, 0, 0, 0);
+        buffer.addVertex(matrix, width, bounds.y + 4, 0.0F).setUv(1.0F, 1.0F).setColor(0, 0, 0, 0);
+        buffer.addVertex(matrix, width, bounds.y, 0.0F).setUv(1.0F, 0.0F).setColor(0, 0, 0, 255);
+        buffer.addVertex(matrix, 0, bounds.y, 0.0F).setUv(0.0F, 0.0F).setColor(0, 0, 0, 255);
+        BufferUploader.drawWithShader(buffer.buildOrThrow());
         RenderSystem.disableBlend();
         
         this.backButton.render(graphics, mouseX, mouseY, delta);

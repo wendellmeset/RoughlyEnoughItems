@@ -85,7 +85,7 @@ public class ConfigSearchWidget {
                     }
                 },
                 Widgets.withTranslate(label, 0, 0.5, 0),
-                Widgets.createTexturedWidget(new ResourceLocation("roughlyenoughitems:textures/gui/config/search_options.png"), new Rectangle(3, 3, 16, 16), 0, 0, 1, 1, 1, 1)
+                Widgets.createTexturedWidget(ResourceLocation.parse("roughlyenoughitems:textures/gui/config/search_options.png"), new Rectangle(3, 3, 16, 16), 0, 0, 1, 1, 1, 1)
         
         );
     }
@@ -126,7 +126,7 @@ public class ConfigSearchWidget {
                         return false;
                     }
                 },
-                Widgets.createTexturedWidget(new ResourceLocation("roughlyenoughitems:textures/gui/config/search_options.png"), bounds, 0, 0, 1, 1, 1, 1)
+                Widgets.createTexturedWidget(ResourceLocation.parse("roughlyenoughitems:textures/gui/config/search_options.png"), bounds, 0, 0, 1, 1, 1, 1)
         
         ), translatable("config.rei.texts.search_options"));
     }

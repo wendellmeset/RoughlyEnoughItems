@@ -28,7 +28,7 @@ import me.shedaniel.rei.impl.init.PrimitivePlatformAdapter;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLEnvironment;
-import net.neoforged.fml.loading.moddiscovery.ModAnnotation;
+import net.neoforged.fml.loading.modscan.ModAnnotation;
 import net.neoforged.neoforgespi.language.IModInfo;
 import net.neoforged.neoforgespi.language.ModFileScanData;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
@@ -68,13 +68,13 @@ public class AnnotationUtils {
                     if (value instanceof Dist[]) {
                         enabled = Arrays.asList((Dist[]) value).contains(FMLEnvironment.dist);
                     } else if (value instanceof ModAnnotation.EnumHolder) {
-                        enabled = Objects.equals(((ModAnnotation.EnumHolder) value).getValue(), FMLEnvironment.dist.name());
+                        enabled = Objects.equals(((ModAnnotation.EnumHolder) value).value(), FMLEnvironment.dist.name());
                     } else if (value instanceof List) {
                         List<ModAnnotation.EnumHolder> holders = ((List<?>) value).stream().filter(o -> o instanceof ModAnnotation.EnumHolder)
                                 .map(o -> (ModAnnotation.EnumHolder) o).toList();
                         if (!holders.isEmpty()) {
                             enabled = holders.stream()
-                                    .anyMatch(o -> Objects.equals(o.getValue(), FMLEnvironment.dist.name()));
+                                    .anyMatch(o -> Objects.equals(o.value(), FMLEnvironment.dist.name()));
                         } else {
                             enabled = true;
                         }

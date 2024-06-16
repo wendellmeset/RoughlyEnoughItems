@@ -24,10 +24,7 @@
 package me.shedaniel.rei.impl.client.gui.widget.basewidgets;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.*;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.gui.DrawableConsumer;
 import net.minecraft.client.gui.GuiGraphics;
@@ -52,15 +49,14 @@ public final class FillRectangleDrawableConsumer implements DrawableConsumer {
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder bufferBuilder = tesselator.getBuilder();
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         Matrix4f pose = graphics.pose().last().pose();
-        bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        bufferBuilder.vertex(pose, rectangle.getMaxX(), rectangle.getMinY(), 0).color(r, g, b, a).endVertex();
-        bufferBuilder.vertex(pose, rectangle.getMinX(), rectangle.getMinY(), 0).color(r, g, b, a).endVertex();
-        bufferBuilder.vertex(pose, rectangle.getMinX(), rectangle.getMaxY(), 0).color(r, g, b, a).endVertex();
-        bufferBuilder.vertex(pose, rectangle.getMaxX(), rectangle.getMaxY(), 0).color(r, g, b, a).endVertex();
-        tesselator.end();
+        BufferBuilder bufferBuilder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        bufferBuilder.addVertex(pose, rectangle.getMaxX(), rectangle.getMinY(), 0).setColor(r, g, b, a);
+        bufferBuilder.addVertex(pose, rectangle.getMinX(), rectangle.getMinY(), 0).setColor(r, g, b, a);
+        bufferBuilder.addVertex(pose, rectangle.getMinX(), rectangle.getMaxY(), 0).setColor(r, g, b, a);
+        bufferBuilder.addVertex(pose, rectangle.getMaxX(), rectangle.getMaxY(), 0).setColor(r, g, b, a);
+        BufferUploader.drawWithShader(bufferBuilder.buildOrThrow());
         RenderSystem.disableBlend();
     }
 }

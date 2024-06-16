@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class SimpleDisplayRenderer extends DisplayRenderer implements WidgetHolder {
-    protected static final ResourceLocation CHEST_GUI_TEXTURE = new ResourceLocation("roughlyenoughitems", "textures/gui/recipecontainer.png");
+    protected static final ResourceLocation CHEST_GUI_TEXTURE = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "textures/gui/recipecontainer.png");
     protected List<Slot> inputWidgets;
     protected List<Slot> outputWidgets;
     protected List<GuiEventListener> widgets;

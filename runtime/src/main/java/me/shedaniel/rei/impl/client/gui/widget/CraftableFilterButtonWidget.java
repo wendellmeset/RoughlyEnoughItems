@@ -142,13 +142,13 @@ public class CraftableFilterButtonWidget {
                                             InternalLogger.getInstance().error("Failed to dispose input method", throwable);
                                         }
                                         
-                                        ConfigManagerImpl.getInstance().getConfig().setInputMethodId(new ResourceLocation("rei:default"));
+                                        ConfigManagerImpl.getInstance().getConfig().setInputMethodId(ResourceLocation.parse("rei:default"));
                                     }).join();
                                     double[] progress = {0};
                                     CompletableFuture<Void> future = pair.getValue().prepare(service, p -> progress[0] = Mth.clamp(p, 0, 1)).whenComplete((unused, throwable) -> {
                                         if (throwable != null) {
                                             InternalLogger.getInstance().error("Failed to prepare input method", throwable);
-                                            ConfigManagerImpl.getInstance().getConfig().setInputMethodId(new ResourceLocation("rei:default"));
+                                            ConfigManagerImpl.getInstance().getConfig().setInputMethodId(ResourceLocation.parse("rei:default"));
                                         } else {
                                             ConfigManagerImpl.getInstance().getConfig().setInputMethodId(pair.getKey());
                                         }
@@ -160,7 +160,7 @@ public class CraftableFilterButtonWidget {
                                     }, () -> {
                                         Minecraft.getInstance().setScreen(screen);
                                         InternalLogger.getInstance().error("Failed to prepare input method: cancelled");
-                                        ConfigManagerImpl.getInstance().getConfig().setInputMethodId(new ResourceLocation("rei:default"));
+                                        ConfigManagerImpl.getInstance().getConfig().setInputMethodId(ResourceLocation.parse("rei:default"));
                                         future.cancel(Platform.isFabric());
                                         service.shutdown();
                                     });

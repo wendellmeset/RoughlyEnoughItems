@@ -47,7 +47,7 @@ import java.util.List;
 
 @Environment(EnvType.CLIENT)
 public class SubCategoryListEntry extends PerformanceScreen.PerformanceEntry implements Expandable {
-    private static final ResourceLocation CONFIG_TEX = new ResourceLocation("cloth-config2", "textures/gui/cloth_config.png");
+    private static final ResourceLocation CONFIG_TEX = ResourceLocation.fromNamespaceAndPath("cloth-config2", "textures/gui/cloth_config.png");
     private final List<PerformanceScreen.PerformanceEntry> entries;
     private final CategoryLabelWidget widget;
     private final List<GuiEventListener> children;

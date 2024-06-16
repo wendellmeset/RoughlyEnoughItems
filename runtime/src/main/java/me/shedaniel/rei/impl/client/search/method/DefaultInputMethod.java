@@ -36,7 +36,7 @@ import java.util.concurrent.Executor;
 public enum DefaultInputMethod implements InputMethod<String> {
     INSTANCE;
     
-    public static final ResourceLocation ID = new ResourceLocation("rei", "default");
+    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath("rei", "default");
     
     @Override
     public List<Locale> getMatchingLocales() {

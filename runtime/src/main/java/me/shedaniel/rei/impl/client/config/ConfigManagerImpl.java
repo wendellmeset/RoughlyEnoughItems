@@ -87,7 +87,7 @@ public class ConfigManagerImpl implements ConfigManager {
             return new JsonPrimitive(location == null ? null : location.toString());
         });
         builder.registerDeserializer(String.class, ResourceLocation.class, (value, marshaller) -> {
-            return value == null ? null : new ResourceLocation(value);
+            return value == null ? null : ResourceLocation.parse(value);
         });
         
         // CheatingMode

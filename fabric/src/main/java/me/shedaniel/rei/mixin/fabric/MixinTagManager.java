@@ -26,6 +26,7 @@ package me.shedaniel.rei.mixin.fabric;
 import me.shedaniel.rei.plugin.common.displays.tag.TagNodes;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.tags.TagManager;
@@ -42,6 +43,6 @@ public abstract class MixinTagManager<T> {
     @Inject(method = "createLoader", at = @At("HEAD"))
     private void load(ResourceManager resourceManager, Executor executor, RegistryAccess.RegistryEntry<T> registryEntry, CallbackInfoReturnable<CompletableFuture<TagManager.LoadResult<T>>> cir) {
         ResourceKey<? extends Registry<T>> resourceKey = registryEntry.key();
-        TagNodes.TAG_DIR_MAP.put(TagManager.getTagDir(resourceKey), resourceKey);
+        TagNodes.TAG_DIR_MAP.put(Registries.tagsDirPath(resourceKey), resourceKey);
     }
 }

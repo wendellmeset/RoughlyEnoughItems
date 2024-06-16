@@ -43,7 +43,7 @@ public class DefaultRecipeBookExclusionZones implements ExclusionZonesProvider<R
     @Override
     public Collection<Rectangle> provide(RecipeUpdateListener screen) {
         if (!(screen instanceof AbstractContainerScreen<?> containerScreen) || !(((AbstractContainerScreen<?>) screen).getMenu() instanceof RecipeBookMenu) ||
-            !Minecraft.getInstance().player.getRecipeBook().isOpen(((RecipeBookMenu<?>) ((AbstractContainerScreen<?>) screen).getMenu()).getRecipeBookType()))
+            !Minecraft.getInstance().player.getRecipeBook().isOpen(((RecipeBookMenu<?, ?>) ((AbstractContainerScreen<?>) screen).getMenu()).getRecipeBookType()))
             return Collections.emptyList();
         RecipeBookComponent recipeBookWidget = screen.getRecipeBookComponent();
         List<Rectangle> l = Lists.newArrayList(new Rectangle(containerScreen.leftPos - 4 - 145, containerScreen.topPos, 4 + 145 + 30, containerScreen.imageHeight));

@@ -41,6 +41,7 @@ import me.shedaniel.rei.api.client.registry.screen.ExclusionZones;
 import me.shedaniel.rei.api.client.registry.screen.ScreenRegistry;
 import me.shedaniel.rei.api.client.registry.transfer.TransferHandlerRegistry;
 import me.shedaniel.rei.api.client.registry.transfer.simple.SimpleTransferHandler;
+import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes;
@@ -97,6 +98,7 @@ import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionBrewing;
 import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.crafting.*;
+import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentInstance;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
@@ -198,20 +200,20 @@ public class DefaultClientPlugin implements REIClientPlugin, BuiltinClientPlugin
     
     @Override
     public void registerCollapsibleEntries(CollapsibleEntryRegistry registry) {
-        registry.group(new ResourceLocation("roughlyenoughitems", "enchanted_book"), Component.translatable("item.minecraft.enchanted_book"),
+        registry.group(ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "enchanted_book"), Component.translatable("item.minecraft.enchanted_book"),
                 stack -> stack.getType() == VanillaEntryTypes.ITEM && stack.<ItemStack>castValue().is(Items.ENCHANTED_BOOK));
-        registry.group(new ResourceLocation("roughlyenoughitems", "potion"), Component.translatable("item.minecraft.potion"),
+        registry.group(ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "potion"), Component.translatable("item.minecraft.potion"),
                 stack -> stack.getType() == VanillaEntryTypes.ITEM && stack.<ItemStack>castValue().is(Items.POTION));
-        registry.group(new ResourceLocation("roughlyenoughitems", "splash_potion"), Component.translatable("item.minecraft.splash_potion"),
+        registry.group(ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "splash_potion"), Component.translatable("item.minecraft.splash_potion"),
                 stack -> stack.getType() == VanillaEntryTypes.ITEM && stack.<ItemStack>castValue().is(Items.SPLASH_POTION));
-        registry.group(new ResourceLocation("roughlyenoughitems", "lingering_potion"), Component.translatable("item.minecraft.lingering_potion"),
+        registry.group(ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "lingering_potion"), Component.translatable("item.minecraft.lingering_potion"),
                 stack -> stack.getType() == VanillaEntryTypes.ITEM && stack.<ItemStack>castValue().is(Items.LINGERING_POTION));
-        registry.group(new ResourceLocation("roughlyenoughitems", "spawn_egg"), Component.translatable("text.rei.spawn_egg"),
+        registry.group(ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "spawn_egg"), Component.translatable("text.rei.spawn_egg"),
                 stack -> stack.getType() == VanillaEntryTypes.ITEM && stack.<ItemStack>castValue().getItem() instanceof SpawnEggItem);
-        registry.group(new ResourceLocation("roughlyenoughitems", "tipped_arrow"), Component.translatable("item.minecraft.tipped_arrow"),
+        registry.group(ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "tipped_arrow"), Component.translatable("item.minecraft.tipped_arrow"),
                 stack -> stack.getType() == VanillaEntryTypes.ITEM && stack.<ItemStack>castValue().is(Items.TIPPED_ARROW));
-        registry.group(new ResourceLocation("roughlyenoughitems", "music_disc"), Component.translatable("text.rei.music_disc"),
-                stack -> stack.getType() == VanillaEntryTypes.ITEM && stack.<ItemStack>castValue().getItem() instanceof RecordItem);
+        registry.group(ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "music_disc"), Component.translatable("text.rei.music_disc"),
+                stack -> stack.getType() == VanillaEntryTypes.ITEM && stack.<ItemStack>castValue().has(DataComponents.JUKEBOX_PLAYABLE));
     }
     
     @Override
@@ -283,17 +285,17 @@ public class DefaultClientPlugin implements REIClientPlugin, BuiltinClientPlugin
                 registry.addWorkstations(PATHING, EntryStacks.of(item));
             }
         });
-        for (EntryStack<?> stack : getTag(new ResourceLocation("c", "axes"))) {
+        for (EntryStack<?> stack : getTag(ResourceLocation.fromNamespaceAndPath("c", "axes"))) {
             if (axes.add(stack.<ItemStack>castValue().getItem())) {
                 registry.addWorkstations(STRIPPING, stack);
                 registry.addWorkstations(WAX_SCRAPING, stack);
                 registry.addWorkstations(OXIDATION_SCRAPING, stack);
             }
         }
-        for (EntryStack<?> stack : getTag(new ResourceLocation("c", "hoes"))) {
+        for (EntryStack<?> stack : getTag(ResourceLocation.fromNamespaceAndPath("c", "hoes"))) {
             if (hoes.add(stack.<ItemStack>castValue().getItem())) registry.addWorkstations(TILLING, stack);
         }
-        for (EntryStack<?> stack : getTag(new ResourceLocation("c", "shovels"))) {
+        for (EntryStack<?> stack : getTag(ResourceLocation.fromNamespaceAndPath("c", "shovels"))) {
             if (shovels.add(stack.<ItemStack>castValue().getItem())) registry.addWorkstations(PATHING, stack);
         }
     }
@@ -431,14 +433,18 @@ public class DefaultClientPlugin implements REIClientPlugin, BuiltinClientPlugin
                         Collections.singletonList(EntryIngredients.of(output.get().getLeft())), Optional.empty(), OptionalInt.of(output.get().getRight())));
             }
         }
-        List<Pair<EnchantmentInstance, ItemStack>> enchantmentBooks = BuiltInRegistries.ENCHANTMENT.stream()
-                .flatMap(enchantment -> {
+        List<Pair<EnchantmentInstance, ItemStack>> enchantmentBooks = BasicDisplay.registryAccess().registry(Registries.ENCHANTMENT)
+                .stream()
+                .flatMap(Registry::holders)
+                .flatMap(holder -> {
+                    if (!holder.isBound()) return Stream.empty();
+                    Enchantment enchantment = holder.value();
                     if (enchantment.getMaxLevel() - enchantment.getMinLevel() >= 10) {
                         return IntStream.of(enchantment.getMinLevel(), enchantment.getMaxLevel())
-                                .mapToObj(lvl -> new EnchantmentInstance(enchantment, lvl));
+                                .mapToObj(lvl -> new EnchantmentInstance(holder, lvl));
                     } else {
                         return IntStream.rangeClosed(enchantment.getMinLevel(), enchantment.getMaxLevel())
-                                .mapToObj(lvl -> new EnchantmentInstance(enchantment, lvl));
+                                .mapToObj(lvl -> new EnchantmentInstance(holder, lvl));
                     }
                 })
                 .map(instance -> {
@@ -450,7 +456,7 @@ public class DefaultClientPlugin implements REIClientPlugin, BuiltinClientPlugin
             ItemStack itemStack = stack.castValue();
             if (!itemStack.isEnchantable()) return;
             for (Pair<EnchantmentInstance, ItemStack> pair : enchantmentBooks) {
-                if (!pair.getKey().enchantment.canEnchant(itemStack)) continue;
+                if (!pair.getKey().enchantment.value().canEnchant(itemStack)) continue;
                 Optional<Pair<ItemStack, Integer>> output = DefaultAnvilDisplay.calculateOutput(itemStack, pair.getValue());
                 if (output.isEmpty()) continue;
                 registry.add(new DefaultAnvilDisplay(List.of(EntryIngredients.of(itemStack), EntryIngredients.of(pair.getValue())),

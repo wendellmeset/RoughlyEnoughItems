@@ -55,9 +55,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class TimeFavoriteEntry extends FavoriteEntry {
-    public static final ResourceLocation ID = new ResourceLocation("roughlyenoughitems", "time");
+    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "time");
     public static final String TRANSLATION_KEY = "favorite.section.time";
-    private static final ResourceLocation CHEST_GUI_TEXTURE = new ResourceLocation("roughlyenoughitems", "textures/gui/recipecontainer.png");
+    private static final ResourceLocation CHEST_GUI_TEXTURE = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "textures/gui/recipecontainer.png");
     public static final String KEY = "mode";
     @Nullable
     private final Time time;

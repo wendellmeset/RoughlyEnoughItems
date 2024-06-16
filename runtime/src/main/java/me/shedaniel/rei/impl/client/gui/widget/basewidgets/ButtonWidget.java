@@ -52,8 +52,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class ButtonWidget extends Button {
-    private static final ResourceLocation BUTTON_LOCATION = new ResourceLocation("roughlyenoughitems", "textures/gui/button.png");
-    private static final ResourceLocation BUTTON_LOCATION_DARK = new ResourceLocation("roughlyenoughitems", "textures/gui/button_dark.png");
+    private static final ResourceLocation BUTTON_LOCATION = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "textures/gui/button.png");
+    private static final ResourceLocation BUTTON_LOCATION_DARK = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "textures/gui/button_dark.png");
     private Rectangle bounds;
     private boolean enabled = true;
     private Component text;

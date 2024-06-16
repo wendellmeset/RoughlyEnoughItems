@@ -56,10 +56,10 @@ import java.util.Iterator;
 @Environment(EnvType.CLIENT)
 @ApiStatus.Internal
 public class HideIngredientsFromTagsPlugin implements REIClientPlugin {
-    private static final ResourceLocation HIDDEN_TAG = new ResourceLocation("c:hidden_from_recipe_viewers");
+    private static final ResourceLocation HIDDEN_TAG = ResourceLocation.fromNamespaceAndPath("c", "hidden_from_recipe_viewers");
     
     static {
-        FilteringRuleTypeRegistry.getInstance().register(new ResourceLocation("roughlyenoughitems", "hidden_from_recipe_viewers"), HideTagsFilteringRuleType.INSTANCE);
+        FilteringRuleTypeRegistry.getInstance().register(ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "hidden_from_recipe_viewers"), HideTagsFilteringRuleType.INSTANCE);
         RoughlyEnoughItemsCoreClient.POST_UPDATE_TAGS.register(HideTagsFilteringRule.INSTANCE::markDirty);
     }
     

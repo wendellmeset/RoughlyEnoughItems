@@ -80,7 +80,7 @@ public interface CraftingRecipeFiller<T extends CraftingRecipe> extends Function
         if (display.isShapeless()) {
             bounds.x -= 10;
         }
-        Widget widget = Widgets.createTexturedWidget(new ResourceLocation("roughlyenoughitems:textures/gui/info.png"), bounds.getX(), bounds.getY(), 0, 0, bounds.getWidth(), bounds.getHeight(), 1, 1, 1, 1);
+        Widget widget = Widgets.createTexturedWidget(ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "textures/gui/info.png"), bounds.getX(), bounds.getY(), 0, 0, bounds.getWidth(), bounds.getHeight(), 1, 1, 1, 1);
         return Widgets.withTooltip(Widgets.withBounds(widget, bounds), texts);
     }
     

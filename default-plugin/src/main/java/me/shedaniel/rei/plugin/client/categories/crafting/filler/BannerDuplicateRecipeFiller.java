@@ -46,7 +46,7 @@ public class BannerDuplicateRecipeFiller implements CraftingRecipeFiller<BannerD
         Map<DyeColor, Pair<EntryIngredient.Builder, EntryStack<?>>> displayMap = new HashMap<>();
         
         for (Pair<DyeColor, ItemStack> pair : ShieldDecorationRecipeFiller.randomizeBanners()) {
-            Optional<Item> bannerOptional = BuiltInRegistries.ITEM.getOptional(new ResourceLocation(pair.getFirst().getName() + "_banner"));
+            Optional<Item> bannerOptional = BuiltInRegistries.ITEM.getOptional(ResourceLocation.parse(pair.getFirst().getName() + "_banner"));
             if (bannerOptional.isEmpty()) continue;
             Pair<EntryIngredient.Builder, EntryStack<?>> builderPair = displayMap.computeIfAbsent(pair.getFirst(), color -> Pair.of(EntryIngredient.builder(), EntryStacks.of(bannerOptional.get())));
             builderPair.getFirst().add(EntryStacks.of(pair.getSecond()));

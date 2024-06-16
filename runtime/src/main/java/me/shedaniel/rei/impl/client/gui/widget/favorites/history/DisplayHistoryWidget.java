@@ -24,10 +24,7 @@
 package me.shedaniel.rei.impl.client.gui.widget.favorites.history;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.*;
 import me.shedaniel.clothconfig2.ClothConfigInitializer;
 import me.shedaniel.clothconfig2.api.ScissorsHandler;
 import me.shedaniel.clothconfig2.api.animator.NumberAnimator;
@@ -141,8 +138,7 @@ public class DisplayHistoryWidget extends WidgetWithBounds implements DraggableC
         RenderSystem.defaultBlendFunc();
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder builder = tesselator.getBuilder();
-        builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        BufferBuilder builder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
         
         float a = (float) (color >> 24 & 255) / 255.0F;
         float r = (float) (color >> 16 & 255) / 255.0F;
@@ -151,13 +147,13 @@ public class DisplayHistoryWidget extends WidgetWithBounds implements DraggableC
         Matrix4f pose = graphics.pose().last().pose();
         
         for (float x = x1 - offset; x < x2; x += 7) {
-            builder.vertex(pose, Mth.clamp(x + 4, x1, x2), y, 0).color(r, g, b, a).endVertex();
-            builder.vertex(pose, Mth.clamp(x, x1, x2), y, 0).color(r, g, b, a).endVertex();
-            builder.vertex(pose, Mth.clamp(x, x1, x2), y + 1, 0).color(r, g, b, a).endVertex();
-            builder.vertex(pose, Mth.clamp(x + 4, x1, x2), y + 1, 0).color(r, g, b, a).endVertex();
+            builder.addVertex(pose, Mth.clamp(x + 4, x1, x2), y, 0).setColor(r, g, b, a);
+            builder.addVertex(pose, Mth.clamp(x, x1, x2), y, 0).setColor(r, g, b, a);
+            builder.addVertex(pose, Mth.clamp(x, x1, x2), y + 1, 0).setColor(r, g, b, a);
+            builder.addVertex(pose, Mth.clamp(x + 4, x1, x2), y + 1, 0).setColor(r, g, b, a);
         }
         
-        tesselator.end();
+        BufferUploader.drawWithShader(builder.buildOrThrow());
         RenderSystem.disableBlend();
     }
     
@@ -170,8 +166,7 @@ public class DisplayHistoryWidget extends WidgetWithBounds implements DraggableC
         RenderSystem.defaultBlendFunc();
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder builder = tesselator.getBuilder();
-        builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        BufferBuilder builder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
         
         float a = (float) (color >> 24 & 255) / 255.0F;
         float r = (float) (color >> 16 & 255) / 255.0F;
@@ -180,13 +175,13 @@ public class DisplayHistoryWidget extends WidgetWithBounds implements DraggableC
         Matrix4f pose = graphics.pose().last().pose();
         
         for (float y = y1 - offset; y < y2; y += 7) {
-            builder.vertex(pose, x + 1, Mth.clamp(y, y1, y2), 0).color(r, g, b, a).endVertex();
-            builder.vertex(pose, x, Mth.clamp(y, y1, y2), 0).color(r, g, b, a).endVertex();
-            builder.vertex(pose, x, Mth.clamp(y + 4, y1, y2), 0).color(r, g, b, a).endVertex();
-            builder.vertex(pose, x + 1, Mth.clamp(y + 4, y1, y2), 0).color(r, g, b, a).endVertex();
+            builder.addVertex(pose, x + 1, Mth.clamp(y, y1, y2), 0).setColor(r, g, b, a);
+            builder.addVertex(pose, x, Mth.clamp(y, y1, y2), 0).setColor(r, g, b, a);
+            builder.addVertex(pose, x, Mth.clamp(y + 4, y1, y2), 0).setColor(r, g, b, a);
+            builder.addVertex(pose, x + 1, Mth.clamp(y + 4, y1, y2), 0).setColor(r, g, b, a);
         }
         
-        tesselator.end();
+        BufferUploader.drawWithShader(builder.buildOrThrow()); 
         RenderSystem.disableBlend();
     }
     

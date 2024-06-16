@@ -111,11 +111,11 @@ public enum DefaultScreenOverlayRenderer implements OverlayRendererProvider {
             }
             resetFocused(screen);
             if (rendered[0] == 0 && !(screen instanceof DisplayScreen)) {
-                sink.render(graphics, mouseX, mouseY, delta);
+                sink.render(graphics, mouseX, mouseY, delta.getRealtimeDeltaTicks());
             }
             rendered[0] = 1;
             if (rendered[0] == 1) {
-                sink.lateRender(graphics, mouseX, mouseY, delta);
+                sink.lateRender(graphics, mouseX, mouseY, delta.getRealtimeDeltaTicks());
             }
             resetFocused(screen);
         };

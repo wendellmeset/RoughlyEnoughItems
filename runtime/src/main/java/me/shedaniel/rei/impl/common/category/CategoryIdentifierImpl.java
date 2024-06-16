@@ -72,7 +72,7 @@ public class CategoryIdentifierImpl<D extends Display> implements CategoryIdenti
         Internals.attachInstance((Function<String, CategoryIdentifier<?>>) id -> {
             CategoryIdentifier<?> identifier = cache.get(id);
             if (identifier != null) return identifier;
-            identifier = new CategoryIdentifierImpl<>(new ResourceLocation(id));
+            identifier = new CategoryIdentifierImpl<>(ResourceLocation.parse(id));
             cache.put(id, identifier);
             return identifier;
         }, "categoryIdentifier");

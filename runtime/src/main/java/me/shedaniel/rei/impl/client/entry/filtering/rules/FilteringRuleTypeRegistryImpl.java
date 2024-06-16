@@ -42,9 +42,9 @@ public class FilteringRuleTypeRegistryImpl extends AbstractList<FilteringRuleTyp
     private final BiMap<ResourceLocation, FilteringRuleType<?>> types = HashBiMap.create();
     
     public FilteringRuleTypeRegistryImpl() {
-        register(new ResourceLocation("roughlyenoughitems", "search"), SearchFilteringRuleType.INSTANCE);
-        register(new ResourceLocation("roughlyenoughitems", "manual"), ManualFilteringRuleType.INSTANCE);
-        register(new ResourceLocation("roughlyenoughitems", "basic"), BasicFilteringRuleType.INSTANCE);
+        register(ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "search"), SearchFilteringRuleType.INSTANCE);
+        register(ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "manual"), ManualFilteringRuleType.INSTANCE);
+        register(ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "basic"), BasicFilteringRuleType.INSTANCE);
     }
     
     @Override

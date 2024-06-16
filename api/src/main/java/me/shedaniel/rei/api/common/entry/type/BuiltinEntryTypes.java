@@ -29,7 +29,7 @@ import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.NonExtendable
 public interface BuiltinEntryTypes {
-    ResourceLocation EMPTY_ID = new ResourceLocation("empty");
+    ResourceLocation EMPTY_ID = ResourceLocation.withDefaultNamespace("empty");
     
     EntryType<Unit> EMPTY = EntryType.deferred(EMPTY_ID);
 }

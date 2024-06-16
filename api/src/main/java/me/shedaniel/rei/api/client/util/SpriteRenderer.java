@@ -197,6 +197,11 @@ public class SpriteRenderer {
             next(sprite.contents().name());
         }
         
+        private static VertexConsumer normal(VertexConsumer consumer, Matrix3f var1, float var2, float var3, float var4) {
+            Vector3f var5 = var1.transform(new Vector3f(var2, var3, var4));
+            return consumer.setNormal(var5.x(), var5.y(), var5.z());
+        }
+        
         public void next(ResourceLocation texture) {
             if (this.consumer == null) {
                 throw new RuntimeException("Invalid VertexConsumer!");
@@ -241,38 +246,29 @@ public class SpriteRenderer {
                     
                     this.consumer = consumers.getBuffer(layer);
                     
-                    normal(this.consumer.vertex(this.model, x, y + nSY, z1)
-                            .color(this.r, this.g, this.b, this.a)
-                            .uv(this.uStart, this.vEnd - dY)
-                            .overlayCoords(this.u, this.v)
-                            .uv2(this.l), this.normal, this.nX, this.nY, this.nZ)
-                            .endVertex();
-                    normal(this.consumer.vertex(this.model, x + nSX, y + nSY, z1)
-                            .color(this.r, this.g, this.b, this.a)
-                            .uv(this.uEnd - dX, this.vEnd - dY)
-                            .overlayCoords(this.u, this.v)
-                            .uv2(this.l), this.normal, this.nX, this.nY, this.nZ)
-                            .endVertex();
-                    normal(this.consumer.vertex(this.model, x + nSX, y, z1)
-                            .color(this.r, this.g, this.b, this.a)
-                            .uv(this.uEnd - dX, this.vStart)
-                            .overlayCoords(this.u, this.v)
-                            .uv2(this.l), this.normal, this.nX, this.nY, this.nZ)
-                            .endVertex();
-                    normal(this.consumer.vertex(this.model, x, y, z1)
-                            .color(this.r, this.g, this.b, this.a)
-                            .uv(this.uStart, this.vStart)
-                            .overlayCoords(this.u, this.v)
-                            .uv2(this.l), this.normal, this.nX, this.nY, this.nZ)
-                            .endVertex();
+                    normal(this.consumer.addVertex(this.model, x, y + nSY, z1)
+                            .setColor(this.r, this.g, this.b, this.a)
+                            .setUv(this.uStart, this.vEnd - dY)
+                            .setUv2(this.u, this.v)
+                            .setOverlay(this.l), this.normal, this.nX, this.nY, this.nZ);
+                    normal(this.consumer.addVertex(this.model, x + nSX, y + nSY, z1)
+                            .setColor(this.r, this.g, this.b, this.a)
+                            .setUv(this.uEnd - dX, this.vEnd - dY)
+                            .setUv2(this.u, this.v)
+                            .setOverlay(this.l), this.normal, this.nX, this.nY, this.nZ);
+                    normal(this.consumer.addVertex(this.model, x + nSX, y, z1)
+                            .setColor(this.r, this.g, this.b, this.a)
+                            .setUv(this.uEnd - dX, this.vStart)
+                            .setUv2(this.u, this.v)
+                            .setOverlay(this.l), this.normal, this.nX, this.nY, this.nZ);
+                    normal(this.consumer.addVertex(this.model, x, y, z1)
+                            .setColor(this.r, this.g, this.b, this.a)
+                            .setUv(this.uStart, this.vStart)
+                            .setUv2(this.u, this.v)
+                            .setOverlay(this.l), this.normal, this.nX, this.nY, this.nZ);
                 }
             }
             
-        }
-        
-        private static VertexConsumer normal(VertexConsumer consumer, Matrix3f var1, float var2, float var3, float var4) {
-            Vector3f var5 = var1.transform(new Vector3f(var2, var3, var4));
-            return consumer.normal(var5.x(), var5.y(), var5.z());
         }
     }
 }
