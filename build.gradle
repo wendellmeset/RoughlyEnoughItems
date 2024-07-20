@@ -1,9 +1,9 @@
 plugins {
-    id("fabric-loom") version "0.4-SNAPSHOT"
+    id("fabric-loom") version "0.9-SNAPSHOT"
     id("maven-publish")
     id("java")
     id("java-library")
-    id("net.minecrell.licenser") version("0.4.1")
+    id("org.cadixdev.licenser") version("0.6.1")
     id("com.matthewprenger.cursegradle") version("1.4.0")
     id("net.corda.plugins.jar-filter") version("5.0.8") apply false
 }
@@ -29,8 +29,8 @@ license {
 }
 
 repositories {
-    maven { url "https://dl.bintray.com/shedaniel/legacy-yarn-updated" }
-    maven { url "https://dl.bintray.com/shedaniel/shedaniel-mods" }
+    maven { url "https://maven.terraformersmc.com/" }
+    maven { url "https://maven.shedaniel.me/" }
 }
 
 jar {
@@ -90,7 +90,7 @@ dependencies {
                 }
             }
         }
-        configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.each eachDep
+        configurations.compileClasspath.resolvedConfiguration.firstLevelModuleDependencies.each eachDep
         configurations.runtimeClasspath.resolvedConfiguration.firstLevelModuleDependencies.each eachDep
     }
 }
@@ -214,12 +214,12 @@ publishing {
     }
 
     repositories {
-        if (project.hasProperty('danielshe_pass')) {
+        if (System.getenv("MAVEN_PASS") != null) {
             maven {
-                url = "http://deploy.modmuss50.me/"
+                url = "https://deploy.shedaniel.me/"
                 credentials {
-                    username = "danielshe"
-                    password = project.getProperty('danielshe_pass')
+                    username = "shedaniel"
+                    password = System.getenv("MAVEN_PASS")
                 }
             }
         }

@@ -106,6 +106,10 @@ public class InputSlotCrafter<C extends Inventory> implements RecipeGridAligner<
                 }
                 
                 takenStack.setCount(1);
+                if (!slot.canPlace(takenStack)) {
+                    return;
+                }
+                
                 if (slot.getItemStack().isEmpty()) {
                     slot.setItemStack(takenStack);
                 } else {
@@ -158,11 +162,20 @@ public class InputSlotCrafter<C extends Inventory> implements RecipeGridAligner<
     }
     
     public int method_7371(ItemStack itemStack) {
+        boolean rejectedModification = false;
         for (int i = 0; i < inventoryStacks.size(); i++) {
             ItemStack itemStack1 = this.inventoryStacks.get(i).getItemStack();
             if (!itemStack1.isEmpty() && areItemsEqual(itemStack, itemStack1) && !itemStack1.isDamaged() && !itemStack1.hasEnchantments() && !itemStack1.hasCustomName()) {
-                return i;
+                if (!this.inventoryStacks.get(i).allowModification(player)) {
+                    rejectedModification = true;
+                } else {
+                    return i;
+                }
             }
+        }
+        
+        if (rejectedModification) {
+            throw new IllegalStateException("Unable to take item from inventory due to slot not allowing modification! Item requested: " + itemStack);
         }
         
         return -1;
