@@ -23,6 +23,7 @@
 
 package me.shedaniel.rei.server;
 
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 public interface StackAccessor {
@@ -31,4 +32,12 @@ public interface StackAccessor {
     void setItemStack(ItemStack stack);
     
     ItemStack takeStack(int amount);
+    
+    default boolean allowModification(Player player) {
+        return true;
+    }
+    
+    default boolean canPlace(ItemStack stack) {
+        return true;
+    }
 }

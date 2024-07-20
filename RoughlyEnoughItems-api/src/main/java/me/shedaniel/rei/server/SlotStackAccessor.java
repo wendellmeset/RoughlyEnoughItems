@@ -23,6 +23,7 @@
 
 package me.shedaniel.rei.server;
 
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
@@ -46,5 +47,15 @@ public class SlotStackAccessor implements StackAccessor {
     @Override
     public ItemStack takeStack(int amount) {
         return slot.remove(amount);
+    }
+    
+    @Override
+    public boolean allowModification(Player player) {
+        return slot.mayPickup(player) && slot.mayPlace(getItemStack());
+    }
+    
+    @Override
+    public boolean canPlace(ItemStack stack) {
+        return slot.mayPlace(stack);
     }
 }

@@ -38,6 +38,10 @@ public interface GridCleanHandler<T extends AbstractContainerMenu> {
         DumpHandler<T> dumpHandler = context.getContainerInfo().getDumpHandler();
         ItemStack stackToReturn = stackAccessor.getItemStack();
         if (!stackToReturn.isEmpty()) {
+            if (!stackAccessor.allowModification(context.getPlayerEntity())) {
+                error("rei.rei.no.slot.in.inv");
+            }
+            
             for (; stackToReturn.getCount() > 0; stackAccessor.takeStack(1)) {
                 ItemStack stackToInsert = stackToReturn.copy();
                 stackToInsert.setCount(1);

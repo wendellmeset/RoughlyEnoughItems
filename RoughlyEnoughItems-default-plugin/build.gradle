@@ -5,5 +5,5 @@ loom {
 }
 
 dependencies {
-    compile project(path: ':RoughlyEnoughItems-api', configuration: 'dev')
+    compileOnly project(path: ':RoughlyEnoughItems-api', configuration: 'dev')
 }

@@ -34,7 +34,7 @@ public interface DumpHandler<T extends AbstractContainerMenu> {
     
     static StackAccessor getOccupiedSlotWithRoomForStack(ItemStack stack, List<StackAccessor> inventoryStacks) {
         for (StackAccessor inventoryStack : inventoryStacks) {
-            if (canStackAddMore(inventoryStack.getItemStack(), stack)) {
+            if (canStackAddMore(inventoryStack.getItemStack(), stack) && inventoryStack.canPlace(stack)) {
                 return inventoryStack;
             }
         }

@@ -1,9 +1,9 @@
 plugins {
-    id("forgified-fabric-loom") version("0.6.66") apply false
+    id("dev.architectury.loom") version("0.9.0-SNAPSHOT") apply false
     id("maven-publish")
     id("java")
     id("java-library")
-    id("net.minecrell.licenser") version("0.4.1")
+    id("org.cadixdev.licenser") version("0.6.1")
     id("com.matthewprenger.cursegradle") version("1.4.0")
 }
 
@@ -20,8 +20,8 @@ group = "me.shedaniel"
 
 allprojects {
     apply plugin: 'maven-publish'
-    apply plugin: 'forgified-fabric-loom'
-    apply plugin: 'net.minecrell.licenser'
+    apply plugin: 'dev.architectury.loom'
+    apply plugin: 'org.cadixdev.licenser'
 
     sourceCompatibility = targetCompatibility = 1.8
 
@@ -31,8 +31,12 @@ allprojects {
     }
 
     repositories {
-        maven { url "https://maven.shedaniel.me" }
         maven { url "https://maven.terraformersmc.com/releases" }
+        maven { url "https://maven.shedaniel.me/" }
+    }
+
+    jar {
+        from "LICENSE"
     }
 
     processResources {
@@ -163,7 +167,7 @@ task remapMavenJar(type: RemapJarTask, dependsOn: jar) {
 
 dependencies {
     subprojects.each {
-        compile project(path: ":${it.name}", configuration: "dev")
+        compileOnly project(path: ":${it.name}", configuration: "dev")
         include project(path: ":${it.name}", configuration: "remapped")
     }
 }
