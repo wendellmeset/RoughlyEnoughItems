@@ -2,8 +2,8 @@ pluginManagement {
     repositories {
         maven { url "https://maven.shedaniel.me/" }
         maven { url "https://maven.fabricmc.net/" }
-        maven { url "https://files.minecraftforge.net/maven/" }
         gradlePluginPortal()
+        maven { url "https://files.minecraftforge.net/maven/" }
     }
 }
 
@@ -13,7 +13,7 @@ include "api"
 include "default-plugin"
 include "runtime"
 include "fabric"
-include "forge"
+//include "forge"
 
-include "jei-compatibility-layer"
-include "jei-internals-workaround"
+//include "jei-compatibility-layer"
+//include "jei-internals-workaround"
