@@ -43,6 +43,10 @@ public interface InputCleanHandler<T extends AbstractContainerMenu, D extends Di
     static <T extends AbstractContainerMenu> void returnSlotsToPlayerInventory(MenuInfoContext<T, ?, ?> context, DumpHandler<T, ?> dumpHandler, SlotAccessor slotAccessor) {
         ItemStack stackToReturn = slotAccessor.getItemStack();
         if (!stackToReturn.isEmpty()) {
+            if (!slotAccessor.allowModification(context.getPlayerEntity())) {
+                error("rei.rei.no.slot.in.inv");
+            }
+            
             for (; stackToReturn.getCount() > 0; slotAccessor.takeStack(1)) {
                 ItemStack stackToInsert = stackToReturn.copy();
                 stackToInsert.setCount(1);

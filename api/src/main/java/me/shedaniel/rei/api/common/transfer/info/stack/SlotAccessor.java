@@ -24,6 +24,7 @@
 package me.shedaniel.rei.api.common.transfer.info.stack;
 
 import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
@@ -36,6 +37,14 @@ public interface SlotAccessor {
     void setItemStack(ItemStack stack);
     
     ItemStack takeStack(int amount);
+    
+    default boolean allowModification(Player player) {
+        return true;
+    }
+    
+    default boolean canPlace(ItemStack stack) {
+        return true;
+    }
     
     static SlotAccessor fromSlot(Slot slot) {
         return new VanillaSlotAccessor(slot);

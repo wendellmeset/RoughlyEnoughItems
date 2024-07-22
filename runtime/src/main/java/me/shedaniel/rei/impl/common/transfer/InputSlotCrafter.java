@@ -128,6 +128,10 @@ public class InputSlotCrafter<T extends AbstractContainerMenu, C extends Contain
                 }
                 
                 takenStack.setCount(1);
+                if (!slot.canPlace(takenStack)) {
+                    return;
+                }
+                
                 if (slot.getItemStack().isEmpty()) {
                     slot.setItemStack(takenStack);
                 } else {
@@ -161,11 +165,20 @@ public class InputSlotCrafter<T extends AbstractContainerMenu, C extends Contain
     
     @Nullable
     public SlotAccessor takeInventoryStack(ItemStack itemStack) {
+        boolean rejectedModification = false;
         for (SlotAccessor inventoryStack : inventoryStacks) {
             ItemStack itemStack1 = inventoryStack.getItemStack();
             if (!itemStack1.isEmpty() && areItemsEqual(itemStack, itemStack1) && !itemStack1.isDamaged() && !itemStack1.isEnchanted() && !itemStack1.hasCustomHoverName()) {
-                return inventoryStack;
+                if (!inventoryStack.allowModification(player)) {
+                    rejectedModification = true;
+                } else {
+                    return inventoryStack;
+                }
             }
+        }
+        
+        if (rejectedModification) {
+            throw new IllegalStateException("Unable to take item from inventory due to slot not allowing modification! Item requested: " + itemStack);
         }
         
         return null;
