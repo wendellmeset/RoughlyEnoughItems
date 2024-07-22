@@ -77,6 +77,9 @@ public class NewInputSlotCrafter<T extends AbstractContainerMenu, C extends Cont
     protected void cleanInputs() {
         for (SlotAccessor slot : getInputSlots()) {
             ItemStack stackToReturn = slot.getItemStack();
+            if (!slot.allowModification(player)) {
+                throw new IllegalStateException("Slot " + slot + " is not modifiable!");
+            }
             if (!stackToReturn.isEmpty()) {
                 for (; !(stackToReturn = slot.getItemStack()).isEmpty(); slot.takeStack(1)) {
                     ItemStack stackToInsert = stackToReturn.copy();
