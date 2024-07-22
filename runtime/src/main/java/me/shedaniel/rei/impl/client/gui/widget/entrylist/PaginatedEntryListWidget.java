@@ -116,6 +116,10 @@ public class PaginatedEntryListWidget extends CollapsingEntryListWidget {
     }
     
     public int getTotalPages() {
+        return getTotalPages(entries);
+    }
+    
+    public int getTotalPages(List<?> entries) {
         return Mth.ceil(stacks.size() / (float) entries.size());
     }
     
@@ -134,7 +138,7 @@ public class PaginatedEntryListWidget extends CollapsingEntryListWidget {
                 }
             }
         }
-        page = Math.max(Math.min(page, getTotalPages() - 1), 0);
+        page = Mth.clamp(page, 0, getTotalPages(entries) - 1);
         int skip = Math.max(0, page * entries.size());
         List</*EntryStack<?> | List<EntryStack<?>>*/ Object> subList = stacks.subList(skip, Math.min(stacks.size(), skip + entries.size()));
         Int2ObjectMap<CollapsedStack> indexedCollapsedStack = getCollapsedStackIndexed();
