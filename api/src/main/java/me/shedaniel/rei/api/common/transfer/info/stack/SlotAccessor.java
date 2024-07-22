@@ -41,6 +41,14 @@ public interface SlotAccessor {
     
     ItemStack takeStack(int amount);
     
+    default boolean allowModification(Player player) {
+        return true;
+    }
+    
+    default boolean canPlace(ItemStack stack) {
+        return true;
+    }
+    
     static SlotAccessor fromSlot(Slot slot) {
         return new VanillaSlotAccessor(slot);
     }

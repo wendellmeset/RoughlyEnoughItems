@@ -24,6 +24,7 @@
 package me.shedaniel.rei.api.common.transfer.info.stack;
 
 import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -52,5 +53,15 @@ public class ContainerSlotAccessor implements SlotAccessor {
     @Override
     public ItemStack takeStack(int amount) {
         return this.container.removeItem(index, amount);
+    }
+    
+    @Override
+    public boolean allowModification(Player player) {
+        return canPlace(getItemStack());
+    }
+    
+    @Override
+    public boolean canPlace(ItemStack stack) {
+        return this.container.canPlaceItem(index, stack);
     }
 }
