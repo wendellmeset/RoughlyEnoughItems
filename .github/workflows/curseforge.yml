@@ -24,8 +24,14 @@ jobs:
           danielshe_curse_api_key: ${{ secrets.CF_API_KEY }}
           BRANCH_NAME: ${{ github.ref }}
           MAVEN_PASS: ${{ secrets.MAVEN_PASS }}
+      - name: Build Jars
+        run: ./gradlew build --stacktrace
+        env:
+          danielshe_curse_api_key: ${{ secrets.CF_API_KEY }}
+          BRANCH_NAME: ${{ github.ref }}
+          MAVEN_PASS: ${{ secrets.MAVEN_PASS }}
       - name: Upload to CurseForge and Maven
-        run: ./gradlew build publish releaseOnCf publish --stacktrace
+        run: ./gradlew publish releaseOnCf --stacktrace
         env:
           danielshe_curse_api_key: ${{ secrets.CF_API_KEY }}
           BRANCH_NAME: ${{ github.ref }}
