@@ -25,6 +25,7 @@ package me.shedaniel.rei.mixin.fabric;
 
 import me.shedaniel.rei.RoughlyEnoughItemsCoreClient;
 import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.protocol.common.ClientboundUpdateTagsPacket;
 import net.minecraft.network.protocol.game.ClientboundUpdateRecipesPacket;
 import net.minecraft.world.item.crafting.RecipeManager;
@@ -36,12 +37,14 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ClientPacketListener.class)
-public class MixinClientPacketListener {
+public abstract class MixinClientPacketListener {
     @Shadow @Final private RecipeManager recipeManager;
+    
+    @Shadow public abstract RegistryAccess.Frozen registryAccess();
     
     @Inject(method = "handleUpdateRecipes", at = @At("HEAD"))
     private void handleUpdateRecipes(ClientboundUpdateRecipesPacket clientboundUpdateRecipesPacket, CallbackInfo ci) {
-        RoughlyEnoughItemsCoreClient.PRE_UPDATE_RECIPES.invoker().update(recipeManager);
+        RoughlyEnoughItemsCoreClient.PRE_UPDATE_RECIPES.invoker().accept(recipeManager, registryAccess());
     }
     
     @Inject(method = "handleUpdateTags", at = @At("HEAD"))

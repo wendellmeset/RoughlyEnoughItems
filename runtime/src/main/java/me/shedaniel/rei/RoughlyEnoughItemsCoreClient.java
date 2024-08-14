@@ -100,6 +100,7 @@ import net.minecraft.client.gui.screens.inventory.CraftingScreen;
 import net.minecraft.client.gui.screens.recipebook.GhostRecipe;
 import net.minecraft.client.gui.screens.recipebook.RecipeBookComponent;
 import net.minecraft.client.resources.language.I18n;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -112,6 +113,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeManager;
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
@@ -120,15 +122,12 @@ import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.function.BiFunction;
-import java.util.function.BooleanSupplier;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.*;
 import java.util.stream.Stream;
 
 @Environment(EnvType.CLIENT)
 public class RoughlyEnoughItemsCoreClient {
-    public static final Event<ClientRecipeUpdateEvent> PRE_UPDATE_RECIPES = EventFactory.createLoop();
+    public static final Event<BiConsumer<RecipeManager, RegistryAccess>> PRE_UPDATE_RECIPES = EventFactory.createLoop();
     public static final Event<Runnable> POST_UPDATE_TAGS = EventFactory.createLoop();
     public static boolean isLeftMousePressed = false;
     private static final ExecutorService RELOAD_PLUGINS = Executors.newSingleThreadScheduledExecutor(task -> {
@@ -317,9 +316,9 @@ public class RoughlyEnoughItemsCoreClient {
         final ResourceLocation recipeButtonTex = new ResourceLocation("textures/gui/recipe_button.png");
         MutableLong startReload = new MutableLong(-1);
         MutableLong endReload = new MutableLong(-1);
-        PRE_UPDATE_RECIPES.register(recipeManager -> {
+        PRE_UPDATE_RECIPES.register((recipeManager, registryAccess) -> {
             RoughlyEnoughItemsCore.PERFORMANCE_LOGGER.clear();
-            reloadPlugins(startReload, ReloadStage.START);
+            reloadPlugins(startReload, ReloadStage.START, registryAccess);
         });
         ClientRecipeUpdateEvent.EVENT.register(recipeManager -> {
             reloadPlugins(endReload, ReloadStage.END);
@@ -469,6 +468,11 @@ public class RoughlyEnoughItemsCoreClient {
     
     @ApiStatus.Internal
     public static void reloadPlugins(MutableLong lastReload, @Nullable ReloadStage start) {
+        reloadPlugins(lastReload, start, null);
+    }
+    
+    @ApiStatus.Internal
+    public static void reloadPlugins(MutableLong lastReload, @Nullable ReloadStage start, @Nullable RegistryAccess registryAccess) {
         if (Minecraft.getInstance().level == null) return;
         if (lastReload != null) {
             if (lastReload.getValue() > 0 && System.currentTimeMillis() - lastReload.getValue() <= 5000) {

@@ -64,11 +64,8 @@ public class DefaultPlugin implements BuiltinPlugin, REIServerPlugin {
     @Override
     public void registerItemComparators(ItemComparatorRegistry registry) {
         Function<ItemStack, ItemEnchantments> enchantmentTag = stack -> {
-            if (!stack.has(DataComponents.ENCHANTMENTS)) {
-                if (stack.has(DataComponents.STORED_ENCHANTMENTS)) {
-                    return stack.get(DataComponents.STORED_ENCHANTMENTS);
-                }
-                return null;
+            if (stack.has(DataComponents.STORED_ENCHANTMENTS)) {
+                return stack.get(DataComponents.STORED_ENCHANTMENTS);
             }
             return stack.get(DataComponents.ENCHANTMENTS);
         };
