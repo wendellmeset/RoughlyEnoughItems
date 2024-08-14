@@ -23,18 +23,7 @@
 
 package me.shedaniel.rei.plugin.common.displays.crafting.forge;
 
-import me.shedaniel.rei.plugin.common.displays.crafting.CraftingRecipeSizeProvider;
-import me.shedaniel.rei.plugin.common.displays.crafting.DefaultCraftingDisplay;
-import net.neoforged.neoforge.common.crafting.IShapedRecipe;
-
 public class DefaultCraftingDisplayImpl {
     public static void registerPlatformSizeProvider() {
-        DefaultCraftingDisplay.registerSizeProvider(recipe -> {
-            if (recipe instanceof IShapedRecipe<?>) {
-                return new CraftingRecipeSizeProvider.Size(((IShapedRecipe<?>) recipe).getWidth(), ((IShapedRecipe<?>) recipe).getHeight());
-            }
-            
-            return null;
-        });
     }
 }
