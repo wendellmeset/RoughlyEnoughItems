@@ -21,39 +21,28 @@
  * SOFTWARE.
  */
 
-package me.shedaniel.rei.api.client.view;
+package me.shedaniel.rei.api.client.registry.transfer;
 
-import me.shedaniel.rei.api.client.plugins.REIClientPlugin;
-import me.shedaniel.rei.api.common.entry.EntryStack;
-import me.shedaniel.rei.api.common.plugins.PluginManager;
-import me.shedaniel.rei.api.common.registry.Reloadable;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 
-public interface Views extends Reloadable<REIClientPlugin> {
+/**
+ * A meta interface for {@link TransferHandler}.
+ */
+@ApiStatus.Experimental
+public interface TransferHandlerMeta {
     /**
-     * @return the instance of {@link Views}
-     */
-    static Views getInstance() {
-        return PluginManager.getClientInstance().get(Views.class);
-    }
-    
-    @Nullable
-    @ApiStatus.Internal
-    @ApiStatus.Experimental
-    ViewSearchBuilder getContext();
-    
-    /**
-     * Returns all craftable items from materials.
+     * Returns the available ingredients for the transfer handler.
+     * This is used in the craftable filter, and the quick transfer tooltip to quickly determine if the handler can handle the recipe.
+     * <p>
+     * If this interface is not implemented, REI will assume stacks only from the player's inventory are available.
      *
-     * @return the list of craftable entries
-     * @deprecated This is no longer exposed in the API due to the lack of use cases and how this API is very specific to a type of implementation.
+     * @param context the context
+     * @return the available ingredients
      */
-    @Deprecated(forRemoval = true)
-    default Collection<EntryStack<?>> findCraftableEntriesByMaterials() {
+    default Iterable<ItemStack> getAvailableIngredients(TransferHandler.Context context) {
         return List.of();
     }
 }

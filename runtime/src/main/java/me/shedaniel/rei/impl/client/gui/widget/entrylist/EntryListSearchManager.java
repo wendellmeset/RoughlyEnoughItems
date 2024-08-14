@@ -23,10 +23,9 @@
 
 package me.shedaniel.rei.impl.client.gui.widget.entrylist;
 
+import com.google.common.base.Predicates;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Iterators;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-import it.unimi.dsi.fastutil.longs.LongSet;
 import me.shedaniel.rei.api.client.config.ConfigManager;
 import me.shedaniel.rei.api.client.config.ConfigObject;
 import me.shedaniel.rei.api.client.gui.config.EntryPanelOrdering;
@@ -36,10 +35,10 @@ import me.shedaniel.rei.api.client.search.SearchFilter;
 import me.shedaniel.rei.api.client.view.Views;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes;
-import me.shedaniel.rei.api.common.util.EntryStacks;
 import me.shedaniel.rei.impl.client.config.collapsible.CollapsibleConfigManager;
 import me.shedaniel.rei.impl.client.search.AsyncSearchManager;
 import me.shedaniel.rei.impl.client.search.collapsed.CollapsedEntriesCache;
+import me.shedaniel.rei.impl.client.view.ViewsImpl;
 import me.shedaniel.rei.impl.common.InternalLogger;
 import me.shedaniel.rei.impl.common.entry.type.EntryRegistryImpl;
 import me.shedaniel.rei.impl.common.entry.type.collapsed.CollapsedStack;
@@ -72,13 +71,7 @@ public class EntryListSearchManager {
     
     private final AsyncSearchManager searchManager = new AsyncSearchManager(EntryListSearchManager::getAllEntriesContextually, () -> {
         boolean checkCraftable = ConfigManager.getInstance().isCraftableOnlyEnabled();
-        LongSet workingItems = checkCraftable ? new LongOpenHashSet() : null;
-        if (checkCraftable) {
-            for (EntryStack<?> stack : Views.getInstance().findCraftableEntriesByMaterials()) {
-                workingItems.add(EntryStacks.hashExact(stack));
-            }
-        }
-        return checkCraftable ? stack -> workingItems.contains(stack.hashExact()) : stack -> true;
+        return checkCraftable ? ((ViewsImpl) Views.getInstance()).getCraftableEntriesPredicate() : Predicates.alwaysTrue();
     }, HashedEntryStackWrapper::normalize);
     
     private static List<HNEntryStackWrapper> getAllEntriesContextually(SearchFilter filter) {
