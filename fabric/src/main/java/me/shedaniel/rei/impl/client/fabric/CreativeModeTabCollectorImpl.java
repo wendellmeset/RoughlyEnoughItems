@@ -23,10 +23,10 @@
 
 package me.shedaniel.rei.impl.client.fabric;
 
+import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.impl.common.InternalLogger;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroupEntries;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.flag.FeatureFlagSet;
@@ -44,7 +44,7 @@ public class CreativeModeTabCollectorImpl {
     public static Map<CreativeModeTab, Collection<ItemStack>> collectTabs() {
         Map<CreativeModeTab, Collection<ItemStack>> map = new LinkedHashMap<>();
         FeatureFlagSet featureFlags = FeatureFlags.REGISTRY.allFlags();
-        CreativeModeTab.ItemDisplayParameters parameters = new CreativeModeTab.ItemDisplayParameters(featureFlags, true, RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY));
+        CreativeModeTab.ItemDisplayParameters parameters = new CreativeModeTab.ItemDisplayParameters(featureFlags, true, BasicDisplay.registryAccess());
         
         for (CreativeModeTab tab : CreativeModeTabs.allTabs()) {
             if (tab.getType() != CreativeModeTab.Type.HOTBAR && tab.getType() != CreativeModeTab.Type.INVENTORY) {
