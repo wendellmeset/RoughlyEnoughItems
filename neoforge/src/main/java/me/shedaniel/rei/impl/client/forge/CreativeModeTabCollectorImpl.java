@@ -23,7 +23,6 @@
 
 package me.shedaniel.rei.impl.client.forge;
 
-import com.google.common.base.MoreObjects;
 import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.impl.common.InternalLogger;
 import net.minecraft.core.RegistryAccess;
