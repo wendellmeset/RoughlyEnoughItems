@@ -124,6 +124,10 @@ public class AsyncSearchManager {
                     .thenApply(entry -> {
                         this.last = entry;
                         return entry;
+                    })
+                    .exceptionally(throwable -> {
+                        InternalLogger.getInstance().error("Error while searching", throwable);
+                        return new AbstractMap.SimpleImmutableEntry<>(List.of(), filter);
                     });
         }
         
