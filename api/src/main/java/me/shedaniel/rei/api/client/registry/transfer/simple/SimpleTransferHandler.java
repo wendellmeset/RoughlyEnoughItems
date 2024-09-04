@@ -23,13 +23,16 @@
 
 package me.shedaniel.rei.api.client.registry.transfer.simple;
 
+import com.google.common.collect.Iterables;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.gui.widgets.Slot;
 import me.shedaniel.rei.api.client.gui.widgets.Widget;
 import me.shedaniel.rei.api.client.registry.transfer.TransferHandler;
+import me.shedaniel.rei.api.client.registry.transfer.TransferHandlerMeta;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.display.Display;
+import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.entry.InputIngredient;
 import me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes;
 import me.shedaniel.rei.api.common.transfer.info.stack.SlotAccessor;
@@ -43,13 +46,14 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.ApiStatus;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @ApiStatus.Experimental
-public interface SimpleTransferHandler extends TransferHandler {
+public interface SimpleTransferHandler extends TransferHandler, TransferHandlerMeta {
     static <C extends AbstractContainerMenu, D extends Display> SimpleTransferHandler create(Class<? extends C> containerClass,
                                                                                              CategoryIdentifier<D> categoryIdentifier,
                                                                                              IntRange inputSlots) {
@@ -144,6 +148,11 @@ public interface SimpleTransferHandler extends TransferHandler {
         if (context.getDisplay() == null) return Collections.emptyList();
         return CollectionUtils.map(context.getDisplay().getInputIngredients(context.getMenu(), context.getMinecraft().player), (entry) ->
                 InputIngredient.withType(entry, VanillaEntryTypes.ITEM));
+    }
+    
+    @Override
+    default Iterable<ItemStack> getAvailableIngredients(Context context) {
+        return Iterables.transform(Iterables.concat(getInputSlots(context), getInventorySlots(context)), SlotAccessor::getItemStack);
     }
     
     /**
