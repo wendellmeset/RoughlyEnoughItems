@@ -24,6 +24,7 @@
 package me.shedaniel.rei.plugin.autocrafting;
 
 import me.shedaniel.rei.api.client.registry.transfer.TransferHandler;
+import me.shedaniel.rei.api.client.registry.transfer.TransferHandlerMeta;
 import me.shedaniel.rei.api.client.registry.transfer.simple.SimpleTransferHandler;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.entry.InputIngredient;
@@ -31,10 +32,11 @@ import me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes;
 import me.shedaniel.rei.api.common.util.CollectionUtils;
 import me.shedaniel.rei.plugin.common.displays.crafting.DefaultCraftingDisplay;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 
-public class InventoryCraftingTransferHandler implements TransferHandler {
+public class InventoryCraftingTransferHandler implements TransferHandler, TransferHandlerMeta {
     private final SimpleTransferHandler parent;
     
     public InventoryCraftingTransferHandler(SimpleTransferHandler parent) {
@@ -60,5 +62,10 @@ public class InventoryCraftingTransferHandler implements TransferHandler {
         return parent.handleSimpleTransfer(context, parent.getMissingInputRenderer(),
                 CollectionUtils.map(inputs, entry -> InputIngredient.withType(entry, VanillaEntryTypes.ITEM)),
                 parent.getInputSlots(context), parent.getInventorySlots(context));
+    }
+    
+    @Override
+    public Iterable<ItemStack> getAvailableIngredients(Context context) {
+        return parent.getAvailableIngredients(context);
     }
 }
