@@ -25,7 +25,9 @@ package me.shedaniel.rei.impl.client.gui.widget;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import me.shedaniel.math.Color;
 import me.shedaniel.rei.api.common.util.EntryStacks;
+import me.shedaniel.rei.impl.client.config.ConfigManagerImpl;
 import me.shedaniel.rei.impl.client.gui.widget.entrylist.EntryListSearchManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiComponent;
@@ -34,6 +36,11 @@ import net.minecraft.world.inventory.Slot;
 
 public class EntryHighlighter extends GuiComponent {
     public static void render(PoseStack matrices) {
+        float dimOpacity = (float) ConfigManagerImpl.getInstance().getConfig().functionality.inventoryHighlightingDarkenOpacity;
+        float opacity = (float) ConfigManagerImpl.getInstance().getConfig().functionality.inventoryHighlightingOpacity;
+        int dimColor = Color.ofRGBA(20 / 255F, 20 / 255F, 20 / 255F, dimOpacity).getColor();
+        int borderColor = Color.ofRGBA(0x5f / 255F, 0xff / 255F, 0x3b / 255F, opacity).getColor();
+        int color = Color.ofRGBA(0x5f / 255F, 0xff / 255F, 0x3b / 255F, opacity * 0x34 / 255F).getColor();
         RenderSystem.disableDepthTest();
         RenderSystem.colorMask(true, true, true, false);
         if (Minecraft.getInstance().screen instanceof AbstractContainerScreen<?> containerScreen) {
@@ -42,18 +49,18 @@ public class EntryHighlighter extends GuiComponent {
                 if (!slot.hasItem() || !EntryListSearchManager.INSTANCE.matches(EntryStacks.of(slot.getItem()))) {
                     matrices.pushPose();
                     matrices.translate(0, 0, 500f);
-                    fillGradient(matrices, x + slot.x, y + slot.y, x + slot.x + 16, y + slot.y + 16, 0xdc202020, 0xdc202020, 0);
+                    fillGradient(matrices, x + slot.x, y + slot.y, x + slot.x + 16, y + slot.y + 16, dimColor, dimColor, 0);
                     matrices.popPose();
                 } else {
                     matrices.pushPose();
                     matrices.translate(0, 0, 200f);
-                    fillGradient(matrices, x + slot.x, y + slot.y, x + slot.x + 16, y + slot.y + 16, 0x345fff3b, 0x345fff3b, 0);
-                
-                    fillGradient(matrices, x + slot.x - 1, y + slot.y - 1, x + slot.x, y + slot.y + 16 + 1, 0xff5fff3b, 0xff5fff3b, 0);
-                    fillGradient(matrices, x + slot.x + 16, y + slot.y - 1, x + slot.x + 16 + 1, y + slot.y + 16 + 1, 0xff5fff3b, 0xff5fff3b, 0);
-                    fillGradient(matrices, x + slot.x - 1, y + slot.y - 1, x + slot.x + 16, y + slot.y, 0xff5fff3b, 0xff5fff3b, 0);
-                    fillGradient(matrices, x + slot.x - 1, y + slot.y + 16, x + slot.x + 16, y + slot.y + 16 + 1, 0xff5fff3b, 0xff5fff3b, 0);
-                
+                    fillGradient(matrices, x + slot.x, y + slot.y, x + slot.x + 16, y + slot.y + 16, color, color, 0);
+                    
+                    fillGradient(matrices, x + slot.x - 1, y + slot.y - 1, x + slot.x, y + slot.y + 16 + 1, borderColor, borderColor, 0);
+                    fillGradient(matrices, x + slot.x + 16, y + slot.y - 1, x + slot.x + 16 + 1, y + slot.y + 16 + 1, borderColor, borderColor, 0);
+                    fillGradient(matrices, x + slot.x - 1, y + slot.y - 1, x + slot.x + 16, y + slot.y, borderColor, borderColor, 0);
+                    fillGradient(matrices, x + slot.x - 1, y + slot.y + 16, x + slot.x + 16, y + slot.y + 16 + 1, borderColor, borderColor, 0);
+                    
                     matrices.popPose();
                 }
             }

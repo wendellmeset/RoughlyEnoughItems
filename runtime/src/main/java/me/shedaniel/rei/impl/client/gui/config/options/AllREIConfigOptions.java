@@ -61,6 +61,15 @@ public interface AllREIConfigOptions {
                 translatable("config.rei.options." + id + ".desc"), bind, save);
     }
     
+    static ComparableValue<Double>[] doubleRange(double start, double end, double step) {
+        int length = (int) Math.ceil((end - start) / step + 1);
+        ComparableValue<Double>[] result = new ComparableValue[length];
+        for (int i = 0; i < length; i++) {
+            result[i] = ComparableValue.ofDouble(Math.min(start + i * step, end));
+        }
+        return result;
+    }
+    
     CompositeOption<AppearanceTheme> THEME = make("appearance.theme", i -> i.appearance.theme, (i, v) -> i.appearance.theme = v)
             .enumOptions();
     CompositeOption<RecipeBorderType> RECIPE_BORDER = make("appearance.recipe_border", i -> i.appearance.recipeBorder, (i, v) -> i.appearance.recipeBorder = v)
@@ -141,12 +150,18 @@ public interface AllREIConfigOptions {
             .ofBoolean(translatable("config.rei.value.accessibility.scrollbar_visibility.when_scrolling"), translatable("config.rei.value.accessibility.scrollbar_visibility.always"));
     CompositeOption<Boolean> CLICKABLE_RECIPE_ARROWS = make("accessibility.clickable_recipe_arrows", i -> i.advanced.miscellaneous.clickableRecipeArrows, (i, v) -> i.advanced.miscellaneous.clickableRecipeArrows = v)
             .enabledDisabled();
+    CompositeOption<Boolean> INVENTORY_SEARCH_MODE = make("accessibility.inventory_search_mode", i -> i.functionality.allowInventoryHighlighting, (i, v) -> i.functionality.allowInventoryHighlighting = v)
+            .enabledDisabled();
+    CompositeOption<ComparableValue<Double>> INVENTORY_SEARCH_DARKEN_OPACITY = make("accessibility.inventory_search_darken_opacity", i -> ComparableValue.ofDouble(i.functionality.inventoryHighlightingDarkenOpacity), (i, v) -> i.functionality.inventoryHighlightingDarkenOpacity = v.value())
+            .entry(OptionValueEntry.options(doubleRange(0.0, 1.0, 0.05))
+                    .overrideText(d -> literal("%.0f%%".formatted(d.value() * 100))));
+    CompositeOption<ComparableValue<Double>> INVENTORY_SEARCH_OPACITY = make("accessibility.inventory_search_opacity", i -> ComparableValue.ofDouble(i.functionality.inventoryHighlightingOpacity), (i, v) -> i.functionality.inventoryHighlightingOpacity = v.value())
+            .entry(OptionValueEntry.options(doubleRange(0.0, 1.0, 0.05))
+                    .overrideText(d -> literal("%.0f%%".formatted(d.value() * 100))));
     CompositeOption<Boolean> VANILLA_RECIPE_BOOK = make("accessibility.vanilla_recipe_book", i -> !i.functionality.disableRecipeBook, (i, v) -> i.functionality.disableRecipeBook = !v)
             .enabledDisabled();
     CompositeOption<Boolean> STATUS_EFFECTS_LOCATION = make("accessibility.status_effects_location", i -> i.functionality.leftSideMobEffects, (i, v) -> i.functionality.leftSideMobEffects = v)
             .ofBoolean(translatable("config.rei.value.accessibility.status_effects_location.right"), translatable("config.rei.value.accessibility.status_effects_location.left"));
-    CompositeOption<Boolean> INVENTORY_SEARCH = make("accessibility.inventory_search", i -> i.functionality.allowInventoryHighlighting, (i, v) -> i.functionality.allowInventoryHighlighting = v)
-            .enabledDisabled();
     CompositeOption<ConfigureCategoriesScreen> CATEGORIES = make("filtering.categories", i -> {
         return new ConfigureCategoriesScreen(
                 new HashMap<>(i.getFilteringQuickCraftCategories()),
@@ -183,7 +198,9 @@ public interface AllREIConfigOptions {
             .ofBoolean(translatable("config.rei.value.list.display_mode.paginated"), translatable("config.rei.value.list.display_mode.scrolled"));
     CompositeOption<EntryPanelOrderingConfig> ORDERING = make("list.ordering", i -> i.advanced.layout.entryPanelOrdering, (i, v) -> i.advanced.layout.entryPanelOrdering = v)
             .enumOptions();
-    CompositeOption<Double> ZOOM = make("list.zoom", i -> i.advanced.accessibility.entrySize, (i, v) -> i.advanced.accessibility.entrySize = v);
+    CompositeOption<ComparableValue<Double>> ZOOM = make("list.zoom", i -> ComparableValue.ofDouble(i.advanced.accessibility.entrySize), (i, v) -> i.advanced.accessibility.entrySize = v.value())
+            .entry(OptionValueEntry.options(doubleRange(0.25, 4.0, 0.25))
+                    .overrideText(d -> literal("%.0f%%".formatted(d.value() * 100))));
     CompositeOption<Boolean> FOCUS_MODE = make("list.focus_mode", i -> i.appearance.isFocusModeZoomed, (i, v) -> i.appearance.isFocusModeZoomed = v)
             .ofBoolean(translatable("config.rei.value.list.focus_mode.highlighted"), translatable("config.rei.value.list.focus_mode.zoomed"));
     CompositeOption<CollapsibleConfigManager.CollapsibleConfigObject> COLLAPSIBLE_ENTRIES = make("list.collapsible_entries", i -> {
