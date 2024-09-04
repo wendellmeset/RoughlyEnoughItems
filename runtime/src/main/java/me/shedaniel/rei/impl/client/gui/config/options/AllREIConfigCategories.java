@@ -51,6 +51,7 @@ public interface AllREIConfigCategories {
     OptionCategory ACCESSIBILITY = make("accessibility")
             .add(ACCESSIBILITY_DISPLAY)
             .add(ACCESSIBILITY_WIDGETS)
+            .add(ACCESSIBILITY_INVENTORY_SEARCH)
             .add(ACCESSIBILITY_FEATURES);
     OptionCategory FILTERING = make("filtering")
             .add(FILTERING_FILTERING)
