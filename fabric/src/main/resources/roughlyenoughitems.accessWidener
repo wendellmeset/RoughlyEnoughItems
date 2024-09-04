@@ -44,3 +44,5 @@ accessible class net/minecraft/tags/Tag$OptionalElementEntry
 accessible field net/minecraft/tags/Tag$OptionalElementEntry id Lnet/minecraft/resources/ResourceLocation;
 accessible class net/minecraft/tags/Tag$ElementEntry
 accessible field net/minecraft/tags/Tag$ElementEntry id Lnet/minecraft/resources/ResourceLocation;
+accessible field net/minecraft/client/multiplayer/ClientLevel connection Lnet/minecraft/client/multiplayer/ClientPacketListener;
+accessible field net/minecraft/client/multiplayer/MultiPlayerGameMode connection Lnet/minecraft/client/multiplayer/ClientPacketListener;

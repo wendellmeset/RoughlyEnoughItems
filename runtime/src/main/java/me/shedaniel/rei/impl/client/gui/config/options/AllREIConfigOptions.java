@@ -24,7 +24,6 @@
 package me.shedaniel.rei.impl.client.gui.config.options;
 
 import me.shedaniel.clothconfig2.api.ModifierKeyCode;
-import me.shedaniel.rei.RoughlyEnoughItemsCore;
 import me.shedaniel.rei.RoughlyEnoughItemsCoreClient;
 import me.shedaniel.rei.api.client.config.entry.EntryStackProvider;
 import me.shedaniel.rei.api.client.gui.config.*;
@@ -249,7 +248,6 @@ public interface AllREIConfigOptions {
             .enabledDisabled();
     CompositeOption<Object> RELOAD_PLUGINS = make("reset.reload_plugins", i -> null, (i, v) -> new Object())
             .reload((access, option, onClose) -> {
-                RoughlyEnoughItemsCore.PERFORMANCE_LOGGER.clear();
                 RoughlyEnoughItemsCoreClient.reloadPlugins(null, null);
                 while (!PluginManager.areAnyReloading()) {
                     try {
