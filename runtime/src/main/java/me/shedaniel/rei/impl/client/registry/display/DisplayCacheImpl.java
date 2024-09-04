@@ -54,6 +54,16 @@ public class DisplayCacheImpl implements DisplayCache {
     }
     
     @Override
+    public int cachedSize() {
+        return this.displaysCached.size();
+    }
+    
+    @Override
+    public int notCachedSize() {
+        return this.displaysNotCached.size();
+    }
+    
+    @Override
     public boolean doesCache() {
         return this.cache;
     }
@@ -66,7 +76,7 @@ public class DisplayCacheImpl implements DisplayCache {
     @Override
     public void add(Display display) {
         if (this.cache) {
-            if (!preprocessed) {
+            if (!this.preprocessed) {
                 this.displaysNotCached.add(display);
             } else {
                 this.process(display);
@@ -80,7 +90,7 @@ public class DisplayCacheImpl implements DisplayCache {
     @Override
     public boolean remove(Display display) {
         if (this.cache) {
-            if (!preprocessed) {
+            if (!this.preprocessed) {
                 return this.displaysNotCached.remove(display);
             } else {
                 boolean removed = this.displaysCached.remove(display);
@@ -106,7 +116,7 @@ public class DisplayCacheImpl implements DisplayCache {
     @Override
     public void endReload() {
         if (this.cache) {
-            if (preprocessed) {
+            if (this.preprocessed) {
                 InternalLogger.getInstance().error("DisplayCache#endReload called after preprocessed!");
             }
             

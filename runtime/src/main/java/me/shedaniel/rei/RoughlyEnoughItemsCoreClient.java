@@ -24,13 +24,12 @@
 package me.shedaniel.rei;
 
 import com.google.common.collect.Lists;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.serialization.DataResult;
 import dev.architectury.event.Event;
 import dev.architectury.event.EventFactory;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.client.ClientGuiEvent;
+import dev.architectury.event.events.client.ClientPlayerEvent;
 import dev.architectury.event.events.client.ClientRecipeUpdateEvent;
 import dev.architectury.event.events.client.ClientScreenInputEvent;
 import dev.architectury.networking.NetworkManager;
@@ -67,7 +66,6 @@ import me.shedaniel.rei.impl.client.entry.filtering.rules.FilteringRuleTypeRegis
 import me.shedaniel.rei.impl.client.entry.renderer.EntryRendererRegistryImpl;
 import me.shedaniel.rei.impl.client.favorites.DelegatingFavoriteEntryProviderImpl;
 import me.shedaniel.rei.impl.client.favorites.FavoriteEntryTypeRegistryImpl;
-import me.shedaniel.rei.impl.client.gui.ScreenOverlayImpl;
 import me.shedaniel.rei.impl.client.gui.modules.entries.SubMenuEntry;
 import me.shedaniel.rei.impl.client.gui.modules.entries.ToggleMenuEntry;
 import me.shedaniel.rei.impl.client.gui.widget.InternalWidgets;
@@ -89,6 +87,8 @@ import me.shedaniel.rei.impl.common.entry.type.EntryRegistryImpl;
 import me.shedaniel.rei.impl.common.entry.type.collapsed.CollapsibleEntryRegistryImpl;
 import me.shedaniel.rei.impl.common.entry.type.types.EmptyEntryDefinition;
 import me.shedaniel.rei.impl.common.plugins.PluginManagerImpl;
+import me.shedaniel.rei.impl.common.plugins.ReloadManagerImpl;
+import me.shedaniel.rei.impl.common.util.InstanceHelper;
 import me.shedaniel.rei.impl.common.util.IssuesDetector;
 import me.shedaniel.rei.plugin.test.REITestPlugin;
 import net.fabricmc.api.EnvType;
@@ -121,7 +121,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.List;
-import java.util.concurrent.*;
 import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
@@ -133,15 +132,6 @@ public class RoughlyEnoughItemsCoreClient {
     public static final Event<ClientRecipeUpdateEvent> PRE_UPDATE_RECIPES = EventFactory.createLoop();
     public static final Event<Runnable> POST_UPDATE_TAGS = EventFactory.createLoop();
     public static boolean isLeftMousePressed = false;
-    private static final ExecutorService RELOAD_PLUGINS = Executors.newSingleThreadScheduledExecutor(task -> {
-        Thread thread = new Thread(task, "REI-ReloadPlugins");
-        thread.setDaemon(true);
-        thread.setUncaughtExceptionHandler(($, exception) -> {
-            InternalLogger.getInstance().throwException(exception);
-        });
-        return thread;
-    });
-    private static final List<Future<?>> RELOAD_TASKS = new CopyOnWriteArrayList<>();
     
     public static void attachClientInternals() {
         InternalWidgets.attach();
@@ -317,24 +307,25 @@ public class RoughlyEnoughItemsCoreClient {
     private void registerEvents() {
         Minecraft client = Minecraft.getInstance();
         final ResourceLocation recipeButtonTex = new ResourceLocation("textures/gui/recipe_button.png");
-        MutableLong startReload = new MutableLong(-1);
         MutableLong endReload = new MutableLong(-1);
         PRE_UPDATE_RECIPES.register(recipeManager -> {
-            RoughlyEnoughItemsCore.PERFORMANCE_LOGGER.clear();
-            reloadPlugins(startReload, ReloadStage.START);
+            reloadPlugins(null, ReloadStage.START);
         });
         ClientRecipeUpdateEvent.EVENT.register(recipeManager -> {
             reloadPlugins(endReload, ReloadStage.END);
+        });
+        ClientPlayerEvent.CLIENT_PLAYER_QUIT.register(player -> {
+            InternalLogger.getInstance().debug("Player quit, clearing reload tasks!");
+            endReload.setValue(-1);
+            ReloadManagerImpl.terminateReloadTasks();
         });
         ClientGuiEvent.INIT_PRE.register((screen, access) -> {
             List<ReloadStage> stages = ((PluginManagerImpl<REIPlugin<?>>) PluginManager.getInstance()).getObservedStages();
             
             if (Minecraft.getInstance().level != null && Minecraft.getInstance().player != null && stages.contains(ReloadStage.START)
                 && !stages.contains(ReloadStage.END) && !PluginManager.areAnyReloading() && screen instanceof AbstractContainerScreen) {
-                for (Future<?> task : RELOAD_TASKS) {
-                    if (!task.isDone()) {
-                        return EventResult.pass();
-                    }
+                if (ReloadManagerImpl.countRunningReloadTasks() > 0) {
+                    return EventResult.pass();
                 }
                 
                 InternalLogger.getInstance().error("Detected missing stage: END! This is possibly due to issues during client recipe reload! REI will force a reload of the recipes now!");
@@ -473,27 +464,12 @@ public class RoughlyEnoughItemsCoreClient {
     public static void reloadPlugins(MutableLong lastReload, @Nullable ReloadStage start) {
         if (Minecraft.getInstance().level == null) return;
         if (lastReload != null) {
-            if (lastReload.getValue() > 0 && System.currentTimeMillis() - lastReload.getValue() <= 5000) {
+            if (lastReload.getValue() > 0 && System.currentTimeMillis() - lastReload.getValue() <= 1000) {
                 InternalLogger.getInstance().warn("Suppressing Reload Plugins of stage " + start);
                 return;
             }
             lastReload.setValue(System.currentTimeMillis());
         }
-        InternalLogger.getInstance().debug("Starting Reload Plugins of stage " + start, new Throwable());
-        if (ConfigObject.getInstance().doesRegisterRecipesInAnotherThread()) {
-            Future<?>[] futures = new Future<?>[1];
-            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> RoughlyEnoughItemsCore._reloadPlugins(start), RELOAD_PLUGINS)
-                    .whenComplete((unused, throwable) -> {
-                        // Remove the future from the list of futures
-                        if (futures[0] != null) {
-                            RELOAD_TASKS.remove(futures[0]);
-                            futures[0] = null;
-                        }
-                    });
-            futures[0] = future;
-            RELOAD_TASKS.add(future);
-        } else {
-            RoughlyEnoughItemsCore._reloadPlugins(start);
-        }
+        ReloadManagerImpl.reloadPlugins(start, () -> InstanceHelper.connectionFromClient() == null);
     }
 }
