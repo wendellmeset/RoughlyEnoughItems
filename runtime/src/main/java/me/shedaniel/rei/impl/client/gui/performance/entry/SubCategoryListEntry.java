@@ -157,6 +157,10 @@ public class SubCategoryListEntry extends PerformanceScreen.PerformanceEntry imp
         return Collections.emptyList();
     }
     
+    public long getTotalTime() {
+        return totalTime;
+    }
+    
     public class CategoryLabelWidget implements GuiEventListener {
         private final Rectangle rectangle = new Rectangle();
         
