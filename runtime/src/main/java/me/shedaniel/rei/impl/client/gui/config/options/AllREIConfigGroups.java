@@ -116,7 +116,8 @@ public interface AllREIConfigGroups {
     OptionGroup DEBUG_PERFORMANCE = make("debug.performance")
             .add(PLUGINS_PERFORMANCE)
             .add(SEARCH_PERFORMANCE)
-            .add(ENTRY_LIST_PERFORMANCE);
+            .add(ENTRY_LIST_PERFORMANCE)
+            .add(DISPLAY_REGISTRY_ANALYSIS);
     OptionGroup RESET_RELOAD = make("reset.reload")
             .add(RELOAD_PLUGINS)
             .add(RELOAD_SEARCH);
