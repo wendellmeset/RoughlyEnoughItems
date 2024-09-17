@@ -29,13 +29,10 @@ import dev.architectury.platform.Platform;
 import dev.architectury.registry.ReloadListenerRegistry;
 import dev.architectury.utils.Env;
 import dev.architectury.utils.EnvExecutor;
-import me.shedaniel.cloth.clothconfig.shadowed.blue.endless.jankson.annotation.Nullable;
 import me.shedaniel.rei.api.common.entry.type.EntryType;
-import me.shedaniel.rei.api.common.plugins.PluginManager;
 import me.shedaniel.rei.api.common.plugins.PluginView;
 import me.shedaniel.rei.api.common.plugins.REIPlugin;
 import me.shedaniel.rei.api.common.plugins.REIServerPlugin;
-import me.shedaniel.rei.api.common.registry.ReloadStage;
 import me.shedaniel.rei.impl.Internals;
 import me.shedaniel.rei.impl.common.InternalLogger;
 import me.shedaniel.rei.impl.common.category.CategoryIdentifierImpl;
@@ -53,11 +50,15 @@ import me.shedaniel.rei.impl.common.logging.*;
 import me.shedaniel.rei.impl.common.logging.performance.PerformanceLogger;
 import me.shedaniel.rei.impl.common.logging.performance.PerformanceLoggerImpl;
 import me.shedaniel.rei.impl.common.plugins.PluginManagerImpl;
+import me.shedaniel.rei.impl.common.plugins.ReloadInterruptionContext;
+import me.shedaniel.rei.impl.common.plugins.ReloadManagerImpl;
 import me.shedaniel.rei.impl.common.registry.RecipeManagerContextImpl;
 import me.shedaniel.rei.impl.common.transfer.MenuInfoRegistryImpl;
 import me.shedaniel.rei.impl.common.transfer.SlotAccessorRegistryImpl;
+import me.shedaniel.rei.impl.common.util.InstanceHelper;
 import me.shedaniel.rei.impl.init.PluginDetector;
 import me.shedaniel.rei.impl.init.PrimitivePlatformAdapter;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.util.Unit;
@@ -70,6 +71,7 @@ import java.util.Comparator;
 import java.util.ServiceLoader;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 @ApiStatus.Internal
@@ -127,6 +129,7 @@ public class RoughlyEnoughItemsCore {
         Internals.attachInstanceSupplier(LOGGER, "logger");
         CategoryIdentifierImpl.attach();
         Internals.attachInstance((Function<ResourceLocation, EntryType<?>>) DeferringEntryTypeProviderImpl.INSTANCE, "entryTypeDeferred");
+        Internals.attachInstance((Supplier<RegistryAccess>) () -> InstanceHelper.getInstance().registryAccess(), "registryAccess");
         Internals.attachInstance(EntryStackProviderImpl.INSTANCE, Internals.EntryStackProvider.class);
         Internals.attachInstance(NbtHasherProviderImpl.INSTANCE, Internals.NbtHasherProvider.class);
         Internals.attachInstance(EntryIngredientImpl.INSTANCE, Internals.EntryIngredientProvider.class);
@@ -135,7 +138,7 @@ public class RoughlyEnoughItemsCore {
                 UnaryOperator.identity(),
                 new EntryTypeRegistryImpl(),
                 new EntrySettingsAdapterRegistryImpl(),
-                new RecipeManagerContextImpl<>(RecipeManagerContextImpl.supplier()),
+                new RecipeManagerContextImpl<>(),
                 new ItemComparatorRegistryImpl(),
                 new FluidComparatorRegistryImpl(),
                 new DisplaySerializerRegistryImpl(),
@@ -145,28 +148,6 @@ public class RoughlyEnoughItemsCore {
                 view -> view.then(PluginView.getInstance()),
                 new MenuInfoRegistryImpl(),
                 new SlotAccessorRegistryImpl()), "serverPluginManager");
-    }
-    
-    public static void _reloadPlugins(@Nullable ReloadStage stage) {
-        if (stage == null) {
-            for (ReloadStage reloadStage : ReloadStage.values()) {
-                _reloadPlugins(reloadStage);
-            }
-            return;
-        }
-        try {
-            for (PluginManager<? extends REIPlugin<?>> instance : PluginManager.getActiveInstances()) {
-                instance.view().pre(stage);
-            }
-            for (PluginManager<? extends REIPlugin<?>> instance : PluginManager.getActiveInstances()) {
-                instance.startReload(stage);
-            }
-            for (PluginManager<? extends REIPlugin<?>> instance : PluginManager.getActiveInstances()) {
-                instance.view().post(stage);
-            }
-        } catch (Throwable throwable) {
-            throwable.printStackTrace();
-        }
     }
     
     public void onInitialize() {
@@ -179,8 +160,7 @@ public class RoughlyEnoughItemsCore {
             MutableLong lastReload = new MutableLong(-1);
             ReloadListenerRegistry.register(PackType.SERVER_DATA, (preparationBarrier, resourceManager, profilerFiller, profilerFiller2, executor, executor2) -> {
                 return preparationBarrier.wait(Unit.INSTANCE).thenRunAsync(() -> {
-                    PERFORMANCE_LOGGER.clear();
-                    RoughlyEnoughItemsCore._reloadPlugins(null);
+                    ReloadManagerImpl.reloadPlugins(null, ReloadInterruptionContext.ofNever());
                 }, executor2);
             });
         }

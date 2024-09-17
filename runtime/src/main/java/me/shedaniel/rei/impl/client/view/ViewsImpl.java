@@ -111,7 +111,7 @@ public class ViewsImpl implements Views {
         forCategories(processingVisibilityHandlers, filteringCategories, displayRegistry, result, (configuration, categoryId, displays, set) -> {
             if (categories.contains(categoryId)) { // If the category is in the search, add all displays
                 for (Display display : displays) {
-                    if (!processingVisibilityHandlers || displayRegistry.isDisplayVisible(display)) {
+                    if (!processingVisibilityHandlers || ((DisplayRegistryImpl) displayRegistry).isDisplayVisible(configuration.getCategory(), display)) {
                         set.add(display);
                     }
                 }
@@ -121,7 +121,7 @@ public class ViewsImpl implements Views {
                 return;
             }
             for (Display display : displays) {
-                if (processingVisibilityHandlers && !displayRegistry.isDisplayVisible(display)) continue;
+                if (processingVisibilityHandlers && !((DisplayRegistryImpl) displayRegistry).isDisplayVisible(configuration.getCategory(), display)) continue;
                 if (!recipesForStacks.isEmpty()) {
                     if (isRecipesFor(displaysHolder, recipesForStacks, display)) {
                         set.add(display);
@@ -171,7 +171,7 @@ public class ViewsImpl implements Views {
             forCategories(processingVisibilityHandlers, filteringCategories, displayRegistry, result, (configuration, categoryId, displays, set) -> {
                 if (categories.contains(categoryId)) return;
                 for (Display display : displays) {
-                    if (processingVisibilityHandlers && !displayRegistry.isDisplayVisible(display)) continue;
+                    if (processingVisibilityHandlers && !((DisplayRegistryImpl) displayRegistry).isDisplayVisible(configuration.getCategory(), display)) continue;
                     if (!recipesForStacksWildcard.isEmpty()) {
                         if (isRecipesFor(displaysHolder, recipesForStacksWildcard, display)) {
                             set.add(display);
@@ -193,7 +193,7 @@ public class ViewsImpl implements Views {
                 if (isStackWorkStationOfCategory(configuration, usagesFor)) {
                     categories.add(categoryId);
                     if (processingVisibilityHandlers) {
-                        set.addAll(CollectionUtils.filterToSet(displays, displayRegistry::isDisplayVisible));
+                        set.addAll(CollectionUtils.filterToSet(displays, display -> ((DisplayRegistryImpl) displayRegistry).isDisplayVisible(configuration.getCategory(), display)));
                     } else {
                         set.addAll(displays);
                     }

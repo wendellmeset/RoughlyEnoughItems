@@ -24,9 +24,9 @@
 package me.shedaniel.rei.api.common.plugins;
 
 import me.shedaniel.rei.api.client.plugins.REIClientPlugin;
-import me.shedaniel.rei.api.common.registry.ReloadStage;
 import me.shedaniel.rei.impl.ClientInternals;
 import me.shedaniel.rei.impl.Internals;
+import me.shedaniel.rei.impl.common.plugins.PluginReloadContext;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import org.jetbrains.annotations.ApiStatus;
@@ -62,18 +62,25 @@ public interface PluginView<P extends REIPlugin<?>> {
             }
             
             @Override
-            public void pre(ReloadStage stage) {
-                PluginView.this.pre(stage);
+            public void pre(PluginReloadContext context) throws InterruptedException {
+                PluginView.this.pre(context);
             }
             
             @Override
-            public void post(ReloadStage stage) {
-                PluginView.this.post(stage);
+            public void reload(PluginReloadContext context) throws InterruptedException {
+                PluginView.this.reload(context);
+            }
+            
+            @Override
+            public void post(PluginReloadContext context) throws InterruptedException {
+                PluginView.this.post(context);
             }
         };
     }
     
-    void pre(ReloadStage stage);
+    void pre(PluginReloadContext context) throws InterruptedException;
     
-    void post(ReloadStage stage);
+    void reload(PluginReloadContext context) throws InterruptedException;
+    
+    void post(PluginReloadContext context) throws InterruptedException;
 }
