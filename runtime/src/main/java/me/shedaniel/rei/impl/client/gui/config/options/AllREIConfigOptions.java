@@ -24,7 +24,6 @@
 package me.shedaniel.rei.impl.client.gui.config.options;
 
 import me.shedaniel.clothconfig2.api.ModifierKeyCode;
-import me.shedaniel.rei.RoughlyEnoughItemsCore;
 import me.shedaniel.rei.RoughlyEnoughItemsCoreClient;
 import me.shedaniel.rei.api.client.config.entry.EntryStackProvider;
 import me.shedaniel.rei.api.client.gui.config.*;
@@ -37,6 +36,7 @@ import me.shedaniel.rei.impl.client.config.entries.ConfigureCategoriesScreen;
 import me.shedaniel.rei.impl.client.config.entries.FilteringEntry;
 import me.shedaniel.rei.impl.client.gui.config.REIConfigScreen;
 import me.shedaniel.rei.impl.client.gui.config.options.configure.PanelBoundariesConfiguration;
+import me.shedaniel.rei.impl.client.gui.performance.DisplayRegistryInfoScreen;
 import me.shedaniel.rei.impl.client.gui.performance.PerformanceScreen;
 import me.shedaniel.rei.impl.client.gui.screen.ConfigReloadingScreen;
 import me.shedaniel.rei.impl.client.gui.screen.collapsible.CollapsibleEntriesScreen;
@@ -246,9 +246,11 @@ public interface AllREIConfigOptions {
             .enabledDisabled();
     CompositeOption<Boolean> ENTRY_LIST_PERFORMANCE = make("debug.entry_list_performance", i -> i.advanced.layout.debugRenderTimeRequired, (i, v) -> i.advanced.layout.debugRenderTimeRequired = v)
             .enabledDisabled();
+    CompositeOption<Object> DISPLAY_REGISTRY_ANALYSIS = make("debug.display_registry_analysis", i -> null, (i, v) -> new Object())
+            .details((access, option, onClose) -> Minecraft.getInstance().setScreen(new DisplayRegistryInfoScreen(onClose)))
+            .requiresLevel();
     CompositeOption<Object> RELOAD_PLUGINS = make("reset.reload_plugins", i -> null, (i, v) -> new Object())
             .reload((access, option, onClose) -> {
-                RoughlyEnoughItemsCore.PERFORMANCE_LOGGER.clear();
                 RoughlyEnoughItemsCoreClient.reloadPlugins(null, null);
                 while (!PluginManager.areAnyReloading()) {
                     try {
