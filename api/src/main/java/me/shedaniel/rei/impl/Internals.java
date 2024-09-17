@@ -35,6 +35,7 @@ import me.shedaniel.rei.api.common.plugins.REIPlugin;
 import me.shedaniel.rei.api.common.plugins.REIServerPlugin;
 import me.shedaniel.rei.api.common.transfer.info.MenuInfoRegistry;
 import me.shedaniel.rei.impl.common.InternalLogger;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.resources.ResourceLocation;
@@ -56,6 +57,7 @@ public final class Internals {
     private static Function<String, CategoryIdentifier<?>> categoryIdentifier = (object) -> throwNotSetup();
     private static Supplier<MenuInfoRegistry> stubMenuInfoRegistry = Internals::throwNotSetup;
     private static Supplier<InternalLogger> logger = Internals::throwNotSetup;
+    private static Supplier<RegistryAccess> registryAccess = Internals::throwNotSetup;
     
     private static <T> T throwNotSetup() {
         throw new AssertionError("REI Internals have not been initialized!");
@@ -116,6 +118,10 @@ public final class Internals {
     
     public static InternalLogger getInternalLogger() {
         return logger.get();
+    }
+    
+    public static RegistryAccess getRegistryAccess() {
+        return registryAccess.get();
     }
     
     public interface EntryStackProvider {

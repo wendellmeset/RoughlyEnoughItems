@@ -27,7 +27,7 @@ import me.shedaniel.rei.api.common.display.Display;
 import me.shedaniel.rei.api.common.display.SimpleDisplaySerializer;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.util.EntryIngredients;
-import me.shedaniel.rei.impl.common.InternalRegistryAccess;
+import me.shedaniel.rei.impl.Internals;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -59,7 +59,7 @@ public abstract class BasicDisplay implements Display {
     
     @ApiStatus.Experimental
     public static RegistryAccess registryAccess() {
-        return InternalRegistryAccess.getInstance().get();
+        return Internals.getRegistryAccess();
     }
     
     /**

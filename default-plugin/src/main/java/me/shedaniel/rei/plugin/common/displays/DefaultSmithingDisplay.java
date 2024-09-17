@@ -26,6 +26,8 @@ package me.shedaniel.rei.plugin.common.displays;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
+import me.shedaniel.rei.api.common.entry.EntryStack;
+import me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes;
 import me.shedaniel.rei.api.common.util.EntryIngredients;
 import me.shedaniel.rei.api.common.util.EntryStacks;
 import me.shedaniel.rei.plugin.common.BuiltinPlugin;
@@ -47,6 +49,9 @@ import java.util.List;
 import java.util.Optional;
 
 public class DefaultSmithingDisplay extends BasicDisplay {
+    @Nullable
+    private final SmithingRecipeType type;
+    
     @ApiStatus.Experimental
     public static DefaultSmithingDisplay ofTransforming(RecipeHolder<SmithingTransformRecipe> recipe) {
         return new DefaultSmithingDisplay(
@@ -73,23 +78,15 @@ public class DefaultSmithingDisplay extends BasicDisplay {
                         .orElse(null);
                 if (trimMaterial == null) continue;
                 
-                ArmorTrim armorTrim = new ArmorTrim(trimMaterial, trimPattern);
-                EntryIngredient.Builder baseItems = EntryIngredient.builder(), outputItems = EntryIngredient.builder();
-                for (ItemStack item : recipe.value().base.getItems()) {
-                    ArmorTrim trim = item.get(DataComponents.TRIM);
-                    if (trim == null || !trim.hasPatternAndMaterial(trimPattern, trimMaterial)) {
-                        ItemStack newItem = item.copyWithCount(1);
-                        newItem.set(DataComponents.TRIM, armorTrim);
-                        baseItems.add(EntryStacks.of(item.copy()));
-                        outputItems.add(EntryStacks.of(newItem));
-                    }
-                }
+                EntryIngredient baseIngredient = EntryIngredients.ofIngredient(recipe.value().base);
+                EntryIngredient templateOutput = baseIngredient.isEmpty() ? EntryIngredient.empty()
+                        : getTrimmingOutput(registryAccess, EntryStacks.of(templateItem), baseIngredient.get(0), EntryStacks.of(additionStack));
+                
                 displays.add(new DefaultSmithingDisplay(List.of(
                         EntryIngredients.of(templateItem),
-                        baseItems.build(),
+                        baseIngredient,
                         EntryIngredients.of(additionStack)
-                ), List.of(outputItems.build()),
-                        Optional.ofNullable(recipe.id())));
+                ), List.of(templateOutput), SmithingRecipeType.TRIM, Optional.ofNullable(recipe.id())));
             }
         }
         return displays;
@@ -104,7 +101,13 @@ public class DefaultSmithingDisplay extends BasicDisplay {
     }
     
     public DefaultSmithingDisplay(List<EntryIngredient> inputs, List<EntryIngredient> outputs, Optional<ResourceLocation> location) {
+        this(inputs, outputs, null, location);
+    }
+    
+    @ApiStatus.Experimental
+    public DefaultSmithingDisplay(List<EntryIngredient> inputs, List<EntryIngredient> outputs, @Nullable SmithingRecipeType type, Optional<ResourceLocation> location) {
         super(inputs, outputs, location);
+        this.type = type;
     }
     
     @Override
@@ -112,7 +115,45 @@ public class DefaultSmithingDisplay extends BasicDisplay {
         return BuiltinPlugin.SMITHING;
     }
     
+    @ApiStatus.Experimental
+    @Nullable
+    public SmithingRecipeType getType() {
+        return type;
+    }
+    
     public static BasicDisplay.Serializer<DefaultSmithingDisplay> serializer() {
-        return BasicDisplay.Serializer.ofSimple(DefaultSmithingDisplay::new);
+        return BasicDisplay.Serializer.of((input, output, id, tag) -> {
+            SmithingRecipeType type = tag.contains("Type") ? SmithingRecipeType.valueOf(tag.getString("Type")) : null;
+            return new DefaultSmithingDisplay(input, output, type, id);
+        }, (display, tag) -> {
+            if (display.type != null) tag.putString("Type", display.type.name());
+        });
+    }
+    
+    @ApiStatus.Experimental
+    public enum SmithingRecipeType {
+        TRIM,
+        TRANSFORM
+    }
+    
+    @ApiStatus.Experimental
+    @ApiStatus.Internal
+    public static EntryIngredient getTrimmingOutput(RegistryAccess registryAccess, EntryStack<?> template, EntryStack<?> base, EntryStack<?> addition) {
+        if (template.getType() != VanillaEntryTypes.ITEM || base.getType() != VanillaEntryTypes.ITEM || addition.getType() != VanillaEntryTypes.ITEM) return EntryIngredient.empty();
+        ItemStack templateItem = template.castValue();
+        ItemStack baseItem = base.castValue();
+        ItemStack additionItem = addition.castValue();
+        Holder.Reference<TrimPattern> trimPattern = TrimPatterns.getFromTemplate(registryAccess, templateItem)
+                .orElse(null);
+        if (trimPattern == null) return EntryIngredient.empty();
+        Holder.Reference<TrimMaterial> trimMaterial = TrimMaterials.getFromIngredient(registryAccess, additionItem)
+                .orElse(null);
+        if (trimMaterial == null) return EntryIngredient.empty();
+        ArmorTrim armorTrim = new ArmorTrim(trimMaterial, trimPattern);
+        ArmorTrim trim = baseItem.get(DataComponents.TRIM);
+        if (trim != null && trim.hasPatternAndMaterial(trimPattern, trimMaterial)) return EntryIngredient.empty();
+        ItemStack newItem = baseItem.copyWithCount(1);
+        newItem.set(DataComponents.TRIM, armorTrim);
+        return EntryIngredients.of(newItem);
     }
 }

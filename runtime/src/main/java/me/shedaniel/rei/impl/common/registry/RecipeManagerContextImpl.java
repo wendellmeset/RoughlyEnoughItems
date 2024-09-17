@@ -23,33 +23,20 @@
 
 package me.shedaniel.rei.impl.common.registry;
 
-import dev.architectury.utils.EnvExecutor;
-import dev.architectury.utils.GameInstance;
 import me.shedaniel.rei.api.common.plugins.REIPlugin;
 import me.shedaniel.rei.api.common.registry.RecipeManagerContext;
-import net.minecraft.client.Minecraft;
+import me.shedaniel.rei.impl.common.util.InstanceHelper;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class RecipeManagerContextImpl<P extends REIPlugin<?>> implements RecipeManagerContext<P> {
     private static final Comparator<RecipeHolder<?>> RECIPE_COMPARATOR = Comparator.comparing((RecipeHolder<?> o) -> o.id().getNamespace()).thenComparing(o -> o.id().getPath());
-    private final Supplier<RecipeManager> recipeManager;
     private List<RecipeHolder<?>> sortedRecipes = null;
-    
-    public RecipeManagerContextImpl(Supplier<RecipeManager> recipeManager) {
-        this.recipeManager = recipeManager;
-    }
-    
-    public static Supplier<RecipeManager> supplier() {
-        return () -> EnvExecutor.getEnvSpecific(() -> () -> Minecraft.getInstance().getConnection().getRecipeManager(),
-                () -> () -> GameInstance.getServer().getRecipeManager());
-    }
     
     @Override
     public List<RecipeHolder<?>> getAllSortedRecipes() {
@@ -62,7 +49,7 @@ public class RecipeManagerContextImpl<P extends REIPlugin<?>> implements RecipeM
     
     @Override
     public RecipeManager getRecipeManager() {
-        return recipeManager.get();
+        return InstanceHelper.getInstance().recipeManager();
     }
     
     @Override
