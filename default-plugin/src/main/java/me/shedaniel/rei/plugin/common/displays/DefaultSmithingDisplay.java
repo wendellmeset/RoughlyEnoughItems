@@ -163,7 +163,7 @@ public class DefaultSmithingDisplay extends BasicDisplay {
                 .orElse(null);
         if (trimMaterial == null) return EntryIngredient.empty();
         ArmorTrim armorTrim = new ArmorTrim(trimMaterial, trimPattern);
-        Optional<ArmorTrim> trim = ArmorTrim.getTrim(registryAccess, baseItem);
+        Optional<ArmorTrim> trim = ArmorTrim.getTrim(registryAccess, baseItem, true);
         if (trim.isPresent() && trim.get().hasPatternAndMaterial(trimPattern, trimMaterial)) return EntryIngredient.empty();
         ItemStack newItem = baseItem.copy();
         newItem.setCount(1);

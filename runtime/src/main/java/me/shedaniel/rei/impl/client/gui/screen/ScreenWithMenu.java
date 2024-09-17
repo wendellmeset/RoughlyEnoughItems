@@ -74,10 +74,10 @@ public class ScreenWithMenu extends Screen {
     }
     
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
-        if (this.menu != null && this.menu.mouseScrolled(mouseX, mouseY, amount))
+    public boolean mouseScrolled(double mouseX, double mouseY, double amountX, double amountY) {
+        if (this.menu != null && this.menu.mouseScrolled(mouseX, mouseY, amountX, amountY))
             return true;
-        return super.mouseScrolled(mouseX, mouseY, amount);
+        return super.mouseScrolled(mouseX, mouseY, amountX, amountY);
     }
     
     @Override

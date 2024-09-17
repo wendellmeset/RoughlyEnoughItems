@@ -215,7 +215,7 @@ public class DisplayRegistryImpl extends RecipeManagerContextImpl<REIClientPlugi
                 try {
                     addWithReason(recipe, DisplayAdditionReason.RECIPE_MANAGER);
                 } catch (Throwable e) {
-                    InternalLogger.getInstance().error("Failed to fill display for recipe: %s [%s]", recipe, recipe.getId(), e);
+                    InternalLogger.getInstance().error("Failed to fill display for recipe: %s [%s]", recipe.value(), recipe.id(), e);
                 }
             }
         }
