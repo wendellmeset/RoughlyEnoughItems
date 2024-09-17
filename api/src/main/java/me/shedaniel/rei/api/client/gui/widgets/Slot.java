@@ -26,10 +26,12 @@ package me.shedaniel.rei.api.client.gui.widgets;
 import me.shedaniel.math.Point;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.common.entry.EntryStack;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 
 public abstract class Slot extends WidgetWithBounds {
     public static final byte UN_MARKED = 0;
@@ -133,6 +135,10 @@ public abstract class Slot extends WidgetWithBounds {
     public abstract Slot entry(EntryStack<?> stack);
     
     public abstract Slot entries(Collection<? extends EntryStack<?>> stacks);
+    
+    @ApiStatus.Experimental
+    @ApiStatus.Internal
+    public abstract Slot withEntriesListener(Consumer<Slot> listener);
     
     public abstract EntryStack<?> getCurrentEntry();
     

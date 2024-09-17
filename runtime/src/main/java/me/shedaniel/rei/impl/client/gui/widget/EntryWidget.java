@@ -86,6 +86,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
@@ -270,6 +271,12 @@ public class EntryWidget extends Slot implements DraggableStackProviderWidget {
         Objects.requireNonNull(stacks);
         this.getCyclingEntries().addAll(stacks);
         if (removeTagMatch) tagMatch = null;
+        return this;
+    }
+    
+    @Override
+    public Slot withEntriesListener(Consumer<Slot> listener) {
+        this.getCyclingEntries().addListener($ -> listener.accept(this));
         return this;
     }
     
