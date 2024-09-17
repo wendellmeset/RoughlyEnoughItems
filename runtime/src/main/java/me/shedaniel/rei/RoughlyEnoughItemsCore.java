@@ -55,8 +55,10 @@ import me.shedaniel.rei.impl.common.plugins.ReloadManagerImpl;
 import me.shedaniel.rei.impl.common.registry.RecipeManagerContextImpl;
 import me.shedaniel.rei.impl.common.transfer.MenuInfoRegistryImpl;
 import me.shedaniel.rei.impl.common.transfer.SlotAccessorRegistryImpl;
+import me.shedaniel.rei.impl.common.util.InstanceHelper;
 import me.shedaniel.rei.impl.init.PluginDetector;
 import me.shedaniel.rei.impl.init.PrimitivePlatformAdapter;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.util.Unit;
@@ -69,6 +71,7 @@ import java.util.Comparator;
 import java.util.ServiceLoader;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 @ApiStatus.Internal
@@ -126,6 +129,7 @@ public class RoughlyEnoughItemsCore {
         Internals.attachInstanceSupplier(LOGGER, "logger");
         CategoryIdentifierImpl.attach();
         Internals.attachInstance((Function<ResourceLocation, EntryType<?>>) DeferringEntryTypeProviderImpl.INSTANCE, "entryTypeDeferred");
+        Internals.attachInstance((Supplier<RegistryAccess>) () -> InstanceHelper.getInstance().registryAccess(), "registryAccess");
         Internals.attachInstance(EntryStackProviderImpl.INSTANCE, Internals.EntryStackProvider.class);
         Internals.attachInstance(NbtHasherProviderImpl.INSTANCE, Internals.NbtHasherProvider.class);
         Internals.attachInstance(EntryIngredientImpl.INSTANCE, Internals.EntryIngredientProvider.class);

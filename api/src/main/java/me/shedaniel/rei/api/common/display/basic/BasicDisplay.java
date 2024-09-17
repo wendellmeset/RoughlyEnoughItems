@@ -23,12 +23,11 @@
 
 package me.shedaniel.rei.api.common.display.basic;
 
-import dev.architectury.utils.EnvExecutor;
-import dev.architectury.utils.GameInstance;
 import me.shedaniel.rei.api.common.display.Display;
 import me.shedaniel.rei.api.common.display.SimpleDisplaySerializer;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.util.EntryIngredients;
+import me.shedaniel.rei.impl.Internals;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -38,16 +37,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 /**
  * A basic implementation of a display, consisting of a list of inputs, a list of outputs
  * and a possible display location.
  */
 public abstract class BasicDisplay implements Display {
-    protected static final Supplier<RegistryAccess> REGISTRY_ACCESS =
-            EnvExecutor.getEnvSpecific(() -> () -> () -> GameInstance.getClient().player.level().registryAccess(),
-                    () -> () -> () -> GameInstance.getServer().registryAccess());
     protected List<EntryIngredient> inputs;
     protected List<EntryIngredient> outputs;
     protected Optional<ResourceLocation> location;
@@ -64,7 +59,7 @@ public abstract class BasicDisplay implements Display {
     
     @ApiStatus.Experimental
     public static RegistryAccess registryAccess() {
-        return REGISTRY_ACCESS.get();
+        return Internals.getRegistryAccess();
     }
     
     /**
