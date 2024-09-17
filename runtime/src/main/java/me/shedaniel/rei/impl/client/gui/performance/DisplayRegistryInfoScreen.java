@@ -24,7 +24,6 @@
 package me.shedaniel.rei.impl.client.gui.performance;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import me.shedaniel.clothconfig2.gui.widget.DynamicElementListWidget;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.registry.display.DisplayRegistry;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
@@ -33,6 +32,7 @@ import me.shedaniel.rei.api.common.util.CollectionUtils;
 import me.shedaniel.rei.impl.client.gui.modules.Menu;
 import me.shedaniel.rei.impl.client.gui.modules.entries.ToggleMenuEntry;
 import me.shedaniel.rei.impl.client.gui.screen.ScreenWithMenu;
+import me.shedaniel.rei.impl.client.gui.widget.UpdatedListWidget;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -40,7 +40,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 
@@ -102,18 +101,17 @@ public class DisplayRegistryInfoScreen extends ScreenWithMenu {
     
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-        renderDirtBackground(graphics);
+        super.render(graphics, mouseX, mouseY, delta);
         list.render(graphics, mouseX, mouseY, delta);
         graphics.drawString(this.font, this.title.getVisualOrderText(), (int) (this.width / 2.0F - this.font.width(this.title) / 2.0F), 12, -1);
-        super.render(graphics, mouseX, mouseY, delta);
     }
     
-    public static abstract class ListEntry extends DynamicElementListWidget.ElementEntry<ListEntry> {
+    public static abstract class ListEntry extends UpdatedListWidget.ElementEntry<ListEntry> {
     }
     
-    private class ListWidget extends DynamicElementListWidget<ListEntry> {
+    private class ListWidget extends UpdatedListWidget<ListEntry> {
         public ListWidget() {
-            super(DisplayRegistryInfoScreen.this.minecraft, DisplayRegistryInfoScreen.this.width, DisplayRegistryInfoScreen.this.height, 30, DisplayRegistryInfoScreen.this.height, Screen.BACKGROUND_LOCATION);
+            super(DisplayRegistryInfoScreen.this.minecraft, DisplayRegistryInfoScreen.this.width, DisplayRegistryInfoScreen.this.height, 30, DisplayRegistryInfoScreen.this.height);
         }
         
         @Override
