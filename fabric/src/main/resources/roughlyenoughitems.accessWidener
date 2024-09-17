@@ -43,3 +43,5 @@ accessible field net/minecraft/world/item/crafting/SmithingTransformRecipe addit
 accessible field net/minecraft/world/item/crafting/SmithingTrimRecipe template Lnet/minecraft/world/item/crafting/Ingredient;
 accessible field net/minecraft/world/item/crafting/SmithingTrimRecipe base Lnet/minecraft/world/item/crafting/Ingredient;
 accessible field net/minecraft/world/item/crafting/SmithingTrimRecipe addition Lnet/minecraft/world/item/crafting/Ingredient;
+accessible field net/minecraft/client/multiplayer/ClientLevel connection Lnet/minecraft/client/multiplayer/ClientPacketListener;
+accessible field net/minecraft/client/multiplayer/MultiPlayerGameMode connection Lnet/minecraft/client/multiplayer/ClientPacketListener;

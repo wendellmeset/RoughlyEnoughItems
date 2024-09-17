@@ -26,17 +26,21 @@ package me.shedaniel.rei.impl.client.gui.performance;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.datafixers.util.Pair;
 import me.shedaniel.clothconfig2.gui.widget.DynamicElementListWidget;
+import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.RoughlyEnoughItemsCore;
 import me.shedaniel.rei.api.common.plugins.REIPlugin;
 import me.shedaniel.rei.api.common.plugins.REIPluginProvider;
+import me.shedaniel.rei.api.common.util.CollectionUtils;
+import me.shedaniel.rei.impl.client.gui.modules.Menu;
+import me.shedaniel.rei.impl.client.gui.modules.entries.ToggleMenuEntry;
 import me.shedaniel.rei.impl.client.gui.performance.entry.PerformanceEntryImpl;
 import me.shedaniel.rei.impl.client.gui.performance.entry.SubCategoryListEntry;
+import me.shedaniel.rei.impl.client.gui.screen.ScreenWithMenu;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.util.FormattedCharSequence;
@@ -49,7 +53,7 @@ import java.util.stream.Collectors;
 import static java.util.concurrent.TimeUnit.*;
 
 @Environment(EnvType.CLIENT)
-public class PerformanceScreen extends Screen {
+public class PerformanceScreen extends ScreenWithMenu {
     private Runnable onClose;
     
     public PerformanceScreen(Runnable onClose) {
@@ -58,6 +62,7 @@ public class PerformanceScreen extends Screen {
     }
     
     private PerformanceEntryListWidget list;
+    private SortType sortType = SortType.ORDER;
     
     /*
      * Copyright (C) 2008 The Guava Authors
@@ -143,8 +148,22 @@ public class PerformanceScreen extends Screen {
                 this.onClose = null;
             }, Supplier::get) {});
         }
+        {
+            Component text = Component.translatable("text.rei.sort");
+            Rectangle bounds = new Rectangle(this.width - 4 - Minecraft.getInstance().font.width(text) - 10, 4, Minecraft.getInstance().font.width(text) + 10, 20);
+            addRenderableWidget(new Button(bounds.x, bounds.y, bounds.width, bounds.height, text, button -> {
+                this.setMenu(new Menu(bounds, CollectionUtils.map(SortType.values(), type -> {
+                    return ToggleMenuEntry.of(Component.translatable("text.rei.sort.by", type.name().toLowerCase(Locale.ROOT)), () -> false, o -> {
+                        this.closeMenu();
+                        this.sortType = type;
+                        this.init(this.minecraft, this.width, this.height);
+                    });
+                }), false));
+            }, Supplier::get) {});
+        }
         list = new PerformanceEntryListWidget();
         long[] totalTime = {0};
+        List<SubCategoryListEntry> subCategories = new ArrayList<>();
         RoughlyEnoughItemsCore.PERFORMANCE_LOGGER.getStages().forEach((stage, inner) -> {
             List<PerformanceEntryImpl> entries = new ArrayList<>();
             inner.times().forEach((obj, time) -> {
@@ -159,9 +178,15 @@ public class PerformanceScreen extends Screen {
                 entries.add(new PerformanceEntryImpl(Component.literal("Miscellaneous Operations"), inner.totalNano() - separateTime));
             }
             totalTime[0] += Math.max(inner.totalNano(), separateTime);
-            entries.sort(Comparator.<PerformanceEntryImpl>comparingLong(value -> value.time).reversed());
-            list.addItem(new SubCategoryListEntry(Component.literal(stage), (List<PerformanceScreen.PerformanceEntry>) (List<? extends PerformanceScreen.PerformanceEntry>) entries, Math.max(inner.totalNano(), separateTime), false));
+            if (this.sortType == SortType.DURATION) {
+                entries.sort(Comparator.<PerformanceEntryImpl>comparingLong(value -> value.time).reversed());
+            }
+            subCategories.add(new SubCategoryListEntry(Component.literal(stage), (List<PerformanceScreen.PerformanceEntry>) (List<? extends PerformanceScreen.PerformanceEntry>) entries, Math.max(inner.totalNano(), separateTime), false));
         });
+        if (this.sortType == SortType.DURATION) {
+            subCategories.sort(Comparator.comparingLong(SubCategoryListEntry::getTotalTime).reversed());
+        }
+        subCategories.forEach(list::addItem);
         list.children().add(0, new PerformanceEntryImpl(Component.literal("Total Load Time"), totalTime[0]));
         addWidget(list);
     }
@@ -212,5 +237,10 @@ public class PerformanceScreen extends Screen {
         protected int getScrollbarPosition() {
             return width - 6;
         }
+    }
+    
+    private enum SortType {
+        ORDER,
+        DURATION
     }
 }

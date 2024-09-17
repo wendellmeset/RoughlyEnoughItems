@@ -26,16 +26,15 @@ package me.shedaniel.rei.impl.client.util;
 import com.google.common.collect.Iterables;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.AbstractList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class OriginalRetainingCyclingList<T> implements CyclingList.Mutable<T> {
     private final Supplier<T> empty;
     @Nullable
     private CyclingList<T> backing = null;
+    private List<Consumer<CyclingList<T>>> listeners = List.of();
     
     public OriginalRetainingCyclingList(Supplier<T> empty) {
         this.empty = empty;
@@ -56,7 +55,9 @@ public class OriginalRetainingCyclingList<T> implements CyclingList.Mutable<T> {
     @Override
     public T previous() {
         if (this.backing == null) return empty.get();
-        return this.backing.previous();
+        T previous = this.backing.previous();
+        notifyListeners();
+        return previous;
     }
     
     @Override
@@ -72,7 +73,9 @@ public class OriginalRetainingCyclingList<T> implements CyclingList.Mutable<T> {
     @Override
     public T next() {
         if (this.backing == null) return empty.get();
-        return this.backing.next();
+        T next = this.backing.next();
+        notifyListeners();
+        return next;
     }
     
     @Override
@@ -86,11 +89,16 @@ public class OriginalRetainingCyclingList<T> implements CyclingList.Mutable<T> {
             mutable.add(entry);
             this.backing = mutable;
         }
+        
+        notifyListeners();
     }
     
     @Override
     public void resetToStart() {
-        if (this.backing != null) this.backing.resetToStart();
+        if (this.backing != null) {
+            this.backing.resetToStart();
+            notifyListeners();
+        };
     }
     
     @Override
@@ -118,6 +126,8 @@ public class OriginalRetainingCyclingList<T> implements CyclingList.Mutable<T> {
                 mutable.addAll(entries);
                 this.backing = mutable;
             }
+            
+            notifyListeners();
         }
     }
     
@@ -128,10 +138,13 @@ public class OriginalRetainingCyclingList<T> implements CyclingList.Mutable<T> {
         } else {
             this.backing = null;
         }
+        
+        notifyListeners();
     }
     
     public void setBacking(@Nullable CyclingList<T> backing) {
         this.backing = backing;
+        notifyListeners();
     }
     
     private static <T> AbstractList<T> getListFromCollection(Collection<? extends T> entries) {
@@ -172,5 +185,20 @@ public class OriginalRetainingCyclingList<T> implements CyclingList.Mutable<T> {
     public CyclingList<T> getBacking() {
         if (this.backing == null) return CyclingList.of(this.empty);
         return this.backing;
+    }
+    
+    public void addListener(Consumer<CyclingList<T>> listener) {
+        if (this.listeners instanceof ArrayList<Consumer<CyclingList<T>>> list) {
+            list.add(listener);
+        } else {
+            this.listeners = new ArrayList<>(this.listeners);
+            this.listeners.add(listener);
+        }
+    }
+    
+    private void notifyListeners() {
+        for (Consumer<CyclingList<T>> listener : this.listeners) {
+            listener.accept(this);
+        }
     }
 }

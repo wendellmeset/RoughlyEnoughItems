@@ -34,6 +34,10 @@ import java.util.List;
 import java.util.Set;
 
 public interface DisplayCache {
+    int cachedSize();
+    
+    int notCachedSize();
+    
     boolean doesCache();
     
     boolean isCached(Display display);

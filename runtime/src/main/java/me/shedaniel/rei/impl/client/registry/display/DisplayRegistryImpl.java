@@ -23,7 +23,9 @@
 
 package me.shedaniel.rei.impl.client.registry.display;
 
-import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import dev.architectury.event.EventResult;
 import me.shedaniel.rei.api.client.plugins.REIClientPlugin;
 import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
@@ -36,6 +38,7 @@ import me.shedaniel.rei.api.client.registry.display.visibility.DisplayVisibility
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.display.Display;
 import me.shedaniel.rei.api.common.plugins.PluginManager;
+import me.shedaniel.rei.api.common.registry.ReloadStage;
 import me.shedaniel.rei.impl.common.InternalLogger;
 import me.shedaniel.rei.impl.common.registry.RecipeManagerContextImpl;
 import net.minecraft.world.item.crafting.Recipe;
@@ -54,10 +57,6 @@ public class DisplayRegistryImpl extends RecipeManagerContextImpl<REIClientPlugi
     private final List<DisplayFiller<?>> fillers = new ArrayList<>();
     private long lastAddWarning = -1;
     private DisplaysHolder displaysHolder = new DisplaysHolderImpl(false);
-    
-    public DisplayRegistryImpl() {
-        super(RecipeManagerContextImpl.supplier());
-    }
     
     @Override
     public void acceptPlugin(REIClientPlugin plugin) {
@@ -122,7 +121,11 @@ public class DisplayRegistryImpl extends RecipeManagerContextImpl<REIClientPlugi
     @Override
     public boolean isDisplayVisible(Display display) {
         DisplayCategory<Display> category = (DisplayCategory<Display>) CategoryRegistry.getInstance().get(display.getCategoryIdentifier()).getCategory();
-        Preconditions.checkNotNull(category, "Failed to resolve category: " + display.getCategoryIdentifier());
+        return isDisplayVisible(category, display);
+    }
+    
+    public boolean isDisplayVisible(DisplayCategory<?> category, Display display) {
+        if (category == null) throw new NullPointerException("Failed to resolve category: " + display.getCategoryIdentifier());
         for (DisplayVisibilityPredicate predicate : visibilityPredicates) {
             try {
                 EventResult result = predicate.handleDisplay(category, display);
@@ -187,13 +190,8 @@ public class DisplayRegistryImpl extends RecipeManagerContextImpl<REIClientPlugi
     
     @Override
     public void endReload() {
-        if (!fillers.isEmpty()) {
-            List<Recipe<?>> allSortedRecipes = getAllSortedRecipes();
-            for (int i = allSortedRecipes.size() - 1; i >= 0; i--) {
-                Recipe<?> recipe = allSortedRecipes.get(i);
-                addWithReason(recipe, DisplayAdditionReason.RECIPE_MANAGER);
-            }
-        }
+        InternalLogger.getInstance().debug("Found preliminary %d displays", displaySize());
+        fillSortedRecipes();
         
         for (CategoryIdentifier<?> identifier : getAll().keySet()) {
             if (CategoryRegistry.getInstance().tryGet(identifier).isEmpty()) {
@@ -201,21 +199,59 @@ public class DisplayRegistryImpl extends RecipeManagerContextImpl<REIClientPlugi
             }
         }
         
-        List<Display> failedDisplays = new ArrayList<>();
-        for (List<Display> displays : getAll().values()) {
-            for (Display display : displays) {
-                if (!DisplayValidator.validate(display)) {
-                    failedDisplays.add(display);
+        removeFailedDisplays();
+        this.displaysHolder.endReload();
+        InternalLogger.getInstance().debug("%d displays registration have completed", displaySize());
+    }
+    
+    private void fillSortedRecipes() {
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        int lastSize = displaySize();
+        if (!fillers.isEmpty()) {
+            List<Recipe<?>> allSortedRecipes = getAllSortedRecipes();
+            for (int i = allSortedRecipes.size() - 1; i >= 0; i--) {
+                Recipe<?> recipe = allSortedRecipes.get(i);
+                try {
+                    addWithReason(recipe, DisplayAdditionReason.RECIPE_MANAGER);
+                } catch (Throwable e) {
+                    InternalLogger.getInstance().error("Failed to fill display for recipe: %s [%s]", recipe, recipe.getId(), e);
                 }
             }
         }
-        for (Display display : failedDisplays) {
-            this.displaysHolder.remove(display);
+        InternalLogger.getInstance().debug("Filled %d displays from recipe manager in %s", displaySize() - lastSize, stopwatch.stop());
+    }
+    
+    private void removeFailedDisplays() {
+        Multimap<CategoryIdentifier<?>, Display> failedDisplays = Multimaps.newListMultimap(new HashMap<>(), ArrayList::new);
+        for (List<Display> displays : getAll().values()) {
+            for (Display display : displays) {
+                if (!DisplayValidator.validate(display)) {
+                    failedDisplays.put(display.getCategoryIdentifier(), display);
+                }
+            }
         }
         
-        this.displaysHolder.endReload();
-        
-        InternalLogger.getInstance().debug("Registered %d displays", displaySize());
+        InternalLogger.getInstance().debug("Removing %d failed displays" + (!failedDisplays.isEmpty() ? ":" : ""), failedDisplays.size());
+        failedDisplays.asMap().entrySet().stream()
+                .sorted(Comparator.comparing(entry -> entry.getKey().toString()))
+                .forEach(entry -> {
+                    InternalLogger.getInstance().debug("- %s: %d failed display" + (entry.getValue().size() == 1 ? "" : "s"), entry.getKey(), entry.getValue().size());
+                    for (Display display : entry.getValue()) {
+                        this.displaysHolder.remove(display);
+                    }
+                });
+    }
+    
+    @Override
+    public void postStage(ReloadStage stage) {
+        if (stage != ReloadStage.END) return;
+        InternalLogger.getInstance().debug("Registered displays report (%d displays, %d cached / %d not cached)" + (displaySize() > 0 ? ":" : ""),
+                displaySize(), displaysHolder().cache().cachedSize(), displaysHolder().cache().notCachedSize());
+        getAll().entrySet().stream()
+                .sorted(Comparator.comparing(entry -> entry.getKey().toString()))
+                .forEach(entry -> {
+                    InternalLogger.getInstance().debug("- %s: %d display" + (entry.getValue().size() == 1 ? "" : "s"), entry.getKey(), entry.getValue().size());
+                });
     }
     
     public DisplaysHolder displaysHolder() {
