@@ -19,6 +19,7 @@
   "text.rei.inventory.highlighting.enabled.tooltip": "Os espaços não encontrados na busca\nficarão da cor cinza.\nClique duas vezes na barra de busca para ativar o modo.",
   "text.rei.caching.search": "Memorizando busca do REI...",
   "text.rei.caching.search.step": "Passo %d/%d (%s%%):",
+  "text.rei.searching": "O REI está procurando resultados…",
   "text.rei.config.menu.dark_theme": "Tema escuro",
   "text.rei.config.menu.craftable_filter": "Fabricáveis",
   "text.rei.config.menu.display": "Exibição...",
