@@ -46,13 +46,13 @@ dependencies {
 
 shadowJar {
     configurations = [project.configurations.shadowCommon]
-    classifier "dev-shadow"
+    archiveClassifier = "dev-shadow"
 }
 
 remapJar {
     input.set shadowJar.archiveFile
     dependsOn shadowJar
-    classifier null
+    archiveClassifier = null
 }
 
 task renameJarForPublication(type: Zip, dependsOn: remapJar) {
@@ -66,7 +66,7 @@ task renameJarForPublication(type: Zip, dependsOn: remapJar) {
 assemble.dependsOn renameJarForPublication
 
 jar {
-    classifier "dev"
+    archiveClassifier = "dev"
 }
 
 java {

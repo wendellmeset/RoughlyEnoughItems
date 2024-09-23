@@ -133,13 +133,13 @@ def modRuntime(str) {
 
 shadowJar {
     configurations = [project.configurations.shadowCommon]
-    classifier "dev-shadow"
+    archiveClassifier = "dev-shadow"
 }
 
 remapJar {
     input.set shadowJar.archiveFile
     dependsOn shadowJar
-    classifier null
+    archiveClassifier = null
 }
 
 task renameJarForPublication(type: Zip, dependsOn: remapJar) {
@@ -153,7 +153,7 @@ task renameJarForPublication(type: Zip, dependsOn: remapJar) {
 assemble.dependsOn renameJarForPublication
 
 jar {
-    classifier "dev"
+    archiveClassifier = "dev"
 }
 
 java {
@@ -171,7 +171,7 @@ sourcesJar {
 }
 
 task serverOnlyJar(type: Jar, dependsOn: [remapJar]) {
-    classifier "server-only"
+    archiveClassifier = "server-only"
     from(zipTree(remapJar.archiveFile.get().asFile)) {
         exclude "META-INF/mods.toml", "mezz/**", "me/shedaniel/rei/forge/RoughlyEnoughItemsForge.class", "me/shedaniel/rei/forge/JEIStub.class"
     }
@@ -197,12 +197,12 @@ publishing {
         ["api", "default-plugin"].forEach { projectName ->
             def remapSrg = tasks.create("remapSrgJarFor$projectName", net.fabricmc.loom.task.RemapJarTask) {
                 inputFile = project(":" + projectName).tasks.jar.archiveFile
-                classifier "srg-remapped-$projectName"
+                archiveClassifier = "srg-remapped-$projectName"
                 targetNamespace = "srg"
             }
             def remapSrgSourcesJar = tasks.create("remapSrgSourcesFor$projectName", net.fabricmc.loom.task.RemapSourcesJarTask) {
                 inputFile = project(":" + projectName).tasks.sourcesJar.archiveFile
-                classifier "srg-remapped-$projectName-sources"
+                archiveClassifier = "srg-remapped-$projectName-sources"
                 targetNamespace = "srg"
             }
             create(projectName + "Forge", MavenPublication.class) { publication ->
