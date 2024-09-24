@@ -172,7 +172,7 @@ public abstract class EntryListWidget extends WidgetWithBounds implements Overla
             if (Screen.hasControlDown()) {
                 ConfigObjectImpl config = ConfigManagerImpl.getInstance().getConfig();
                 scaleIndicator.setAs(10.0D);
-                if (config.setEntrySize(config.getEntrySize() + amount * 0.075)) {
+                if (config.setEntrySize(config.getEntrySize() + Double.compare(amount, 0) * 0.05)) {
                     ConfigManager.getInstance().saveConfig();
                     REIRuntime.getInstance().getOverlay().ifPresent(ScreenOverlay::queueReloadOverlay);
                     return true;

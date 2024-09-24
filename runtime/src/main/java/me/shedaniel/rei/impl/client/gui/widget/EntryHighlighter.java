@@ -24,7 +24,9 @@
 package me.shedaniel.rei.impl.client.gui.widget;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import me.shedaniel.math.Color;
 import me.shedaniel.rei.api.common.util.EntryStacks;
+import me.shedaniel.rei.impl.client.config.ConfigManagerImpl;
 import me.shedaniel.rei.impl.client.gui.widget.entrylist.EntryListSearchManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -33,6 +35,11 @@ import net.minecraft.world.inventory.Slot;
 
 public class EntryHighlighter {
     public static void render(GuiGraphics graphics) {
+        float dimOpacity = (float) ConfigManagerImpl.getInstance().getConfig().functionality.inventoryHighlightingDarkenOpacity;
+        float opacity = (float) ConfigManagerImpl.getInstance().getConfig().functionality.inventoryHighlightingOpacity;
+        int dimColor = Color.ofRGBA(20 / 255F, 20 / 255F, 20 / 255F, dimOpacity).getColor();
+        int borderColor = Color.ofRGBA(0x5f / 255F, 0xff / 255F, 0x3b / 255F, opacity).getColor();
+        int color = Color.ofRGBA(0x5f / 255F, 0xff / 255F, 0x3b / 255F, opacity * 0x34 / 255F).getColor();
         RenderSystem.disableDepthTest();
         RenderSystem.colorMask(true, true, true, false);
         if (Minecraft.getInstance().screen instanceof AbstractContainerScreen<?> containerScreen) {
@@ -41,17 +48,17 @@ public class EntryHighlighter {
                 if (!slot.hasItem() || !EntryListSearchManager.INSTANCE.matches(EntryStacks.of(slot.getItem()))) {
                     graphics.pose().pushPose();
                     graphics.pose().translate(0, 0, 500f);
-                    graphics.fillGradient(x + slot.x, y + slot.y, x + slot.x + 16, y + slot.y + 16, 0xdc202020, 0xdc202020);
+                    graphics.fillGradient(x + slot.x, y + slot.y, x + slot.x + 16, y + slot.y + 16, dimColor, dimColor);
                     graphics.pose().popPose();
                 } else {
                     graphics.pose().pushPose();
                     graphics.pose().translate(0, 0, 200f);
-                    graphics.fillGradient(x + slot.x, y + slot.y, x + slot.x + 16, y + slot.y + 16, 0x345fff3b, 0x345fff3b);
-                
-                    graphics.fillGradient(x + slot.x - 1, y + slot.y - 1, x + slot.x, y + slot.y + 16 + 1, 0xff5fff3b, 0xff5fff3b);
-                    graphics.fillGradient(x + slot.x + 16, y + slot.y - 1, x + slot.x + 16 + 1, y + slot.y + 16 + 1, 0xff5fff3b, 0xff5fff3b);
-                    graphics.fillGradient(x + slot.x - 1, y + slot.y - 1, x + slot.x + 16, y + slot.y, 0xff5fff3b, 0xff5fff3b);
-                    graphics.fillGradient(x + slot.x - 1, y + slot.y + 16, x + slot.x + 16, y + slot.y + 16 + 1, 0xff5fff3b, 0xff5fff3b);
+                    graphics.fillGradient(x + slot.x, y + slot.y, x + slot.x + 16, y + slot.y + 16, color, color);
+                    
+                    graphics.fillGradient(x + slot.x - 1, y + slot.y - 1, x + slot.x, y + slot.y + 16 + 1, borderColor, borderColor);
+                    graphics.fillGradient(x + slot.x + 16, y + slot.y - 1, x + slot.x + 16 + 1, y + slot.y + 16 + 1, borderColor, borderColor);
+                    graphics.fillGradient(x + slot.x - 1, y + slot.y - 1, x + slot.x + 16, y + slot.y, borderColor, borderColor);
+                    graphics.fillGradient(x + slot.x - 1, y + slot.y + 16, x + slot.x + 16, y + slot.y + 16 + 1, borderColor, borderColor);
                     
                     graphics.pose().popPose();
                 }

@@ -23,7 +23,6 @@
 
 package me.shedaniel.rei.impl.client.search.collapsed;
 
-import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import me.shedaniel.rei.api.client.registry.entry.CollapsibleEntryRegistry;
@@ -31,13 +30,11 @@ import me.shedaniel.rei.impl.common.InternalLogger;
 import me.shedaniel.rei.impl.common.entry.type.collapsed.CollapsibleEntryRegistryImpl;
 import me.shedaniel.rei.impl.common.util.HashedEntryStackWrapper;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 
 public class CollapsedEntriesCache {
     private static CollapsedEntriesCache instance = new CollapsedEntriesCache();
