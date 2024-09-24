@@ -82,7 +82,7 @@ public interface OptionValueEntry<T> {
         };
     }
     
-    static <T> OptionValueEntry<T> options(T... options) {
+    static <T> OptionValueEntry.Selection<T> options(T... options) {
         return new Selection<>() {
             @Override
             public List<T> getOptions() {

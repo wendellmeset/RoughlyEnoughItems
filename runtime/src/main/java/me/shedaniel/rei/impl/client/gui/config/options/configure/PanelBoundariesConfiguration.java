@@ -308,7 +308,7 @@ public enum PanelBoundariesConfiguration implements OptionValueEntry.Configurato
         }
         
         private void renderPreview(GuiGraphics graphics, Rectangle panelBounds, float delta) {
-            int entrySize = Mth.ceil(18 * access.get(AllREIConfigOptions.ZOOM));
+            int entrySize = Mth.ceil(18 * access.get(AllREIConfigOptions.ZOOM).value());
             Rectangle overlayBounds;
             DisplayPanelLocation location = access.get(AllREIConfigOptions.LOCATION);
             PanelBoundary boundary = access.get(option);

@@ -658,6 +658,8 @@ public class ConfigObjectImpl implements ConfigObject, ConfigData {
         @Comment("Declares whether subsets is enabled.")
         public boolean isSubsetsEnabled = false;
         public boolean allowInventoryHighlighting = true;
+        public double inventoryHighlightingDarkenOpacity = 0.85;
+        public double inventoryHighlightingOpacity = 1.0;
         public ItemCheatingMode itemCheatingMode = ItemCheatingMode.REI_LIKE;
     }
     
