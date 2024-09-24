@@ -31,6 +31,7 @@ import me.shedaniel.rei.impl.client.gui.widget.entrylist.EntryListSearchManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.inventory.Slot;
 
 public class EntryHighlighter {
@@ -46,10 +47,7 @@ public class EntryHighlighter {
             int x = containerScreen.leftPos, y = containerScreen.topPos;
             for (Slot slot : containerScreen.getMenu().slots) {
                 if (!slot.hasItem() || !EntryListSearchManager.INSTANCE.matches(EntryStacks.of(slot.getItem()))) {
-                    graphics.pose().pushPose();
-                    graphics.pose().translate(0, 0, 500f);
-                    graphics.fillGradient(x + slot.x, y + slot.y, x + slot.x + 16, y + slot.y + 16, dimColor, dimColor);
-                    graphics.pose().popPose();
+                    graphics.fillGradient(RenderType.guiOverlay(), x + slot.x, y + slot.y, x + slot.x + 16, y + slot.y + 16, dimColor, dimColor, 0);
                 } else {
                     graphics.pose().pushPose();
                     graphics.pose().translate(0, 0, 200f);
