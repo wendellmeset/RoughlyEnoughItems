@@ -106,6 +106,10 @@ publishing {
                         builtBy remapSourcesJarTask
                         classifier "sources"
                     }
+
+                    // Hack to inherit the dependencies without inheriting the artifacts
+                    publication.setArtifacts(publication.artifacts)
+                    from components.java
                 }
             }
         }
