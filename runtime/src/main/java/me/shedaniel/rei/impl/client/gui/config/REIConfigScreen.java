@@ -82,6 +82,8 @@ public class REIConfigScreen extends Screen implements ConfigAccess {
     @Nullable
     private Menu menu;
     @Nullable
+    private Widget menuWidget;
+    @Nullable
     private CompositeOption<ModifierKeyCode> focusedKeycodeOption = null;
     private ModifierKeyCode partialKeycode = null;
     
@@ -397,14 +399,18 @@ public class REIConfigScreen extends Screen implements ConfigAccess {
     
     @Override
     public void openMenu(Menu menu) {
+        if (this.menu != null) {
+            this.widgets.remove(this.menuWidget);
+        }
         this.menu = menu;
-        this.widgets.add(menu);
+        this.widgets.add(this.menuWidget = Widgets.withTranslate(menu, 0, 0, 300));
     }
     
     @Override
     public void closeMenu() {
-        this.widgets.remove(menu);
+        this.widgets.remove(this.menuWidget);
         this.menu = null;
+        this.menuWidget = null;
     }
     
     @Override

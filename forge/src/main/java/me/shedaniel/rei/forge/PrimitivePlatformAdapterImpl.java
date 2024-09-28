@@ -23,7 +23,6 @@
 
 package me.shedaniel.rei.forge;
 
-import me.shedaniel.rei.RoughlyEnoughItemsState;
 import me.shedaniel.rei.impl.init.PrimitivePlatformAdapter;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.ModList;
@@ -39,9 +38,6 @@ public class PrimitivePlatformAdapterImpl implements PrimitivePlatformAdapter {
     
     @Override
     public void checkMods() {
-        if (ModList.get().isLoaded("moreoverlays")) {
-            RoughlyEnoughItemsState.error("REI is not compatible with MoreOverlays, and actually contains Builtin Inventory Highlighting, other features can be installed via different mods!");
-        }
     }
     
     @Override

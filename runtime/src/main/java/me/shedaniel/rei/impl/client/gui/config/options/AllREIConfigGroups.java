@@ -68,10 +68,13 @@ public interface AllREIConfigGroups {
     OptionGroup ACCESSIBILITY_WIDGETS = make("accessibility.widgets")
             .add(SCROLLBAR_VISIBILITY)
             .add(CLICKABLE_RECIPE_ARROWS);
+    OptionGroup ACCESSIBILITY_INVENTORY_SEARCH = make("accessibility.inventory_search")
+            .add(INVENTORY_SEARCH_MODE)
+            .add(INVENTORY_SEARCH_DARKEN_OPACITY)
+            .add(INVENTORY_SEARCH_OPACITY);
     OptionGroup ACCESSIBILITY_FEATURES = make("accessibility.features")
             .add(VANILLA_RECIPE_BOOK)
-            .add(STATUS_EFFECTS_LOCATION)
-            .add(INVENTORY_SEARCH);
+            .add(STATUS_EFFECTS_LOCATION);
     OptionGroup FILTERING_FILTERING = make("filtering.filtering")
             .add(CATEGORIES)
             .add(CUSTOMIZED_FILTERING);

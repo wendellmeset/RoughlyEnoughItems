@@ -21,45 +21,50 @@
  * SOFTWARE.
  */
 
-package me.shedaniel.rei.forge;
+package me.shedaniel.rei.impl.client.gui.config.options;
 
-import me.shedaniel.rei.impl.init.PrimitivePlatformAdapter;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.fml.ModList;
-import net.neoforged.fml.loading.FMLEnvironment;
-import net.neoforged.fml.loading.FMLLoader;
-import org.apache.maven.artifact.versioning.ComparableVersion;
+import org.jetbrains.annotations.ApiStatus;
 
-public class PrimitivePlatformAdapterImpl implements PrimitivePlatformAdapter {
-    @Override
-    public boolean isClient() {
-        return FMLEnvironment.dist == Dist.CLIENT;
+import java.util.Objects;
+import java.util.function.BiPredicate;
+
+@ApiStatus.Internal
+public final class ComparableValue<T> {
+    private final T value;
+    private final BiPredicate<T, Object> equals;
+    
+    private ComparableValue(T value, BiPredicate<T, Object> equals) {
+        this.value = value;
+        this.equals = equals;
+    }
+    
+    public static <T> ComparableValue<T> of(T value, BiPredicate<T, Object> equals) {
+        return new ComparableValue<>(value, equals);
+    }
+    
+    public static ComparableValue<Float> ofFloat(float value) {
+        return of(value, (a, b) -> b instanceof Float f && Math.abs(a - f) <= 0.001F);
+    }
+    
+    public static ComparableValue<Double> ofDouble(double value) {
+        return of(value, (a, b) -> b instanceof Double d && Math.abs(a - d) <= 0.001D);
+    }
+    
+    public T value() {
+        return value;
     }
     
     @Override
-    public void checkMods() {
-    }
-    
-    @Override
-    public boolean isDev() {
-        return !FMLLoader.isProduction();
-    }
-    
-    @Override
-    public String getMinecraftVersion() {
-        return ModList.get().getModContainerById("minecraft").get().getModInfo().getVersion().toString();
-    }
-    
-    @Override
-    public int compareVersions(String version1, String version2) {
-        ComparableVersion v1 = new ComparableVersion(version1);
-        ComparableVersion v2 = new ComparableVersion(version2);
-        
-        try {
-            return v1.compareTo(v2);
-        } catch (IllegalStateException e) {
-            new IllegalStateException("Failed to compare versions: " + version1 + " and " + version2, e).printStackTrace();
-            return 0;
+    public boolean equals(Object obj) {
+        if (obj instanceof ComparableValue) {
+            return equals.test(value, ((ComparableValue<?>) obj).value);
         }
+        
+        return false;
+    }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(value);
     }
 }
