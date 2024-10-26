@@ -210,15 +210,16 @@ publishing {
                 project.afterEvaluate {
                     def project = project(":" + projectName)
                     remapSrg.inputFile = project.fakeForgeJar.archiveFile
-                    publication.artifact(remapSrg) { classifier null }
+                    def normalArtifact, sourceArtifact
+                    publication.artifact(remapSrg) { classifier null; normalArtifact = it }
                     publication.artifact(remapSrgSourcesJar) {
                         builtBy remapSrgSourcesJar
                         classifier "sources"
+                        sourceArtifact = it
                     }
 
-                    // Hack to inherit the dependencies without inheriting the artifacts
-                    publication.setArtifacts(publication.artifacts)
                     from components.java
+                    publication.setArtifacts([normalArtifact, sourceArtifact])
                 }
             }
         }
