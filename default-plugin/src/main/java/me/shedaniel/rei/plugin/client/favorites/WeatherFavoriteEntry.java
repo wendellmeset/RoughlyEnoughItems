@@ -40,6 +40,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.nbt.CompoundTag;
@@ -124,7 +125,7 @@ public class WeatherFavoriteEntry extends FavoriteEntry {
             }
             
             private void renderWeatherIcon(GuiGraphics graphics, Weather type, int centerX, int centerY, int color) {
-                graphics.blit(CHEST_GUI_TEXTURE, centerX - 7, centerY - 7, type.getId() * 14, 14, 14, 14, 256, 256);
+                graphics.blit(RenderType::guiTextured, CHEST_GUI_TEXTURE, centerX - 7, centerY - 7, type.getId() * 14, 14, 14, 14, 256, 256);
             }
             
             @Override

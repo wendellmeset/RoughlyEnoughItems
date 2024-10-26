@@ -29,7 +29,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import me.shedaniel.clothconfig2.ClothConfigInitializer;
-import me.shedaniel.clothconfig2.api.ScissorsHandler;
 import me.shedaniel.clothconfig2.api.scroll.ScrollingContainer;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.REIRuntime;
@@ -64,7 +63,7 @@ public class ScrolledEntryListWidget extends CollapsingEntryListWidget {
     
     @Override
     protected void renderEntries(boolean fastEntryRendering, GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-        ScissorsHandler.INSTANCE.scissor(bounds);
+        graphics.enableScissor(bounds.x, bounds.y, bounds.getMaxX(), bounds.getMaxY());
         
         int entrySize = entrySize();
         int skip = Math.max(0, Mth.floor(scrolling.scrollAmount() / (float) entrySize));
@@ -121,9 +120,9 @@ public class ScrolledEntryListWidget extends CollapsingEntryListWidget {
         new CollapsedEntriesBorderRenderer().render(graphics, helper, collapsedStackIndices);
         
         scrolling.updatePosition(delta);
-        ScissorsHandler.INSTANCE.removeLastScissor();
+        graphics.disableScissor();
         if (scrolling.getMaxScroll() > 0) {
-            scrolling.renderScrollBar(graphics, 0, 1, REIRuntime.getInstance().isDarkThemeEnabled() ? 0.8f : 1f);
+            scrolling.renderScrollBar(graphics, 0, REIRuntime.getInstance().isDarkThemeEnabled() ? 0.8f : 1f);
         }
     }
     

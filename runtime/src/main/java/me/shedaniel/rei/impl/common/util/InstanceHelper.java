@@ -33,7 +33,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.world.item.crafting.RecipeAccess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,9 +43,7 @@ import java.lang.ref.WeakReference;
 public final class InstanceHelper {
     private static final InstanceHelper INSTANCE = new InstanceHelper();
     private WeakReference<RegistryAccess> registryAccessRef;
-    private WeakReference<RecipeManager> recipeManagerRef;
     private boolean warnedRegistryAccess;
-    private boolean warnedRecipeManager;
     
     public static InstanceHelper getInstance() {
         return INSTANCE;
@@ -73,27 +71,6 @@ public final class InstanceHelper {
         return access;
     }
     
-    public RecipeManager recipeManager() {
-        RecipeManager manager = this.recipeManagerRef == null ? null : this.recipeManagerRef.get();
-        if (manager != null) {
-            return manager;
-        }
-        
-        if (Platform.getEnvironment() == Env.CLIENT) {
-            manager = recipeManagerFromClient();
-        } else if (GameInstance.getServer() != null) {
-            manager = GameInstance.getServer().getRecipeManager();
-        }
-        
-        if (manager == null && !this.warnedRegistryAccess) {
-            this.warnedRegistryAccess = true;
-            
-            throw new IllegalStateException("Cannot get recipe manager!");
-        }
-        
-        return manager;
-    }
-    
     @Environment(EnvType.CLIENT)
     @Nullable
     public static ClientPacketListener connectionFromClient() {
@@ -117,9 +94,9 @@ public final class InstanceHelper {
     }
     
     @Environment(EnvType.CLIENT)
-    private static RecipeManager recipeManagerFromClient() {
+    private static RecipeAccess recipeAccessFromClient() {
         ClientPacketListener connection = connectionFromClient();
         if (connection == null) return null;
-        return connection.getRecipeManager();
+        return connection.recipes();
     }
 }

@@ -56,9 +56,10 @@ public class BannerDuplicateRecipeFiller implements CraftingRecipeFiller<BannerD
             EntryIngredient inputsFirst = pair.getFirst().build();
             EntryStack<?> inputsSecond = pair.getSecond();
             EntryIngredient.unifyFocuses(inputsFirst);
-            displays.add(new DefaultCustomShapelessDisplay(recipe,
+            displays.add(new DefaultCustomShapelessDisplay(
                     List.of(inputsFirst, EntryIngredient.of(inputsSecond)),
-                    List.of(inputsFirst)));
+                    List.of(inputsFirst),
+                    Optional.of(recipe.id().location())));
         }
         
         return displays;

@@ -23,7 +23,6 @@
 
 package me.shedaniel.rei.impl.client.gui.config.components;
 
-import me.shedaniel.clothconfig2.api.ScissorsHandler;
 import me.shedaniel.clothconfig2.api.animator.NumberAnimator;
 import me.shedaniel.clothconfig2.api.animator.ValueAnimator;
 import me.shedaniel.math.Point;
@@ -128,10 +127,11 @@ public class ConfigOptionWidget {
                     this.previewLabel.render(graphics, mouseX, mouseY, delta);
                     
                     if (this.preview != null && this.previewHeight.value() > 0.1f) {
-                        ScissorsHandler.INSTANCE.scissor(MatrixUtils.transform(graphics.pose().last().pose(), new Rectangle(0, 24 + 12 * split.size() - (nextLinePreview ? 0 : 12), width, this.previewHeight.value())));
+                        Rectangle rectangle = MatrixUtils.transform(graphics.pose().last().pose(), new Rectangle(0, 24 + 12 * split.size() - (nextLinePreview ? 0 : 12), width, this.previewHeight.value()));
+                        graphics.enableScissor(rectangle.x, rectangle.y, rectangle.getMaxX(), rectangle.getMaxY());
                         this.previewTranslation = new Matrix4f().translate(0, 12 + 12 * split.size(), 100);
                         this.preview.render(graphics, mouseX, mouseY, delta);
-                        ScissorsHandler.INSTANCE.removeLastScissor();
+                        graphics.disableScissor();
                     }
                 }
             }

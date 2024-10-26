@@ -23,33 +23,17 @@
 
 package me.shedaniel.rei.impl.client.gui.widget;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.Tesselator;
 import me.shedaniel.clothconfig2.gui.widget.DynamicElementListWidget;
-import me.shedaniel.rei.impl.client.gui.InternalTextures;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
 
 public class UpdatedListWidget<E extends UpdatedListWidget.Entry<E>> extends DynamicElementListWidget<E> {
     public UpdatedListWidget(Minecraft client, int width, int height, int top, int bottom) {
-        super(client, width, height, top, bottom, InternalTextures.LEGACY_DIRT);
+        super(client, width, height, top, bottom, null);
         this.setRenderSelection(false);
-    }
-    
-    @Override
-    protected void renderHoleBackground(GuiGraphics graphics, int y1, int y2, int alpha1, int alpha2) {
-    }
-    
-    @Override
-    protected void renderBackBackground(GuiGraphics graphics, BufferBuilder buffer, Tesselator tessellator) {
-        RenderSystem.enableBlend();
-        graphics.blit(ResourceLocation.withDefaultNamespace("textures/gui/menu_list_background.png"), this.left, this.top, this.right, this.bottom, this.width, this.bottom - this.top, 32, 32);
-        RenderSystem.disableBlend();
     }
     
     @SuppressWarnings("rawtypes")

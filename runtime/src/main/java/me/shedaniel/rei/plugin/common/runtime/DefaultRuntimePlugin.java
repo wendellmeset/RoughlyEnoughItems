@@ -29,7 +29,7 @@ import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.entry.type.EntryTypeRegistry;
 import me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes;
 import me.shedaniel.rei.api.common.fluid.FluidSupportProvider;
-import me.shedaniel.rei.api.common.plugins.REIServerPlugin;
+import me.shedaniel.rei.api.common.plugins.REICommonPlugin;
 import me.shedaniel.rei.api.common.transfer.info.stack.PlayerInventorySlotAccessor;
 import me.shedaniel.rei.api.common.transfer.info.stack.SlotAccessor;
 import me.shedaniel.rei.api.common.transfer.info.stack.SlotAccessorRegistry;
@@ -47,7 +47,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 @ApiStatus.Internal
-public class DefaultRuntimePlugin implements REIServerPlugin {
+public class DefaultRuntimePlugin implements REICommonPlugin {
     public static final ResourceLocation PLUGIN = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "default_runtime_plugin");
     
     @Override

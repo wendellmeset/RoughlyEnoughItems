@@ -29,7 +29,6 @@ import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.entry.settings.EntryIngredientSetting;
 import me.shedaniel.rei.impl.Internals;
-import net.minecraft.nbt.ListTag;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -230,11 +229,6 @@ public enum EntryIngredientImpl implements Internals.EntryIngredientProvider {
         }
         
         @Override
-        public ListTag save() {
-            return new ListTag();
-        }
-        
-        @Override
         public EntryIngredient filter(Predicate<EntryStack<?>> filter) {
             return this;
         }
@@ -377,13 +371,6 @@ public enum EntryIngredientImpl implements Internals.EntryIngredientProvider {
         }
         
         @Override
-        public ListTag save() {
-            ListTag listTag = new ListTag();
-            listTag.add(stack.saveStack());
-            return listTag;
-        }
-        
-        @Override
         public EntryIngredient filter(Predicate<EntryStack<?>> filter) {
             if (filter.test(stack)) {
                 return this;
@@ -479,15 +466,6 @@ public enum EntryIngredientImpl implements Internals.EntryIngredientProvider {
         @Override
         public void sort(Comparator<? super EntryStack<?>> c) {
             throw new UnsupportedOperationException();
-        }
-        
-        @Override
-        public ListTag save() {
-            ListTag listTag = new ListTag();
-            for (EntryStack<?> stack : array) {
-                listTag.add(stack.saveStack());
-            }
-            return listTag;
         }
         
         @Override

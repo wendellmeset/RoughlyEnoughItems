@@ -23,18 +23,38 @@
 
 package me.shedaniel.rei.plugin.common.displays;
 
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.display.Display;
+import me.shedaniel.rei.api.common.display.DisplaySerializer;
 import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.plugin.common.BuiltinPlugin;
+import net.minecraft.network.codec.StreamCodec;
 
-import java.util.Collections;
 import java.util.List;
 
 public class DefaultPathingDisplay extends BasicDisplay {
+    public static final DisplaySerializer<DefaultPathingDisplay> SERIALIZER = DisplaySerializer.of(
+            RecordCodecBuilder.mapCodec(instance -> instance.group(
+                    EntryIngredient.codec().fieldOf("in").forGetter(DefaultPathingDisplay::getIn),
+                    EntryIngredient.codec().fieldOf("out").forGetter(DefaultPathingDisplay::getOut)
+            ).apply(instance, DefaultPathingDisplay::new)),
+            StreamCodec.composite(
+                    EntryIngredient.streamCodec(),
+                    DefaultPathingDisplay::getIn,
+                    EntryIngredient.streamCodec(),
+                    DefaultPathingDisplay::getOut,
+                    DefaultPathingDisplay::new
+            ));
+    
     public DefaultPathingDisplay(EntryStack<?> in, EntryStack<?> out) {
-        this(Collections.singletonList(EntryIngredient.of(in)), Collections.singletonList(EntryIngredient.of(out)));
+        this(List.of(EntryIngredient.of(in)), List.of(EntryIngredient.of(out)));
+    }
+    
+    public DefaultPathingDisplay(EntryIngredient in, EntryIngredient out) {
+        this(List.of(in), List.of(out));
     }
     
     public DefaultPathingDisplay(List<EntryIngredient> inputs, List<EntryIngredient> outputs) {
@@ -54,7 +74,8 @@ public class DefaultPathingDisplay extends BasicDisplay {
         return BuiltinPlugin.PATHING;
     }
     
-    public static BasicDisplay.Serializer<DefaultPathingDisplay> serializer() {
-        return BasicDisplay.Serializer.ofSimpleRecipeLess(DefaultPathingDisplay::new);
+    @Override
+    public DisplaySerializer<? extends Display> getSerializer() {
+        return SERIALIZER;
     }
 }

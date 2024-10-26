@@ -44,15 +44,6 @@ public abstract class Button extends BaseWidget<Button> {
     
     public abstract int getTextColor(Point mouse);
     
-    public abstract void setTextureId(@Nullable BiFunction<Button, Point, Integer> textureIdFunction);
-    
-    public final Button textureId(@Nullable BiFunction<Button, Point, Integer> textureIdFunction) {
-        setTextureId(textureIdFunction);
-        return this;
-    }
-    
-    public abstract int getTextureId(Point mouse);
-    
     public abstract void onClick();
     
     public abstract boolean isEnabled();

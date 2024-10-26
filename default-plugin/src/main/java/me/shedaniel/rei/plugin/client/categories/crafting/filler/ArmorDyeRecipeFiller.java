@@ -37,10 +37,7 @@ import net.minecraft.world.item.component.DyedItemColor;
 import net.minecraft.world.item.crafting.ArmorDyeRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class ArmorDyeRecipeFiller implements CraftingRecipeFiller<ArmorDyeRecipe> {
     @Override
@@ -55,10 +52,11 @@ public class ArmorDyeRecipeFiller implements CraftingRecipeFiller<ArmorDyeRecipe
                 ItemStack output = armorStack.copy();
                 DyeItem dyeItem = DyeItem.byColor(color);
                 output = DyedItemColor.applyDyes(output, List.of(dyeItem));
-                displays.add(new DefaultCustomShapelessDisplay(recipe,
+                displays.add(new DefaultCustomShapelessDisplay(
                         List.of(EntryIngredient.of(armor.copy()),
                                 EntryIngredients.of(dyeItem)),
-                        List.of(EntryIngredients.of(output))));
+                        List.of(EntryIngredients.of(output)),
+                        Optional.of(recipe.id().location())));
             }
             
             for (int i = 0; i < 9; i++) {
@@ -74,8 +72,9 @@ public class ArmorDyeRecipeFiller implements CraftingRecipeFiller<ArmorDyeRecipe
                 }
                 ItemStack output = armorStack.copy();
                 output = DyedItemColor.applyDyes(output, dyeItems);
-                displays.add(new DefaultCustomShapelessDisplay(recipe,
-                        inputs, List.of(EntryIngredients.of(output))));
+                displays.add(new DefaultCustomShapelessDisplay(
+                        inputs, List.of(EntryIngredients.of(output)),
+                        Optional.of(recipe.id().location())));
             }
         }
         

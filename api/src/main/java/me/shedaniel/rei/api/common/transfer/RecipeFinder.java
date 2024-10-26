@@ -23,315 +23,386 @@
 
 package me.shedaniel.rei.api.common.transfer;
 
-import com.google.common.collect.Lists;
-import it.unimi.dsi.fastutil.ints.*;
-import net.minecraft.core.NonNullList;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.world.entity.player.StackedContents;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Consumer;
 
-public class RecipeFinder {
-    public final Int2IntMap idToAmountMap = new Int2IntOpenHashMap();
+public class RecipeFinder<T> {
+    public final Reference2IntOpenHashMap<T> amounts = new Reference2IntOpenHashMap<>();
     
-    public static int getItemId(ItemStack stack) {
-        return StackedContents.getStackingIndex(stack);
+    public boolean contains(T item) {
+        return this.amounts.getInt(item) > 0;
     }
     
-    public static ItemStack getStackFromId(int itemId) {
-        return StackedContents.fromStackingIndex(itemId);
+    boolean containsAtLeast(T object, int i) {
+        return this.amounts.getInt(object) >= i;
     }
     
-    public void addNormalItem(ItemStack stack) {
-        if (!stack.isDamaged() && !stack.isEnchanted() && !stack.has(DataComponents.CUSTOM_NAME)) {
-            this.addItem(stack);
+    public void take(T item, int amount) {
+        int taken = this.amounts.addTo(item, -amount);
+        if (taken < amount) {
+            throw new IllegalStateException("Took " + amount + " items, but only had " + taken);
         }
     }
     
-    public void addItem(ItemStack stack) {
-        this.addItem(stack, 64);
+    public void put(T item, int amount) {
+        this.amounts.addTo(item, amount);
     }
     
-    public void addItem(ItemStack stack, int count) {
-        if (!stack.isEmpty()) {
-            int itemId = getItemId(stack);
-            int itemCount = Math.min(count, stack.getCount());
-            this.addItem(itemId, itemCount);
-        }
+    public boolean findRecipe(List<Ingredient<T>> list, int maxCrafts, @Nullable Consumer<T> output) {
+        return new Filter(list).tryPick(maxCrafts, output);
     }
     
-    public boolean contains(int itemId) {
-        return this.idToAmountMap.get(itemId) > 0;
-    }
-    
-    /**
-     * Takes an amount from the finder
-     *
-     * @return the amount taken
-     */
-    public int take(int itemId, int amount) {
-        int mapAmount = this.idToAmountMap.get(itemId);
-        if (mapAmount >= amount) {
-            this.idToAmountMap.put(itemId, mapAmount - amount);
-            return itemId;
-        } else {
-            return 0;
-        }
-    }
-    
-    private void addItem(int itemId, int itemCount) {
-        this.idToAmountMap.put(itemId, this.idToAmountMap.get(itemId) + itemCount);
-    }
-    
-    public boolean findRecipe(NonNullList<Ingredient> ingredients, @Nullable IntList intList_1) {
-        return this.findRecipe(ingredients, intList_1, 1);
-    }
-    
-    public boolean findRecipe(NonNullList<Ingredient> ingredients, @Nullable IntList intList_1, int maxCrafts) {
-        return (new RecipeFinder.Filter(ingredients)).find(maxCrafts, intList_1);
-    }
-    
-    public int countRecipeCrafts(NonNullList<Ingredient> ingredients, @Nullable IntList intList_1) {
-        return this.countRecipeCrafts(ingredients, Integer.MAX_VALUE, intList_1);
-    }
-    
-    public int countRecipeCrafts(NonNullList<Ingredient> ingredients, int maxCrafts, @Nullable IntList intList_1) {
-        return (new RecipeFinder.Filter(ingredients)).countCrafts(maxCrafts, intList_1);
+    public int countRecipeCrafts(List<Ingredient<T>> list, int maxCrafts, @Nullable Consumer<T> output) {
+        return new Filter(list).tryPickAll(maxCrafts, output);
     }
     
     public void clear() {
-        this.idToAmountMap.clear();
+        this.amounts.clear();
     }
     
     class Filter {
-        private final List<Ingredient> ingredients = Lists.newArrayList();
+        private final List<Ingredient<T>> ingredients;
         private final int ingredientCount;
-        private final int[] usableIngredientItemIds;
-        private final int usableIngredientSize;
-        private final BitSet bitSet;
+        private final List<T> items;
+        private final int itemCount;
+        private final BitSet data;
         private final IntList path = new IntArrayList();
-        private final NonNullList<Ingredient> ingredientsInput;
         
-        public Filter(NonNullList<Ingredient> ingredientsInput) {
-            this.ingredientsInput = ingredientsInput;
-            this.ingredients.addAll(new ArrayList<>(ingredientsInput));
-            this.ingredients.removeIf(Ingredient::isEmpty);
+        public Filter(final List<Ingredient<T>> list) {
+            this.ingredients = list;
             this.ingredientCount = this.ingredients.size();
-            this.usableIngredientItemIds = this.getUsableIngredientItemIds();
-            this.usableIngredientSize = this.usableIngredientItemIds.length;
-            this.bitSet = new BitSet(this.ingredientCount + this.usableIngredientSize + this.ingredientCount + this.ingredientCount * this.usableIngredientSize);
-            
-            for (int ingredientIndex = 0; ingredientIndex < this.ingredients.size(); ++ingredientIndex) {
-                IntList possibleStacks = this.ingredients.get(ingredientIndex).getStackingIds();
+            this.items = this.getUniqueAvailableIngredientItems();
+            this.itemCount = this.items.size();
+            this.data = new BitSet(this.visitedIngredientCount() + this.visitedItemCount() + this.satisfiedCount() + this.connectionCount() + this.residualCount());
+            this.setInitialConnections();
+        }
+        
+        private void setInitialConnections() {
+            for (int i = 0; i < this.ingredientCount; i++) {
+                List<T> list = ((Ingredient<T>) this.ingredients.get(i)).elements();
                 
-                // Loops over usable ingredients
-                for (int usableIngredientIndex = 0; usableIngredientIndex < this.usableIngredientSize; ++usableIngredientIndex) {
-                    if (possibleStacks.contains(this.usableIngredientItemIds[usableIngredientIndex])) {
-                        this.bitSet.set(this.getIndex(true, usableIngredientIndex, ingredientIndex));
+                for (int j = 0; j < this.itemCount; j++) {
+                    if (list.contains(this.items.get(j))) {
+                        this.setConnection(j, i);
                     }
                 }
             }
-            
         }
         
-        @SuppressWarnings("deprecation")
-        public boolean find(int maxCrafts, @Nullable IntList intList_1) {
+        public boolean tryPick(int maxCrafts, @Nullable Consumer<T> output) {
             if (maxCrafts <= 0) {
                 return true;
             } else {
-                int int_2;
-                for (int_2 = 0; this.dfs(maxCrafts); ++int_2) {
-                    RecipeFinder.this.take(this.usableIngredientItemIds[this.path.getInt(0)], maxCrafts);
-                    int int_3 = this.path.size() - 1;
-                    this.setSatisfied(this.path.getInt(int_3));
-                    
-                    for (int int_4 = 0; int_4 < int_3; ++int_4) {
-                        this.toggleResidual((int_4 & 1) == 0, this.path.get(int_4), this.path.get(int_4 + 1));
-                    }
-                    
-                    this.path.clear();
-                    this.bitSet.clear(0, this.ingredientCount + this.usableIngredientSize);
-                }
+                int j = 0;
                 
-                boolean boolean_1 = int_2 == this.ingredientCount;
-                boolean boolean_2 = boolean_1 && intList_1 != null;
-                if (boolean_2) {
-                    intList_1.clear();
-                }
-                
-                this.bitSet.clear(0, this.ingredientCount + this.usableIngredientSize + this.ingredientCount);
-                int int_5 = 0;
-                List<Ingredient> list_1 = new ArrayList<>(ingredientsInput);
-                
-                for (Ingredient ingredient : list_1) {
-                    if (boolean_2 && ingredient.isEmpty()) {
-                        intList_1.add(0);
-                    } else {
-                        for (int int_7 = 0; int_7 < this.usableIngredientSize; ++int_7) {
-                            if (this.hasResidual(false, int_5, int_7)) {
-                                this.toggleResidual(true, int_7, int_5);
-                                RecipeFinder.this.addItem(this.usableIngredientItemIds[int_7], maxCrafts);
-                                if (boolean_2) {
-                                    intList_1.add(this.usableIngredientItemIds[int_7]);
+                while (true) {
+                    IntList intList = this.tryAssigningNewItem(maxCrafts);
+                    if (intList == null) {
+                        boolean bl = j == this.ingredientCount;
+                        boolean bl2 = bl && output != null;
+                        this.clearAllVisited();
+                        this.clearSatisfied();
+                        
+                        for (int l = 0; l < this.ingredientCount; l++) {
+                            for (int m = 0; m < this.itemCount; m++) {
+                                if (this.isAssigned(m, l)) {
+                                    this.unassign(m, l);
+                                    put(this.items.get(m), maxCrafts);
+                                    if (bl2) {
+                                        output.accept(this.items.get(m));
+                                    }
+                                    break;
                                 }
                             }
                         }
                         
-                        ++int_5;
+                        assert this.data.get(this.residualOffset(), this.residualOffset() + this.residualCount()).isEmpty();
+                        
+                        return bl;
+                    }
+                    
+                    int k = intList.getInt(0);
+                    take(this.items.get(k), maxCrafts);
+                    int l = intList.size() - 1;
+                    this.setSatisfied(intList.getInt(l));
+                    j++;
+                    
+                    for (int mx = 0; mx < intList.size() - 1; mx++) {
+                        if (isPathIndexItem(mx)) {
+                            int n = intList.getInt(mx);
+                            int o = intList.getInt(mx + 1);
+                            this.assign(n, o);
+                        } else {
+                            int n = intList.getInt(mx + 1);
+                            int o = intList.getInt(mx);
+                            this.unassign(n, o);
+                        }
                     }
                 }
-                
-                return boolean_1;
             }
         }
         
-        private int[] getUsableIngredientItemIds() {
-            IntCollection intCollection_1 = new IntAVLTreeSet();
+        private static boolean isPathIndexItem(int i) {
+            return (i & 1) == 0;
+        }
+        
+        private List<T> getUniqueAvailableIngredientItems() {
+            Set<T> set = new ReferenceOpenHashSet<>();
             
-            for (Ingredient ingredient_1 : this.ingredients) {
-                intCollection_1.addAll(ingredient_1.getStackingIds());
+            for (Ingredient<T> ingredient : this.ingredients) {
+                set.addAll(ingredient.elements());
             }
             
-            IntIterator intIterator_1 = intCollection_1.iterator();
+            set.removeIf(object -> !contains(object));
+            return List.copyOf(set);
+        }
+        
+        @Nullable
+        private IntList tryAssigningNewItem(int i) {
+            this.clearAllVisited();
             
-            while (intIterator_1.hasNext()) {
-                if (!RecipeFinder.this.contains(intIterator_1.nextInt())) {
-                    intIterator_1.remove();
+            for (int j = 0; j < this.itemCount; j++) {
+                if (containsAtLeast(this.items.get(j), i)) {
+                    IntList intList = this.findNewItemAssignmentPath(j);
+                    if (intList != null) {
+                        return intList;
+                    }
                 }
             }
             
-            return intCollection_1.toIntArray();
+            return null;
         }
         
-        private boolean dfs(int amount) {
-            int usableIngredientSize = this.usableIngredientSize;
+        @Nullable
+        private IntList findNewItemAssignmentPath(int i) {
+            this.path.clear();
+            this.visitItem(i);
+            this.path.add(i);
             
-            for (int int_3 = 0; int_3 < usableIngredientSize; ++int_3) {
-                if (RecipeFinder.this.idToAmountMap.get(this.usableIngredientItemIds[int_3]) >= amount) {
-                    this.visit(false, int_3);
-                    
-                    while (!this.path.isEmpty()) {
-                        int int_4 = this.path.size();
-                        boolean boolean_1 = (int_4 & 1) == 1;
-                        int int_5 = this.path.getInt(int_4 - 1);
-                        if (!boolean_1 && !this.isSatisfied(int_5)) {
+            while (!this.path.isEmpty()) {
+                int j = this.path.size();
+                int k = this.path.getInt(j - 1);
+                if (isPathIndexItem(j - 1)) {
+                    for (int l = 0; l < this.ingredientCount; l++) {
+                        if (!this.hasVisitedIngredient(l) && this.hasConnection(k, l) && !this.isAssigned(k, l)) {
+                            this.visitIngredient(l);
+                            this.path.add(l);
                             break;
                         }
-                        
-                        int int_6 = boolean_1 ? this.ingredientCount : usableIngredientSize;
-                        
-                        int int_8;
-                        for (int_8 = 0; int_8 < int_6; ++int_8) {
-                            if (!this.hasVisited(boolean_1, int_8) && this.hasConnection(boolean_1, int_5, int_8) && this.hasResidual(boolean_1, int_5, int_8)) {
-                                this.visit(boolean_1, int_8);
-                                break;
-                            }
-                        }
-                        
-                        int_8 = this.path.size();
-                        if (int_8 == int_4) {
-                            this.path.removeInt(int_8 - 1);
-                        }
+                    }
+                } else {
+                    if (!this.isSatisfied(k)) {
+                        return this.path;
                     }
                     
-                    if (!this.path.isEmpty()) {
-                        return true;
+                    for (int lx = 0; lx < this.itemCount; lx++) {
+                        if (!this.hasVisitedItem(lx) && this.isAssigned(lx, k)) {
+                            assert this.hasConnection(lx, k);
+                            
+                            this.visitItem(lx);
+                            this.path.add(lx);
+                            break;
+                        }
                     }
+                }
+                
+                int l = this.path.size();
+                if (l == j) {
+                    this.path.removeInt(l - 1);
                 }
             }
             
-            return false;
+            return null;
         }
         
-        private boolean isSatisfied(int int_1) {
-            return this.bitSet.get(this.getSatisfiedIndex(int_1));
+        private int visitedIngredientOffset() {
+            return 0;
         }
         
-        private void setSatisfied(int int_1) {
-            this.bitSet.set(this.getSatisfiedIndex(int_1));
+        private int visitedIngredientCount() {
+            return this.ingredientCount;
         }
         
-        private int getSatisfiedIndex(int int_1) {
-            return this.ingredientCount + this.usableIngredientSize + int_1;
+        private int visitedItemOffset() {
+            return this.visitedIngredientOffset() + this.visitedIngredientCount();
         }
         
-        private boolean hasConnection(boolean boolean_1, int int_1, int int_2) {
-            return this.bitSet.get(this.getIndex(boolean_1, int_1, int_2));
+        private int visitedItemCount() {
+            return this.itemCount;
         }
         
-        private boolean hasResidual(boolean boolean_1, int int_1, int int_2) {
-            return boolean_1 != this.bitSet.get(1 + this.getIndex(boolean_1, int_1, int_2));
+        private int satisfiedOffset() {
+            return this.visitedItemOffset() + this.visitedItemCount();
         }
         
-        private void toggleResidual(boolean boolean_1, int int_1, int int_2) {
-            this.bitSet.flip(1 + this.getIndex(boolean_1, int_1, int_2));
+        private int satisfiedCount() {
+            return this.ingredientCount;
         }
         
-        private int getIndex(boolean boolean_1, int int_1, int int_2) {
-            int int_3 = boolean_1 ? int_1 * this.ingredientCount + int_2 : int_2 * this.ingredientCount + int_1;
-            return this.ingredientCount + this.usableIngredientSize + this.ingredientCount + 2 * int_3;
+        private int connectionOffset() {
+            return this.satisfiedOffset() + this.satisfiedCount();
         }
         
-        private void visit(boolean boolean_1, int int_1) {
-            this.bitSet.set(this.getVisitedIndex(boolean_1, int_1));
-            this.path.add(int_1);
+        private int connectionCount() {
+            return this.ingredientCount * this.itemCount;
         }
         
-        private boolean hasVisited(boolean boolean_1, int int_1) {
-            return this.bitSet.get(this.getVisitedIndex(boolean_1, int_1));
+        private int residualOffset() {
+            return this.connectionOffset() + this.connectionCount();
         }
         
-        private int getVisitedIndex(boolean boolean_1, int int_1) {
-            return (boolean_1 ? 0 : this.ingredientCount) + int_1;
+        private int residualCount() {
+            return this.ingredientCount * this.itemCount;
         }
         
-        public int countCrafts(int maxCrafts, @Nullable IntList intList_1) {
-            int int_2 = 0;
-            int crafts = Math.min(maxCrafts, this.getMinIngredientCount()) + 1;
+        private boolean isSatisfied(int i) {
+            return this.data.get(this.getSatisfiedIndex(i));
+        }
+        
+        private void setSatisfied(int i) {
+            this.data.set(this.getSatisfiedIndex(i));
+        }
+        
+        private int getSatisfiedIndex(int i) {
+            assert i >= 0 && i < this.ingredientCount;
+            
+            return this.satisfiedOffset() + i;
+        }
+        
+        private void clearSatisfied() {
+            this.clearRange(this.satisfiedOffset(), this.satisfiedCount());
+        }
+        
+        private void setConnection(int i, int j) {
+            this.data.set(this.getConnectionIndex(i, j));
+        }
+        
+        private boolean hasConnection(int i, int j) {
+            return this.data.get(this.getConnectionIndex(i, j));
+        }
+        
+        private int getConnectionIndex(int i, int j) {
+            assert i >= 0 && i < this.itemCount;
+            
+            assert j >= 0 && j < this.ingredientCount;
+            
+            return this.connectionOffset() + i * this.ingredientCount + j;
+        }
+        
+        private boolean isAssigned(int i, int j) {
+            return this.data.get(this.getResidualIndex(i, j));
+        }
+        
+        private void assign(int i, int j) {
+            int k = this.getResidualIndex(i, j);
+            
+            assert !this.data.get(k);
+            
+            this.data.set(k);
+        }
+        
+        private void unassign(int i, int j) {
+            int k = this.getResidualIndex(i, j);
+            
+            assert this.data.get(k);
+            
+            this.data.clear(k);
+        }
+        
+        private int getResidualIndex(int i, int j) {
+            assert i >= 0 && i < this.itemCount;
+            
+            assert j >= 0 && j < this.ingredientCount;
+            
+            return this.residualOffset() + i * this.ingredientCount + j;
+        }
+        
+        private void visitIngredient(int i) {
+            this.data.set(this.getVisitedIngredientIndex(i));
+        }
+        
+        private boolean hasVisitedIngredient(int i) {
+            return this.data.get(this.getVisitedIngredientIndex(i));
+        }
+        
+        private int getVisitedIngredientIndex(int i) {
+            assert i >= 0 && i < this.ingredientCount;
+            
+            return this.visitedIngredientOffset() + i;
+        }
+        
+        private void visitItem(int i) {
+            this.data.set(this.getVisitiedItemIndex(i));
+        }
+        
+        private boolean hasVisitedItem(int i) {
+            return this.data.get(this.getVisitiedItemIndex(i));
+        }
+        
+        private int getVisitiedItemIndex(int i) {
+            assert i >= 0 && i < this.itemCount;
+            
+            return this.visitedItemOffset() + i;
+        }
+        
+        private void clearAllVisited() {
+            this.clearRange(this.visitedIngredientOffset(), this.visitedIngredientCount());
+            this.clearRange(this.visitedItemOffset(), this.visitedItemCount());
+        }
+        
+        private void clearRange(int i, int j) {
+            this.data.clear(i, i + j);
+        }
+        
+        public int tryPickAll(int i, @Nullable Consumer<T> output) {
+            int j = 0;
+            int k = Math.min(i, this.getMinIngredientCount()) + 1;
             
             while (true) {
-                while (true) {
-                    int int_4 = (int_2 + crafts) / 2;
-                    if (this.find(int_4, null)) {
-                        if (crafts - int_2 <= 1) {
-                            if (int_4 > 0) {
-                                this.find(int_4, intList_1);
-                            }
-                            
-                            return int_4;
+                int l = (j + k) / 2;
+                if (this.tryPick(l, null)) {
+                    if (k - j <= 1) {
+                        if (l > 0) {
+                            this.tryPick(l, output);
                         }
                         
-                        int_2 = int_4;
-                    } else {
-                        crafts = int_4;
+                        return l;
                     }
+                    
+                    j = l;
+                } else {
+                    k = l;
                 }
             }
         }
         
-        @SuppressWarnings("deprecation")
         private int getMinIngredientCount() {
-            int min = Integer.MAX_VALUE;
+            int i = Integer.MAX_VALUE;
             
-            for (Ingredient ingredient : this.ingredients) {
-                int maxIngredientCount = 0;
+            for (Ingredient<T> ingredient : this.ingredients) {
+                int j = 0;
                 
-                int currStackingId;
-                for (IntListIterator stackingIds = ingredient.getStackingIds().iterator(); stackingIds.hasNext(); maxIngredientCount = Math.max(maxIngredientCount, RecipeFinder.this.idToAmountMap.get(currStackingId))) {
-                    currStackingId = stackingIds.next();
+                for (T object : ingredient.elements()) {
+                    j = Math.max(j, amounts.getInt(object));
                 }
                 
-                if (min > 0) {
-                    min = Math.min(min, maxIngredientCount);
+                if (i > 0) {
+                    i = Math.min(i, j);
                 }
             }
             
-            return min;
+            return i;
         }
+    }
+    
+    public record Ingredient<T>(List<T> elements) {
     }
 }

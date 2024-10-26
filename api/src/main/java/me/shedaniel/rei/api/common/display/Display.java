@@ -23,14 +23,15 @@
 
 package me.shedaniel.rei.api.common.display;
 
+import com.mojang.serialization.Codec;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.entry.InputIngredient;
-import me.shedaniel.rei.api.common.transfer.info.MenuInfo;
-import me.shedaniel.rei.api.common.transfer.info.MenuSerializationContext;
 import me.shedaniel.rei.api.common.util.CollectionUtils;
 import me.shedaniel.rei.impl.display.DisplaySpec;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -50,6 +51,14 @@ import java.util.Optional;
  * @see me.shedaniel.rei.api.client.registry.display.DisplayRegistry
  */
 public interface Display extends DisplaySpec {
+    static Codec<Display> codec() {
+        return DisplaySerializerRegistry.getInstance().codec();
+    }
+    
+    static StreamCodec<RegistryFriendlyByteBuf, Display> streamCodec() {
+        return DisplaySerializerRegistry.getInstance().streamCodec();
+    }
+    
     /**
      * Returns the list of inputs for this display. This only affects the stacks resolving for the display,
      * and not necessarily the stacks that are displayed.
@@ -57,24 +66,6 @@ public interface Display extends DisplaySpec {
      * @return a list of inputs
      */
     List<EntryIngredient> getInputEntries();
-    
-    @Deprecated(forRemoval = true)
-    default List<EntryIngredient> getInputEntries(MenuSerializationContext<?, ?, ?> context, MenuInfo<?, ?> info, boolean fill) {
-        return getInputEntries();
-    }
-    
-    /**
-     * Returns the list of inputs for this display, aligned for the menu. This only affects the stacks resolving for the display,
-     * and not necessarily the stacks that are displayed.
-     * <p>
-     * Each ingredient is also provided with the corresponding index slot-wise. The order of the list does not matter.
-     *
-     * @return a list of inputs
-     */
-    @Deprecated(forRemoval = true)
-    default List<InputIngredient<EntryStack<?>>> getInputIngredients(MenuSerializationContext<?, ?, ?> context, MenuInfo<?, ?> info, boolean fill) {
-        return CollectionUtils.mapIndexed(getInputEntries(context, info, fill), InputIngredient::of);
-    }
     
     /**
      * Returns the list of inputs for this display, aligned for the menu. This only affects the stacks resolving for the display,
@@ -117,9 +108,20 @@ public interface Display extends DisplaySpec {
      *
      * @return the display location
      */
-    default Optional<ResourceLocation> getDisplayLocation() {
-        return Optional.empty();
-    }
+    Optional<ResourceLocation> getDisplayLocation();
+    
+    /**
+     * Returns the serializer for this display.
+     * <p>
+     * Returning {@code null} is allowed but not preferred, only if this display is never going to be synced from the server.
+     * <p>
+     * Any serializer returned here must be registered with {@link DisplaySerializerRegistry}.
+     * Plugins that would like to save / read recipes should use the generic {@link #codec()} and {@link #streamCodec()} instead.
+     *
+     * @return the serializer for this display
+     */
+    @Nullable
+    DisplaySerializer<? extends Display> getSerializer();
     
     @Override
     @ApiStatus.NonExtendable

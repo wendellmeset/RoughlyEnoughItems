@@ -23,7 +23,6 @@
 
 package me.shedaniel.rei.plugin.client.categories.crafting.filler;
 
-import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
 import me.shedaniel.rei.api.common.display.Display;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.entry.EntryStack;
@@ -31,7 +30,6 @@ import me.shedaniel.rei.api.common.util.EntryIngredients;
 import me.shedaniel.rei.api.common.util.EntryStacks;
 import me.shedaniel.rei.plugin.common.displays.crafting.DefaultCustomShapelessDisplay;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.Fireworks;
@@ -41,6 +39,7 @@ import net.minecraft.world.item.crafting.RecipeHolder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public class FireworkRocketRecipeFiller implements CraftingRecipeFiller<FireworkRocketRecipe> {
     @Override
@@ -57,9 +56,10 @@ public class FireworkRocketRecipeFiller implements CraftingRecipeFiller<Firework
                 outputs[i] = EntryStacks.of(new ItemStack(Items.FIREWORK_ROCKET, 3));
                 outputs[i].getValue().set(DataComponents.FIREWORKS, new Fireworks(i + 1, List.of()));
             }
-            displays.add(new DefaultCustomShapelessDisplay(recipe,
+            displays.add(new DefaultCustomShapelessDisplay(
                     List.of(inputs),
-                    List.of(EntryIngredient.of(outputs))));
+                    List.of(EntryIngredient.of(outputs)),
+                    Optional.of(recipe.id().location())));
         }
         
         return displays;
@@ -68,12 +68,5 @@ public class FireworkRocketRecipeFiller implements CraftingRecipeFiller<Firework
     @Override
     public Class<FireworkRocketRecipe> getRecipeClass() {
         return FireworkRocketRecipe.class;
-    }
-    
-    @Override
-    public void registerCategories(CategoryRegistry registry) {
-        registerExtension(registry, (bounds, widgets, display) -> {
-            widgets.add(createInfoWidget(bounds, display, Component.translatable("text.rei.crafting.firework.gunpowder.amount")));
-        });
     }
 }

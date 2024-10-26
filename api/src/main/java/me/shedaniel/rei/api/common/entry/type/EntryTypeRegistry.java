@@ -24,7 +24,7 @@
 package me.shedaniel.rei.api.common.entry.type;
 
 import me.shedaniel.rei.api.common.plugins.PluginManager;
-import me.shedaniel.rei.api.common.plugins.REIPlugin;
+import me.shedaniel.rei.api.common.plugins.REICommonPlugin;
 import me.shedaniel.rei.api.common.registry.Reloadable;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
@@ -44,9 +44,9 @@ import java.util.Set;
  *
  * @see EntryDefinition
  * @see #registerBridge(EntryType, EntryType, EntryTypeBridge)
- * @see REIPlugin#registerEntryTypes(EntryTypeRegistry)
+ * @see REICommonPlugin#registerEntryTypes(EntryTypeRegistry)
  */
-public interface EntryTypeRegistry extends Reloadable<REIPlugin<?>> {
+public interface EntryTypeRegistry extends Reloadable<REICommonPlugin> {
     static EntryTypeRegistry getInstance() {
         return PluginManager.getInstance().get(EntryTypeRegistry.class);
     }

@@ -23,20 +23,40 @@
 
 package me.shedaniel.rei.plugin.common.displays;
 
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.display.Display;
+import me.shedaniel.rei.api.common.display.DisplaySerializer;
 import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.plugin.common.BuiltinPlugin;
+import net.minecraft.network.codec.StreamCodec;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.util.Collections;
 import java.util.List;
 
 @ApiStatus.Experimental
 public class DefaultWaxingDisplay extends BasicDisplay {
+    public static final DisplaySerializer<DefaultWaxingDisplay> SERIALIZER = DisplaySerializer.of(
+            RecordCodecBuilder.mapCodec(instance -> instance.group(
+                    EntryIngredient.codec().fieldOf("in").forGetter(DefaultWaxingDisplay::getIn),
+                    EntryIngredient.codec().fieldOf("out").forGetter(DefaultWaxingDisplay::getOut)
+            ).apply(instance, DefaultWaxingDisplay::new)),
+            StreamCodec.composite(
+                    EntryIngredient.streamCodec(),
+                    DefaultWaxingDisplay::getIn,
+                    EntryIngredient.streamCodec(),
+                    DefaultWaxingDisplay::getOut,
+                    DefaultWaxingDisplay::new
+            ));
+    
     public DefaultWaxingDisplay(EntryStack<?> in, EntryStack<?> out) {
-        this(Collections.singletonList(EntryIngredient.of(in)), Collections.singletonList(EntryIngredient.of(out)));
+        this(List.of(EntryIngredient.of(in)), List.of(EntryIngredient.of(out)));
+    }
+    
+    public DefaultWaxingDisplay(EntryIngredient in, EntryIngredient out) {
+        this(List.of(in), List.of(out));
     }
     
     public DefaultWaxingDisplay(List<EntryIngredient> inputs, List<EntryIngredient> outputs) {
@@ -56,7 +76,8 @@ public class DefaultWaxingDisplay extends BasicDisplay {
         return BuiltinPlugin.WAXING;
     }
     
-    public static Serializer<DefaultWaxingDisplay> serializer() {
-        return Serializer.ofSimpleRecipeLess(DefaultWaxingDisplay::new);
+    @Override
+    public DisplaySerializer<? extends Display> getSerializer() {
+        return SERIALIZER;
     }
 }

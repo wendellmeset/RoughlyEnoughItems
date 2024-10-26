@@ -41,7 +41,6 @@ import me.shedaniel.rei.api.common.util.EntryStacks;
 import me.shedaniel.rei.impl.client.registry.display.DisplayCache;
 import me.shedaniel.rei.impl.client.registry.display.DisplayRegistryImpl;
 import me.shedaniel.rei.impl.common.util.HashedEntryStackWrapper;
-import me.shedaniel.rei.plugin.autocrafting.DefaultCategoryHandler;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +51,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class CraftableFilterCalculator implements Predicate<HashedEntryStackWrapper> {
-    private final Supplier<DisplayCache> displayCache = Suppliers.memoize(() -> ((DisplayRegistryImpl) DisplayRegistry.getInstance()).displaysHolder().cache());
+    private final Supplier<DisplayCache> displayCache = Suppliers.memoize(() -> ((DisplayRegistryImpl) DisplayRegistry.getInstance()).cache());
     private Set<Display> checkedCraftableDisplays = Collections.synchronizedSet(new ReferenceOpenHashSet<>());
     private Set<Display> checkedUncraftableDisplays = Collections.synchronizedSet(new ReferenceOpenHashSet<>());
     private LongSet checkedCraftableEntries = LongSets.synchronize(new LongOpenHashSet());
@@ -133,26 +132,14 @@ public class CraftableFilterCalculator implements Predicate<HashedEntryStackWrap
     @Nullable
     public Long2LongMap chooseHandler(Display display) {
         TransferHandler.Context transferContext = TransferHandler.Context.create(false, false, REIRuntime.getInstance().getPreviousContainerScreen(), display);
-        DefaultCategoryHandler legacyHandler = null;
         for (TransferHandler handler : TransferHandlerRegistry.getInstance()) {
-            if (handler instanceof DefaultCategoryHandler) {
-                legacyHandler = (DefaultCategoryHandler) handler;
-            } else {
-                TransferHandler.ApplicabilityResult result = handler.checkApplicable(transferContext);
-                if (result.isSuccessful()) {
-                    if (handler instanceof TransferHandlerMeta) {
-                        return extractIngredients(((TransferHandlerMeta) handler).getAvailableIngredients(transferContext));
-                    } else {
-                        return CraftableFilter.INSTANCE.getInvStacks();
-                    }
-                }
-            }
-        }
-        
-        if (legacyHandler != null) {
-            TransferHandler.ApplicabilityResult result = legacyHandler.checkApplicable(transferContext);
+            TransferHandler.ApplicabilityResult result = handler.checkApplicable(transferContext);
             if (result.isSuccessful()) {
-                return CraftableFilter.INSTANCE.getInvStacks();
+                if (handler instanceof TransferHandlerMeta) {
+                    return extractIngredients(((TransferHandlerMeta) handler).getAvailableIngredients(transferContext));
+                } else {
+                    return CraftableFilter.INSTANCE.getInvStacks();
+                }
             }
         }
         

@@ -23,22 +23,22 @@
 
 package me.shedaniel.rei.api.common.display;
 
-import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import com.mojang.serialization.Codec;
 import me.shedaniel.rei.api.common.plugins.PluginManager;
-import me.shedaniel.rei.api.common.plugins.REIPlugin;
+import me.shedaniel.rei.api.common.plugins.REICommonPlugin;
 import me.shedaniel.rei.api.common.registry.Reloadable;
-import me.shedaniel.rei.api.common.transfer.info.MenuSerializationContext;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The registry for display serializers used for display serialization, useful for persistent displays across reloads,
  * and server-client communication.
  *
- * <p>This is mostly a fallback system for {@link me.shedaniel.rei.api.common.transfer.info.MenuInfo#save(MenuSerializationContext, Display)}.
- *
- * @see REIPlugin#registerDisplaySerializer(DisplaySerializerRegistry)
+ * @see REICommonPlugin#registerDisplaySerializer(DisplaySerializerRegistry)
  */
-public interface DisplaySerializerRegistry extends Reloadable<REIPlugin<?>> {
+public interface DisplaySerializerRegistry extends Reloadable<REICommonPlugin> {
     static DisplaySerializerRegistry getInstance() {
         return PluginManager.getInstance().get(DisplaySerializerRegistry.class);
     }
@@ -47,46 +47,49 @@ public interface DisplaySerializerRegistry extends Reloadable<REIPlugin<?>> {
      * Registers a {@link DisplaySerializer} for serializing a {@link Display} for syncing across server-client, and
      * for serializing displays to disk for favorites.
      *
-     * @param categoryId the category identifier of the display
+     * @param id         the identifier of the display serializer
      * @param serializer the serializer of the display
      * @param <D>        the type of the display
      */
-    <D extends Display> void register(CategoryIdentifier<? extends D> categoryId, DisplaySerializer<D> serializer);
+    <D extends Display> void register(ResourceLocation id, DisplaySerializer<D> serializer);
     
     /**
-     * Marks a {@link Display} as unavailable to sync across server-client, and
-     * for serializing displays to disk for favorites.
+     * Returns the display serializer for the given id.
      *
-     * @param categoryId the category identifier of the display
-     * @param <D>        the type of the display
+     * @param id the identifier of the display serializer
+     * @return the display serializer
      */
-    <D extends Display> void registerNotSerializable(CategoryIdentifier<D> categoryId);
+    @Nullable
+    DisplaySerializer<?> get(ResourceLocation id);
     
     /**
-     * Returns whether a {@link DisplaySerializer} is registered for the given {@link CategoryIdentifier}.
+     * Returns the id of the display serializer.
      *
-     * @param categoryId the identifier of the category
-     * @param <D>        the type of the display
-     * @return whether a serializer is registered for the given category
+     * @param serializer the display serializer
+     * @return the id of the display serializer
      */
-    <D extends Display> boolean hasSerializer(CategoryIdentifier<D> categoryId);
+    @Nullable
+    ResourceLocation getId(DisplaySerializer<?> serializer);
     
     /**
-     * Serializes the display into a tag.
+     * Returns whether the display serializer is registered.
      *
-     * @param tag     the tag to serialize into
-     * @param display the display to serialize
-     * @return the tag
-     * @see DisplaySerializer#save(CompoundTag, Display)
+     * @param serializer the display serializer
+     * @return whether the display serializer is registered
      */
-    <D extends Display> CompoundTag save(D display, CompoundTag tag);
+    boolean isRegistered(DisplaySerializer<?> serializer);
     
     /**
-     * Deserializes the display from a tag.
+     * Returns a generic codec for any registered displays.
      *
-     * @param tag the tag to deserialize from
-     * @return the display
-     * @see DisplaySerializer#read(CompoundTag)
+     * @return a generic codec for any registered displays
      */
-    <D extends Display> D read(CategoryIdentifier<? extends D> categoryId, CompoundTag tag);
+    Codec<Display> codec();
+    
+    /**
+     * Returns a generic stream codec for any registered displays.
+     *
+     * @return a generic stream codec for any registered displays
+     */
+    StreamCodec<RegistryFriendlyByteBuf, Display> streamCodec();
 }

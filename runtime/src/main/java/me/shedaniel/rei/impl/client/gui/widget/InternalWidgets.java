@@ -177,11 +177,6 @@ public final class InternalWidgets {
     
     private static class WidgetsProvider implements ClientInternals.WidgetsProvider {
         @Override
-        public boolean isRenderingPanel(Panel panel) {
-            return PanelWidget.isRendering(panel);
-        }
-        
-        @Override
         public Widget wrapVanillaWidget(GuiEventListener element) {
             if (element instanceof Widget) return (Widget) element;
             return new VanillaWrappedWidget(element);

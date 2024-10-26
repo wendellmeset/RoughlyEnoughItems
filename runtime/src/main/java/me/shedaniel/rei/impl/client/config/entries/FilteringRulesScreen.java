@@ -45,6 +45,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
@@ -188,7 +189,7 @@ public class FilteringRulesScreen extends Screen {
                 @Override
                 public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
                     super.renderWidget(graphics, mouseX, mouseY, delta);
-                    graphics.blit(InternalTextures.CHEST_GUI_TEXTURE, getX() + 3, getY() + 3, 0, 0, 14, 14);
+                    graphics.blit(RenderType::guiTextured, InternalTextures.CHEST_GUI_TEXTURE, getX() + 3, getY() + 3, 0, 0, 14, 14, 256, 256);
                 }
             };
             {

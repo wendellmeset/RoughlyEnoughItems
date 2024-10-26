@@ -23,34 +23,48 @@
 
 package me.shedaniel.rei.plugin.common.displays.crafting;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import me.shedaniel.rei.api.common.display.Display;
+import me.shedaniel.rei.api.common.display.DisplaySerializer;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
-import me.shedaniel.rei.api.common.registry.RecipeManagerContext;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeHolder;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
 
-public class DefaultCustomShapedDisplay extends DefaultCraftingDisplay<Recipe<?>> {
-    private int width;
-    private int height;
+public class DefaultCustomShapedDisplay extends DefaultCraftingDisplay {
+    public static final DisplaySerializer<DefaultCustomShapedDisplay> SERIALIZER = DisplaySerializer.of(
+            RecordCodecBuilder.mapCodec(instance -> instance.group(
+                    EntryIngredient.codec().listOf().fieldOf("inputs").forGetter(DefaultCustomShapedDisplay::getInputEntries),
+                    EntryIngredient.codec().listOf().fieldOf("outputs").forGetter(DefaultCustomShapedDisplay::getOutputEntries),
+                    ResourceLocation.CODEC.optionalFieldOf("location").forGetter(DefaultCustomShapedDisplay::getDisplayLocation),
+                    Codec.INT.fieldOf("width").forGetter(DefaultCustomShapedDisplay::getWidth),
+                    Codec.INT.fieldOf("height").forGetter(DefaultCustomShapedDisplay::getHeight)
+            ).apply(instance, DefaultCustomShapedDisplay::new)),
+            StreamCodec.composite(
+                    EntryIngredient.streamCodec().apply(ByteBufCodecs.list()),
+                    DefaultCustomShapedDisplay::getInputEntries,
+                    EntryIngredient.streamCodec().apply(ByteBufCodecs.list()),
+                    DefaultCustomShapedDisplay::getOutputEntries,
+                    ByteBufCodecs.optional(ResourceLocation.STREAM_CODEC),
+                    DefaultCustomShapedDisplay::getDisplayLocation,
+                    ByteBufCodecs.INT,
+                    DefaultCustomShapedDisplay::getWidth,
+                    ByteBufCodecs.INT,
+                    DefaultCustomShapedDisplay::getHeight,
+                    DefaultCustomShapedDisplay::new
+            ));
     
-    public DefaultCustomShapedDisplay(@Nullable RecipeHolder<?> possibleRecipe, List<EntryIngredient> input, List<EntryIngredient> output, int width, int height) {
-        this(null, possibleRecipe, input, output, width, height);
-    }
+    private final int width;
+    private final int height;
     
-    public DefaultCustomShapedDisplay(@Nullable ResourceLocation location, @Nullable RecipeHolder<?> possibleRecipe, List<EntryIngredient> input, List<EntryIngredient> output, int width, int height) {
-        super(input, output, Optional.ofNullable((RecipeHolder<Recipe<?>>) possibleRecipe));
+    public DefaultCustomShapedDisplay(List<EntryIngredient> input, List<EntryIngredient> output, Optional<ResourceLocation> location, int width, int height) {
+        super(input, output, location);
         this.width = width;
         this.height = height;
-    }
-    
-    public static DefaultCustomShapedDisplay simple(List<EntryIngredient> input, List<EntryIngredient> output, int width, int height, Optional<ResourceLocation> location) {
-        RecipeHolder<?> optionalRecipe = location.flatMap(resourceLocation -> RecipeManagerContext.getInstance().getRecipeManager().byKey(resourceLocation))
-                .orElse(null);
-        return new DefaultCustomShapedDisplay(location.orElse(null), optionalRecipe, input, output, width, height);
     }
     
     @Override
@@ -61,5 +75,15 @@ public class DefaultCustomShapedDisplay extends DefaultCraftingDisplay<Recipe<?>
     @Override
     public int getHeight() {
         return height;
+    }
+    
+    @Override
+    public boolean isShapeless() {
+        return false;
+    }
+    
+    @Override
+    public DisplaySerializer<? extends Display> getSerializer() {
+        return SERIALIZER;
     }
 }

@@ -123,27 +123,22 @@ public class PluginDetectorImpl implements PluginDetector {
         return simpleName;
     }
     
-    @Override
-    public void detectServerPlugins() {
-        loadPlugin(REIServerPlugin.class, ((PluginView<REIServerPlugin>) PluginManager.getServerInstance())::registerPlugin);
-        try {
-            PluginView.getServerInstance().registerPlugin((REIServerPlugin) Class.forName("me.shedaniel.rei.impl.common.compat.FabricFluidAPISupportPlugin").getConstructor().newInstance());
-        } catch (Throwable throwable) {
-            throwable.printStackTrace();
-        }
-    }
-    
     @SuppressWarnings({"RedundantCast", "rawtypes"})
     @Override
     public void detectCommonPlugins() {
-        loadPlugin((Class<? extends REIPlugin<?>>) (Class) REIPlugin.class, ((PluginView<REIPlugin<?>>) PluginManager.getInstance())::registerPlugin);
+        loadPlugin((Class<? extends REICommonPlugin>) (Class) REICommonPlugin.class, PluginManager.getInstance().view()::registerPlugin);
+        try {
+            PluginView.getInstance().registerPlugin((REICommonPlugin) Class.forName("me.shedaniel.rei.impl.common.compat.FabricFluidAPISupportPlugin").getConstructor().newInstance());
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
+        }
     }
     
     @Environment(EnvType.CLIENT)
     @Override
     public Supplier<Runnable> detectClientPlugins() {
         return () -> () -> {
-            loadPlugin(REIClientPlugin.class, ((PluginView<REIClientPlugin>) PluginManager.getClientInstance())::registerPlugin);
+            loadPlugin(REIClientPlugin.class, PluginManager.getClientInstance().view()::registerPlugin);
             Supplier<Method> method = Suppliers.memoize(() -> {
                 String methodName = FabricLoader.getInstance().isDevelopmentEnvironment() ? FabricLoader.getInstance().getMappingResolver().mapMethodName("intermediary", "net.minecraft.class_332", "method_51442", "(Ljava/util/List;Lnet/minecraft/class_5632;)V")
                         : "method_51442";

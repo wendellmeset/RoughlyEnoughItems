@@ -23,7 +23,6 @@
 
 package me.shedaniel.rei.impl.client.gui.widget.entrylist;
 
-import com.mojang.blaze3d.vertex.Tesselator;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.impl.common.entry.type.collapsed.CollapsedStack;
@@ -31,7 +30,6 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
@@ -45,7 +43,7 @@ public class CollapsedEntriesTooltip implements ClientTooltipComponent, TooltipC
     }
     
     @Override
-    public int getHeight() {
+    public int getHeight(Font font) {
         int entrySize = EntryListWidget.entrySize();
         int w = Math.max(1, MAX_WIDTH / entrySize);
         return Math.min(3, Mth.ceil(stack.getIngredient().size() / (float) w)) * entrySize + 2;
@@ -60,7 +58,7 @@ public class CollapsedEntriesTooltip implements ClientTooltipComponent, TooltipC
     }
     
     @Override
-    public void renderImage(Font font, int x, int y, GuiGraphics graphics) {
+    public void renderImage(Font font, int x, int y, int weight, int height, GuiGraphics graphics) {
         int entrySize = EntryListWidget.entrySize();
         int w = Math.max(1, MAX_WIDTH / entrySize);
         int i = 0;
@@ -73,7 +71,9 @@ public class CollapsedEntriesTooltip implements ClientTooltipComponent, TooltipC
             if (i / w > 3 - 1) {
                 graphics.pose().translate(0, 0, 200);
                 Component text = Component.literal("+" + (stack.getIngredient().size() - w * 3 + 1)).withStyle(ChatFormatting.GRAY);
-                font.drawInBatch(text, x1 + entrySize / 2 - font.width(text) / 2, y1 + entrySize / 2 - 1, -1, true, graphics.pose().last().pose(), graphics.bufferSource(), Font.DisplayMode.NORMAL, 0, 15728880);
+                graphics.drawSpecial(source -> {
+                    font.drawInBatch(text, x1 + entrySize / 2 - font.width(text) / 2, y1 + entrySize / 2 - 1, -1, true, graphics.pose().last().pose(), source, Font.DisplayMode.NORMAL, 0, 15728880);
+                });
                 graphics.flush();
                 break;
             } else {

@@ -25,6 +25,9 @@ package me.shedaniel.rei.plugin.client.forge;
 
 import com.google.gson.internal.LinkedTreeMap;
 import me.shedaniel.rei.api.client.registry.display.DisplayRegistry;
+import me.shedaniel.rei.api.common.entry.EntryIngredient;
+import me.shedaniel.rei.api.common.entry.EntryStack;
+import me.shedaniel.rei.api.common.util.EntryIngredients;
 import me.shedaniel.rei.plugin.client.BuiltinClientPlugin;
 import me.shedaniel.rei.plugin.client.DefaultClientPlugin;
 import net.minecraft.client.Minecraft;
@@ -39,7 +42,6 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.neoforged.neoforge.common.brewing.BrewingRecipe;
 import net.neoforged.neoforge.common.brewing.IBrewingRecipe;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Set;
@@ -52,7 +54,9 @@ public class DefaultClientPluginImpl extends DefaultClientPlugin {
         for (IBrewingRecipe recipe : brewing.getRecipes()) {
             if (recipe instanceof BrewingRecipe) {
                 BrewingRecipe brewingRecipe = (BrewingRecipe) recipe;
-                clientPlugin.registerBrewingRecipe(brewingRecipe.getInput(), brewingRecipe.getIngredient(), brewingRecipe.getOutput().copy());
+                clientPlugin.registerBrewingRecipe(EntryIngredients.ofIngredient(brewingRecipe.getInput()),
+                        EntryIngredients.ofIngredient(brewingRecipe.getIngredient()),
+                        EntryIngredients.of(brewingRecipe.getOutput().copy()));
             }
         }
     }
@@ -62,16 +66,21 @@ public class DefaultClientPluginImpl extends DefaultClientPlugin {
         for (Ingredient container : brewing.containers) {
             for (PotionBrewing.Mix<Potion> mix : brewing.potionMixes) {
                 Holder<Potion> from = mix.from();
-                Ingredient ingredient = mix.ingredient;
+                Ingredient ingredient = mix.ingredient();
                 Holder<Potion> to = mix.to();
-                Ingredient base = Ingredient.of(Arrays.stream(container.getItems())
-                        .map(ItemStack::copy)
-                        .peek(stack -> stack.set(DataComponents.POTION_CONTENTS, new PotionContents(from))));
-                ItemStack output = Arrays.stream(container.getItems())
-                        .map(ItemStack::copy)
-                        .peek(stack -> stack.set(DataComponents.POTION_CONTENTS, new PotionContents(to)))
-                        .findFirst().orElse(ItemStack.EMPTY);
-                clientPlugin.registerBrewingRecipe(base, ingredient, output);
+                EntryIngredient base = EntryIngredients.ofIngredient(container)
+                        .map(stack -> {
+                            EntryStack<?> copied = stack.copy();
+                            copied.<ItemStack>castValue().set(DataComponents.POTION_CONTENTS, new PotionContents(from));
+                            return copied;
+                        });
+                EntryIngredient output = EntryIngredients.ofIngredient(container)
+                        .map(stack -> {
+                            EntryStack<?> copied = stack.copy();
+                            copied.<ItemStack>castValue().set(DataComponents.POTION_CONTENTS, new PotionContents(to));
+                            return copied;
+                        });
+                clientPlugin.registerBrewingRecipe(base, EntryIngredients.ofIngredient(ingredient), output);
                 potions.add(from);
                 potions.add(to);
             }
@@ -83,10 +92,10 @@ public class DefaultClientPluginImpl extends DefaultClientPlugin {
                 Holder<Item> to = mix.to();
                 ItemStack baseStack = new ItemStack(from);
                 baseStack.set(DataComponents.POTION_CONTENTS, new PotionContents(potion));
-                Ingredient base = Ingredient.of(baseStack);
+                EntryIngredient base = EntryIngredients.of(baseStack);
                 ItemStack output = new ItemStack(to);
                 output.set(DataComponents.POTION_CONTENTS, new PotionContents(potion));
-                clientPlugin.registerBrewingRecipe(base, ingredient, output);
+                clientPlugin.registerBrewingRecipe(base, EntryIngredients.ofIngredient(ingredient), EntryIngredients.of(output));
             }
         }
     }

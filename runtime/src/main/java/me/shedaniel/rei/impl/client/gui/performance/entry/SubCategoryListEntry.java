@@ -34,6 +34,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -82,7 +83,7 @@ public class SubCategoryListEntry extends PerformanceScreen.PerformanceEntry imp
         this.widget.rectangle.y = y;
         this.widget.rectangle.width = entryWidth - 6;
         this.widget.rectangle.height = 24;
-        graphics.blit(CONFIG_TEX, x + 3, y + 5, 24, (this.widget.rectangle.contains(mouseX, mouseY) ? 18 : 0) + (this.expanded ? 9 : 0), 9, 9);
+        graphics.blit(RenderType::guiTextured, CONFIG_TEX, x + 3, y + 5, 24, (this.widget.rectangle.contains(mouseX, mouseY) ? 18 : 0) + (this.expanded ? 9 : 0), 9, 9, 256, 256);
         graphics.drawString(Minecraft.getInstance().font, this.name.getVisualOrderText(), x + 3 + 15, y + 6, this.widget.rectangle.contains(mouseX, mouseY) ? -1638890 : -1);
         
         for (PerformanceScreen.PerformanceEntry performanceEntry : this.entries) {

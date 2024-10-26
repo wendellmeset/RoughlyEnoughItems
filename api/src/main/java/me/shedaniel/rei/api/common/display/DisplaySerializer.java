@@ -23,32 +23,22 @@
 
 package me.shedaniel.rei.api.common.display;
 
-import net.minecraft.nbt.CompoundTag;
+import com.mojang.serialization.MapCodec;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The display serializer used for display serialization, useful for persistent displays across reloads,
  * and server-client communication.
  *
- * @see SimpleDisplaySerializer
  * @see DisplaySerializerRegistry
  */
+@ApiStatus.NonExtendable
 public interface DisplaySerializer<D extends Display> {
-    /**
-     * Serializes the display into a tag.
-     *
-     * @param tag     the tag to serialize into
-     * @param display the display to serialize
-     * @return the tag
-     */
-    CompoundTag save(CompoundTag tag, D display);
+    MapCodec<D> codec();
     
-    /**
-     * Deserializes the display from a tag.
-     *
-     * @param tag the tag to deserialize from
-     * @return the display
-     */
-    D read(CompoundTag tag);
+    StreamCodec<RegistryFriendlyByteBuf, D> streamCodec();
     
     /**
      * Returns whether the serialized output is persistent across differing reboots, thus enabling serialization support for saving to disk.
@@ -57,5 +47,28 @@ public interface DisplaySerializer<D extends Display> {
      */
     default boolean isPersistent() {
         return true;
+    }
+    
+    static <D extends Display> DisplaySerializer<D> of(MapCodec<D> codec, StreamCodec<RegistryFriendlyByteBuf, D> streamCodec) {
+        return of(codec, streamCodec, true);
+    }
+    
+    static <D extends Display> DisplaySerializer<D> of(MapCodec<D> codec, StreamCodec<RegistryFriendlyByteBuf, D> streamCodec, boolean persistent) {
+        return new DisplaySerializer<>() {
+            @Override
+            public MapCodec<D> codec() {
+                return codec;
+            }
+            
+            @Override
+            public StreamCodec<RegistryFriendlyByteBuf, D> streamCodec() {
+                return streamCodec;
+            }
+            
+            @Override
+            public boolean isPersistent() {
+                return persistent;
+            }
+        };
     }
 }

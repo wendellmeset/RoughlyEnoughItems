@@ -38,6 +38,7 @@ import net.minecraft.world.item.crafting.RecipeHolder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public class MapExtendingRecipeFiller implements CraftingRecipeFiller<MapExtendingRecipe> {
     @Override
@@ -54,9 +55,10 @@ public class MapExtendingRecipeFiller implements CraftingRecipeFiller<MapExtendi
                 }
             }
             
-            displays.add(new DefaultCustomDisplay(recipe,
+            displays.add(new DefaultCustomDisplay(
                     List.of(inputs),
-                    List.of(mapWith("X", i + 1, 1))));
+                    List.of(mapWith("X", i + 1, 1)),
+                    Optional.of(recipe.id().location())));
         }
         
         return displays;

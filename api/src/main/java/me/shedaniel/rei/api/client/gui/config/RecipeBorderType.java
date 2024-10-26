@@ -23,36 +23,36 @@
 
 package me.shedaniel.rei.api.client.gui.config;
 
+import me.shedaniel.rei.api.client.gui.widgets.utils.PanelTextures;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.resources.language.I18n;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.Locale;
 
 @Environment(EnvType.CLIENT)
-public enum RecipeBorderType {
-    DEFAULT(66),
-    LIGHTER(0),
-    NONE(0, false);
+public enum RecipeBorderType implements PanelTextures {
+    DEFAULT(ResourceLocation.parse("roughlyenoughitems:widget/panel_default"), ResourceLocation.parse("roughlyenoughitems:widget/panel_default_dark")),
+    LIGHTER(ResourceLocation.parse("roughlyenoughitems:widget/panel_lighter"), ResourceLocation.parse("roughlyenoughitems:widget/panel_lighter_dark")),
+    NONE(ResourceLocation.parse("roughlyenoughitems:widget/panel_none"), ResourceLocation.parse("roughlyenoughitems:widget/panel_none_dark"));
     
-    private int offset;
-    private boolean render;
+    private final ResourceLocation texture;
+    private final ResourceLocation darkTexture;
     
-    RecipeBorderType(int offset) {
-        this(offset, true);
+    RecipeBorderType(ResourceLocation texture, ResourceLocation darkTexture) {
+        this.texture = texture;
+        this.darkTexture = darkTexture;
     }
     
-    RecipeBorderType(int offset, boolean render) {
-        this.offset = offset;
-        this.render = render;
+    @Override
+    public ResourceLocation texture() {
+        return texture;
     }
     
-    public int getYOffset() {
-        return offset;
-    }
-    
-    public boolean isRendering() {
-        return render;
+    @Override
+    public ResourceLocation darkTexture() {
+        return darkTexture;
     }
     
     @Override

@@ -23,6 +23,8 @@
 
 package me.shedaniel.rei.api.common.entry;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import dev.architectury.utils.Env;
 import dev.architectury.utils.EnvExecutor;
 import me.shedaniel.rei.api.client.config.ConfigObject;
@@ -40,9 +42,9 @@ import me.shedaniel.rei.api.common.util.TextRepresentable;
 import me.shedaniel.rei.impl.Internals;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Unit;
@@ -50,10 +52,7 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -118,71 +117,39 @@ public interface EntryStack<T> extends TextRepresentable, Renderer {
     }
     
     /**
-     * Reads an {@link EntryStack} from the given {@link CompoundTag}.
+     * Returns a {@link Codec} for {@link EntryStack}.
      * <p>
-     * The compound tag must contain "type" for resolving the {@link EntryDefinition} for
-     * the {@link EntryStack}.
+     * This can be used to serialize and deserialize entry stacks.
+     * Note that this will fail if the {@link EntryDefinition} does not support serialization.
      *
-     * @param tag the tag
-     * @return the entry stack
-     * @throws NullPointerException          if the {@link EntryDefinition} is not found
-     * @throws UnsupportedOperationException if the {@link EntryDefinition} does not support reading from a tag
-     * @see EntrySerializer#supportReading()
-     * @see EntryIngredient#read(ListTag)
+     * @return the codec for {@link EntryStack}
      */
-    static EntryStack<?> read(CompoundTag tag) {
-        ResourceLocation type = ResourceLocation.parse(tag.getString("type"));
-        EntryDefinition<?> definition = EntryTypeRegistry.getInstance().get(type);
-        if (definition == null) throw new NullPointerException("Read missing entry type: " + type);
-        EntrySerializer<?> serializer = definition.getSerializer();
-        if (serializer != null && serializer.supportReading()) {
-            return EntryStack.of((EntryDefinition<Object>) definition, serializer.read(tag));
-        }
-        throw new UnsupportedOperationException(definition.getType().getId() + " does not support deserialization!");
+    static Codec<EntryStack<?>> codec() {
+        Codec<EntryType<?>> typeCodec = ResourceLocation.CODEC.flatXmap(id -> {
+            return Optional.ofNullable(EntryTypeRegistry.getInstance().get(id))
+                    .map(DataResult::success)
+                    .orElseGet(() -> DataResult.error(() -> "Read missing entry type: " + id))
+                    .map(EntryDefinition::getType);
+        }, type -> DataResult.success(type.getId()));
+        return typeCodec.dispatch(EntryStack::getType, type -> type.getDefinition().getSerializer().codec()
+                .xmap(o -> EntryStack.of((EntryType<Object>) type, o), EntryStack::castValue)
+                .fieldOf("value"));
+    }
+    
+    static StreamCodec<RegistryFriendlyByteBuf, EntryStack<?>> streamCodec() {
+        StreamCodec<RegistryFriendlyByteBuf, EntryType<?>> typeCodec = ResourceLocation.STREAM_CODEC.<EntryType<?>>map(id -> EntryTypeRegistry.getInstance().get(id).getType(), EntryType::getId).cast();
+        return typeCodec.dispatch(EntryStack::getType, type -> type.getDefinition().getSerializer().streamCodec()
+                .map(o -> EntryStack.of((EntryType<Object>) type, o), EntryStack::castValue));
     }
     
     /**
-     * Saves the entry stack to a {@link CompoundTag}. This is only supported if the entry stack has a serializer.
+     * Returns whether the {@link EntryDefinition} of this {@link EntryStack} supports serialization.
      *
-     * @return the saved tag
-     * @throws UnsupportedOperationException if the {@link EntryDefinition} does not support saving to a tag
-     * @see EntrySerializer#supportSaving()
-     * @see EntryIngredient#saveIngredient()
-     * @since 8.3
+     * @return whether the {@link EntryDefinition} of this {@link EntryStack} supports serialization
      */
-    @Nullable
-    default CompoundTag saveStack() {
-        return save();
-    }
-    
-    /**
-     * Saves the entry stack to a {@link CompoundTag}. This is only supported if the entry stack has a serializer.
-     *
-     * @return the saved tag
-     * @throws UnsupportedOperationException if the {@link EntryDefinition} does not support saving to a tag
-     * @see EntrySerializer#supportSaving()
-     * @see EntryIngredient#saveIngredient()
-     * @deprecated use {@link #saveStack()} instead
-     */
-    @Nullable
-    @Deprecated(forRemoval = true)
-    default CompoundTag save() {
-        if (supportSaving()) {
-            CompoundTag tag = getDefinition().getSerializer().save(this, getValue());
-            tag.putString("type", getType().getId().toString());
-            return tag;
-        }
-        throw new UnsupportedOperationException(getType().getId() + " does not support serialization!");
-    }
-    
-    /**
-     * Returns whether the {@link EntryDefinition} of this {@link EntryStack} supports saving to a tag.
-     *
-     * @return whether the {@link EntryDefinition} of this {@link EntryStack} supports saving to a tag
-     */
-    default boolean supportSaving() {
+    default boolean supportSerialization() {
         EntrySerializer<T> serializer = getDefinition().getSerializer();
-        return serializer != null && serializer.supportSaving();
+        return serializer != null;
     }
     
     /**

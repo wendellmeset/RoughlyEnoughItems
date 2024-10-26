@@ -36,6 +36,7 @@ import me.shedaniel.rei.api.common.util.CollectionUtils;
 import me.shedaniel.rei.api.common.util.EntryStacks;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.ApiStatus;
@@ -135,7 +136,7 @@ public class SimpleDisplayRenderer extends DisplayRenderer implements WidgetHold
         graphics.pose().popPose();
         xx = bounds.x + 4 + 18 * (getItemsPerLine() - 2);
         yy = bounds.y + getHeight() / 2 - 8;
-        graphics.blit(CHEST_GUI_TEXTURE, xx, yy, 0, 28, 18, 18);
+        graphics.blit(RenderType::guiTextured, CHEST_GUI_TEXTURE, xx, yy, 0, 28, 18, 18, 256, 256);
         xx += 18;
         yy += outputWidgets.size() * -9 + 9;
         graphics.pose().pushPose();

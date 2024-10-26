@@ -31,7 +31,7 @@ import me.shedaniel.rei.api.common.entry.type.EntryDefinition;
 import me.shedaniel.rei.api.common.entry.type.EntryType;
 import me.shedaniel.rei.api.common.entry.type.EntryTypeBridge;
 import me.shedaniel.rei.api.common.entry.type.EntryTypeRegistry;
-import me.shedaniel.rei.api.common.plugins.REIPlugin;
+import me.shedaniel.rei.api.common.plugins.REICommonPlugin;
 import me.shedaniel.rei.api.common.registry.ReloadStage;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.ApiStatus;
@@ -52,7 +52,7 @@ public class EntryTypeRegistryImpl implements EntryTypeRegistry {
     }
     
     @Override
-    public void acceptPlugin(REIPlugin<?> plugin) {
+    public void acceptPlugin(REICommonPlugin plugin) {
         plugin.registerEntryTypes(this);
     }
     

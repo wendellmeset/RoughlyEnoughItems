@@ -24,7 +24,7 @@
 package me.shedaniel.rei.api.common.transfer.info.stack;
 
 import me.shedaniel.rei.api.common.plugins.PluginManager;
-import me.shedaniel.rei.api.common.plugins.REIServerPlugin;
+import me.shedaniel.rei.api.common.plugins.REICommonPlugin;
 import me.shedaniel.rei.api.common.registry.Reloadable;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -36,12 +36,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Predicate;
 
 @ApiStatus.Experimental
-public interface SlotAccessorRegistry extends Reloadable<REIServerPlugin> {
+public interface SlotAccessorRegistry extends Reloadable<REICommonPlugin> {
     /**
      * @return the instance of {@link SlotAccessorRegistry}
      */
     static SlotAccessorRegistry getInstance() {
-        return PluginManager.getServerInstance().get(SlotAccessorRegistry.class);
+        return PluginManager.getInstance().get(SlotAccessorRegistry.class);
     }
     
     void register(ResourceLocation id, Predicate<SlotAccessor> accessorPredicate, Serializer serializer);

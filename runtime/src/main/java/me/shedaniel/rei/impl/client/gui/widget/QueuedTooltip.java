@@ -32,8 +32,10 @@ import me.shedaniel.rei.api.common.entry.EntryStack;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -47,6 +49,8 @@ public class QueuedTooltip implements Tooltip {
     private Point location;
     private List<TooltipEntryImpl> entries;
     private EntryStack<?> stack = EntryStack.empty();
+    @Nullable
+    private ResourceLocation tooltipStyle;
     
     private QueuedTooltip(Point location, Collection<? extends Tooltip.Entry> entries) {
         this.location = location;
@@ -107,6 +111,18 @@ public class QueuedTooltip implements Tooltip {
     @Override
     public Tooltip withContextStack(EntryStack<?> stack) {
         this.stack = stack.copy();
+        return this;
+    }
+    
+    @Override
+    @Nullable
+    public ResourceLocation getTooltipStyle() {
+        return this.tooltipStyle;
+    }
+    
+    @Override
+    public Tooltip withTooltipStyle(@Nullable ResourceLocation styleLocation) {
+        this.tooltipStyle = styleLocation;
         return this;
     }
     

@@ -25,7 +25,6 @@ package me.shedaniel.rei.impl.client.gui.screen.collapsible;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
-import com.mojang.blaze3d.vertex.Tesselator;
 import me.shedaniel.clothconfig2.ClothConfigInitializer;
 import me.shedaniel.clothconfig2.api.scroll.ScrollingContainer;
 import me.shedaniel.math.Rectangle;
@@ -52,7 +51,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import org.joml.Matrix4f;
@@ -186,8 +184,10 @@ public class CollapsibleEntriesScreen extends Screen {
             int stringWidth = font.width(debugText);
             graphics.fillGradient(minecraft.screen.width - stringWidth - 2, 32, minecraft.screen.width, 32 + font.lineHeight + 2, -16777216, -16777216);
             graphics.pose().pushPose();
-            Matrix4f matrix = graphics.pose().last().pose();
-            font.drawInBatch(debugText.getVisualOrderText(), minecraft.screen.width - stringWidth, 32 + 2, -1, false, matrix, graphics.bufferSource(), Font.DisplayMode.NORMAL, 0, 15728880);
+            graphics.drawSpecial(source -> {
+                Matrix4f matrix = graphics.pose().last().pose();
+                font.drawInBatch(debugText.getVisualOrderText(), minecraft.screen.width - stringWidth, 32 + 2, -1, false, matrix, source, Font.DisplayMode.NORMAL, 0, 15728880);
+            });
             graphics.flush();
             graphics.pose().popPose();
         }

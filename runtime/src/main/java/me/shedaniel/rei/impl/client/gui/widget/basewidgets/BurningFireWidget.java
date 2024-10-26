@@ -31,6 +31,7 @@ import me.shedaniel.rei.api.client.REIRuntime;
 import me.shedaniel.rei.api.client.gui.widgets.BurningFire;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
@@ -83,10 +84,10 @@ public final class BurningFireWidget extends BurningFire {
         ResourceLocation texture = REIRuntime.getInstance().getDefaultDisplayTexture(dark);
         if (getAnimationDuration() > 0) {
             int height = 14 - Mth.ceil((System.currentTimeMillis() / (animationDuration / 14) % 14d));
-            graphics.blit(texture, getX(), getY(), 1, 74, 14, 14 - height);
-            graphics.blit(texture, getX(), getY() + 14 - height, 82, 77 + (14 - height), 14, height);
+            graphics.blit(RenderType::guiTextured, texture, getX(), getY(), 1, 74, 14, 14 - height, 256, 256);
+            graphics.blit(RenderType::guiTextured, texture, getX(), getY() + 14 - height, 82, 77 + (14 - height), 14, height, 256, 256);
         } else {
-            graphics.blit(texture, getX(), getY(), 1, 74, 14, 14);
+            graphics.blit(RenderType::guiTextured, texture, getX(), getY(), 1, 74, 14, 14, 256, 256);
         }
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
     }

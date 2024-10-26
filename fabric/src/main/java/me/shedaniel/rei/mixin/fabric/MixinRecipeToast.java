@@ -25,8 +25,8 @@ package me.shedaniel.rei.mixin.fabric;
 
 import me.shedaniel.rei.api.client.config.ConfigObject;
 import net.minecraft.client.gui.components.toasts.RecipeToast;
-import net.minecraft.client.gui.components.toasts.ToastComponent;
-import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.client.gui.components.toasts.ToastManager;
+import net.minecraft.world.item.crafting.display.RecipeDisplay;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -36,7 +36,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(RecipeToast.class)
 public class MixinRecipeToast {
     @Inject(method = "addOrUpdate", at = @At("HEAD"), cancellable = true)
-    private static void addOrUpdate(ToastComponent toastGui, RecipeHolder<?> recipe, CallbackInfo info) {
+    private static void addOrUpdate(ToastManager toastManager, RecipeDisplay recipeDisplay, CallbackInfo info) {
         if (disableRecipeBook()) info.cancel();
     }
     

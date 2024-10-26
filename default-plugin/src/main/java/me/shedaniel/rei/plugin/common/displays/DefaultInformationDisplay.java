@@ -24,25 +24,41 @@
 package me.shedaniel.rei.plugin.common.displays;
 
 import com.google.common.collect.Lists;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.display.Display;
 import me.shedaniel.rei.api.common.display.DisplaySerializer;
-import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.plugin.common.BuiltinPlugin;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.*;
 
 public class DefaultInformationDisplay implements Display {
-    private EntryIngredient entryStacks;
-    private List<Component> texts;
-    private Component name;
+    public static final DisplaySerializer<DefaultInformationDisplay> SERIALIZER = DisplaySerializer.of(
+            RecordCodecBuilder.mapCodec(instance -> instance.group(
+                    EntryIngredient.codec().fieldOf("stacks").forGetter(DefaultInformationDisplay::getEntryStacks),
+                    ComponentSerialization.CODEC.fieldOf("name").forGetter(DefaultInformationDisplay::getName),
+                    ComponentSerialization.CODEC.listOf().fieldOf("texts").forGetter(DefaultInformationDisplay::getTexts)
+            ).apply(instance, (stacks, name, texts) -> new DefaultInformationDisplay(stacks, name).lines(texts))),
+            StreamCodec.composite(
+                    EntryIngredient.streamCodec(),
+                    DefaultInformationDisplay::getEntryStacks,
+                    ComponentSerialization.STREAM_CODEC,
+                    DefaultInformationDisplay::getName,
+                    ComponentSerialization.STREAM_CODEC.apply(ByteBufCodecs.list()),
+                    DefaultInformationDisplay::getTexts,
+                    (stacks, name, texts) -> new DefaultInformationDisplay(stacks, name).lines(texts)
+            ));
+    
+    private final EntryIngredient entryStacks;
+    private final List<Component> texts;
+    private final Component name;
     
     protected DefaultInformationDisplay(EntryIngredient entryStacks, Component name) {
         this.entryStacks = entryStacks;
@@ -100,30 +116,13 @@ public class DefaultInformationDisplay implements Display {
         return BuiltinPlugin.INFO;
     }
     
-    public static DisplaySerializer<DefaultInformationDisplay> serializer() {
-        return new DisplaySerializer<DefaultInformationDisplay>() {
-            @Override
-            public CompoundTag save(CompoundTag tag, DefaultInformationDisplay display) {
-                tag.put("stacks", display.getEntryStacks().saveIngredient());
-                tag.putString("name", Component.Serializer.toJson(display.getName(), BasicDisplay.registryAccess()));
-                ListTag descriptions = new ListTag();
-                for (Component text : display.getTexts()) {
-                    descriptions.add(StringTag.valueOf(Component.Serializer.toJson(text, BasicDisplay.registryAccess())));
-                }
-                tag.put("descriptions", descriptions);
-                return tag;
-            }
-            
-            @Override
-            public DefaultInformationDisplay read(CompoundTag tag) {
-                EntryIngredient stacks = EntryIngredient.read(tag.getList("stacks", Tag.TAG_COMPOUND));
-                Component name = Component.Serializer.fromJson(tag.getString("name"), BasicDisplay.registryAccess());
-                List<Component> descriptions = new ArrayList<>();
-                for (Tag descriptionTag : tag.getList("descriptions", Tag.TAG_STRING)) {
-                    descriptions.add(Component.Serializer.fromJson(descriptionTag.getAsString(), BasicDisplay.registryAccess()));
-                }
-                return new DefaultInformationDisplay(stacks, name).lines(descriptions);
-            }
-        };
+    @Override
+    public Optional<ResourceLocation> getDisplayLocation() {
+        return Optional.empty();
+    }
+    
+    @Override
+    public DisplaySerializer<? extends Display> getSerializer() {
+        return SERIALIZER;
     }
 }

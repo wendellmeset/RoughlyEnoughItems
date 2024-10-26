@@ -23,18 +23,38 @@
 
 package me.shedaniel.rei.plugin.common.displays;
 
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.display.Display;
+import me.shedaniel.rei.api.common.display.DisplaySerializer;
 import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.plugin.common.BuiltinPlugin;
+import net.minecraft.network.codec.StreamCodec;
 
-import java.util.Collections;
 import java.util.List;
 
 public class DefaultStrippingDisplay extends BasicDisplay {
+    public static final DisplaySerializer<DefaultStrippingDisplay> SERIALIZER = DisplaySerializer.of(
+            RecordCodecBuilder.mapCodec(instance -> instance.group(
+                    EntryIngredient.codec().fieldOf("input").forGetter(DefaultStrippingDisplay::getIn),
+                    EntryIngredient.codec().fieldOf("output").forGetter(DefaultStrippingDisplay::getOut)
+            ).apply(instance, DefaultStrippingDisplay::new)),
+            StreamCodec.composite(
+                    EntryIngredient.streamCodec(),
+                    DefaultStrippingDisplay::getIn,
+                    EntryIngredient.streamCodec(),
+                    DefaultStrippingDisplay::getOut,
+                    DefaultStrippingDisplay::new
+            ));
+    
     public DefaultStrippingDisplay(EntryStack<?> in, EntryStack<?> out) {
-        this(Collections.singletonList(EntryIngredient.of(in)), Collections.singletonList(EntryIngredient.of(out)));
+        this(List.of(EntryIngredient.of(in)), List.of(EntryIngredient.of(out)));
+    }
+    
+    public DefaultStrippingDisplay(EntryIngredient in, EntryIngredient out) {
+        this(List.of(in), List.of(out));
     }
     
     public DefaultStrippingDisplay(List<EntryIngredient> inputs, List<EntryIngredient> outputs) {
@@ -54,7 +74,8 @@ public class DefaultStrippingDisplay extends BasicDisplay {
         return BuiltinPlugin.STRIPPING;
     }
     
-    public static BasicDisplay.Serializer<DefaultStrippingDisplay> serializer() {
-        return BasicDisplay.Serializer.ofSimpleRecipeLess(DefaultStrippingDisplay::new);
+    @Override
+    public DisplaySerializer<? extends Display> getSerializer() {
+        return SERIALIZER;
     }
 }

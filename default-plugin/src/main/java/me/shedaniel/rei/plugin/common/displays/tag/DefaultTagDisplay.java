@@ -26,6 +26,8 @@ package me.shedaniel.rei.plugin.common.displays.tag;
 import dev.architectury.fluid.FluidStack;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.display.Display;
+import me.shedaniel.rei.api.common.display.DisplaySerializer;
+import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.util.CollectionUtils;
@@ -53,7 +55,7 @@ public class DefaultTagDisplay<S, T> implements Display {
     public DefaultTagDisplay(TagKey<S> key, Function<Holder<S>, EntryStack<T>> mapper) {
         this.key = key;
         this.mapper = mapper;
-        this.ingredients = CollectionUtils.map(EntryIngredients.ofTag(key, mapper), EntryIngredient::of);
+        this.ingredients = CollectionUtils.map(EntryIngredients.ofTag(BasicDisplay.registryAccess(), key, mapper), EntryIngredient::of);
     }
     
     public static DefaultTagDisplay<ItemLike, ItemStack> ofItems(TagKey<ItemLike> key) {
@@ -90,6 +92,11 @@ public class DefaultTagDisplay<S, T> implements Display {
     @Override
     public Optional<ResourceLocation> getDisplayLocation() {
         return Optional.of(key.location());
+    }
+    
+    @Override
+    public DisplaySerializer<? extends Display> getSerializer() {
+        return null;
     }
     
     public TagKey<S> getKey() {

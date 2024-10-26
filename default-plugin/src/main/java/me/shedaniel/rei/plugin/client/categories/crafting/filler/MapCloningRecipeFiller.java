@@ -33,15 +33,17 @@ import net.minecraft.world.item.crafting.RecipeHolder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public class MapCloningRecipeFiller implements CraftingRecipeFiller<MapCloningRecipe> {
     @Override
     public Collection<Display> apply(RecipeHolder<MapCloningRecipe> recipe) {
         List<Display> displays = new ArrayList<>();
         
-        displays.add(new DefaultCustomShapelessDisplay(recipe,
+        displays.add(new DefaultCustomShapelessDisplay(
                 List.of(EntryIngredients.of(Items.FILLED_MAP), EntryIngredients.of(Items.MAP)),
-                List.of(EntryIngredients.of(Items.FILLED_MAP, 2))));
+                List.of(EntryIngredients.of(Items.FILLED_MAP, 2)),
+                Optional.of(recipe.id().location())));
         
         return displays;
     }

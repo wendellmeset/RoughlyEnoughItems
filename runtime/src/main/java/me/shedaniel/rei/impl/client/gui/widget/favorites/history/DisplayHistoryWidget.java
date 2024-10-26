@@ -23,10 +23,8 @@
 
 package me.shedaniel.rei.impl.client.gui.widget.favorites.history;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import me.shedaniel.clothconfig2.ClothConfigInitializer;
-import me.shedaniel.clothconfig2.api.ScissorsHandler;
 import me.shedaniel.clothconfig2.api.animator.NumberAnimator;
 import me.shedaniel.clothconfig2.api.animator.ValueAnimator;
 import me.shedaniel.clothconfig2.api.scroll.ScrollingContainer;
@@ -47,7 +45,7 @@ import me.shedaniel.rei.impl.client.gui.widget.favorites.FavoritesListWidget;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -70,7 +68,7 @@ public class DisplayHistoryWidget extends WidgetWithBounds implements DraggableC
         this.parent = parent;
         this.height = ValueAnimator.ofDouble().withConvention(() -> {
             boolean draggingDisplay = DraggingContext.getInstance().isDraggingComponent()
-                                      && DraggingContext.getInstance().getDragged().get() instanceof Display;
+                    && DraggingContext.getInstance().getDragged().get() instanceof Display;
             if (draggingDisplay) {
                 return Math.min(parent.excludedBounds.height, 80D);
             }
@@ -99,17 +97,18 @@ public class DisplayHistoryWidget extends WidgetWithBounds implements DraggableC
             xOffset -= getBounds().getWidth();
             DisplayEntry entry = entries.get(i);
             entry.setScrolled(xOffset);
-            if (entry.isStable()) {
-                ScissorsHandler.INSTANCE.scissor(getBounds());
+            boolean shouldScissor = entry.isStable();
+            if (shouldScissor) {
+                graphics.enableScissor(getBounds().x, getBounds().y, getBounds().getMaxX(), getBounds().getMaxY());
             }
             entry.render(graphics, mouseX, mouseY, delta);
-            if (entry.isStable()) {
-                ScissorsHandler.INSTANCE.removeLastScissor();
+            if (shouldScissor) {
+                graphics.disableScissor();
             }
         }
         
         boolean draggingDisplay = DraggingContext.getInstance().isDraggingComponent()
-                                  && DraggingContext.getInstance().getDragged().get() instanceof Display;
+                && DraggingContext.getInstance().getDragged().get() instanceof Display;
         double onBoardingHeight = this.height.value();
         
         if (entries.isEmpty() && draggingDisplay && Math.round(onBoardingHeight) > 0) {
@@ -130,59 +129,49 @@ public class DisplayHistoryWidget extends WidgetWithBounds implements DraggableC
     }
     
     private void drawHorizontalDashedLine(GuiGraphics graphics, int x1, int x2, int y, int color, boolean reverse) {
-        float offset = (System.currentTimeMillis() % 700) / 100.0F;
-        if (ConfigObject.getInstance().isReducedMotion()) offset = 0;
-        if (!reverse) offset = 7 - offset;
+        float[] offset = {(System.currentTimeMillis() % 700) / 100.0F};
+        if (ConfigObject.getInstance().isReducedMotion()) offset[0] = 0;
+        if (!reverse) offset[0] = 7 - offset[0];
         
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
-        Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder builder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        
-        float a = (float) (color >> 24 & 255) / 255.0F;
-        float r = (float) (color >> 16 & 255) / 255.0F;
-        float g = (float) (color >> 8 & 255) / 255.0F;
-        float b = (float) (color & 255) / 255.0F;
-        Matrix4f pose = graphics.pose().last().pose();
-        
-        for (float x = x1 - offset; x < x2; x += 7) {
-            builder.addVertex(pose, Mth.clamp(x + 4, x1, x2), y, 0).setColor(r, g, b, a);
-            builder.addVertex(pose, Mth.clamp(x, x1, x2), y, 0).setColor(r, g, b, a);
-            builder.addVertex(pose, Mth.clamp(x, x1, x2), y + 1, 0).setColor(r, g, b, a);
-            builder.addVertex(pose, Mth.clamp(x + 4, x1, x2), y + 1, 0).setColor(r, g, b, a);
-        }
-        
-        BufferUploader.drawWithShader(builder.buildOrThrow());
-        RenderSystem.disableBlend();
+        graphics.drawSpecial(source -> {
+            VertexConsumer buffer = source.getBuffer(RenderType.gui());
+            
+            float a = (float) (color >> 24 & 255) / 255.0F;
+            float r = (float) (color >> 16 & 255) / 255.0F;
+            float g = (float) (color >> 8 & 255) / 255.0F;
+            float b = (float) (color & 255) / 255.0F;
+            Matrix4f pose = graphics.pose().last().pose();
+            
+            for (float x = x1 - offset[0]; x < x2; x += 7) {
+                buffer.addVertex(pose, Mth.clamp(x + 4, x1, x2), y, 0).setColor(r, g, b, a);
+                buffer.addVertex(pose, Mth.clamp(x, x1, x2), y, 0).setColor(r, g, b, a);
+                buffer.addVertex(pose, Mth.clamp(x, x1, x2), y + 1, 0).setColor(r, g, b, a);
+                buffer.addVertex(pose, Mth.clamp(x + 4, x1, x2), y + 1, 0).setColor(r, g, b, a);
+            }
+        });
     }
     
     private void drawVerticalDashedLine(GuiGraphics graphics, int x, int y1, int y2, int color, boolean reverse) {
-        float offset = (System.currentTimeMillis() % 700) / 100.0F;
-        if (ConfigObject.getInstance().isReducedMotion()) offset = 0;
-        if (!reverse) offset = 7 - offset;
+        float[] offset = {(System.currentTimeMillis() % 700) / 100.0F};
+        if (ConfigObject.getInstance().isReducedMotion()) offset[0] = 0;
+        if (!reverse) offset[0] = 7 - offset[0];
         
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
-        Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder builder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        
-        float a = (float) (color >> 24 & 255) / 255.0F;
-        float r = (float) (color >> 16 & 255) / 255.0F;
-        float g = (float) (color >> 8 & 255) / 255.0F;
-        float b = (float) (color & 255) / 255.0F;
-        Matrix4f pose = graphics.pose().last().pose();
-        
-        for (float y = y1 - offset; y < y2; y += 7) {
-            builder.addVertex(pose, x + 1, Mth.clamp(y, y1, y2), 0).setColor(r, g, b, a);
-            builder.addVertex(pose, x, Mth.clamp(y, y1, y2), 0).setColor(r, g, b, a);
-            builder.addVertex(pose, x, Mth.clamp(y + 4, y1, y2), 0).setColor(r, g, b, a);
-            builder.addVertex(pose, x + 1, Mth.clamp(y + 4, y1, y2), 0).setColor(r, g, b, a);
-        }
-        
-        BufferUploader.drawWithShader(builder.buildOrThrow()); 
-        RenderSystem.disableBlend();
+        graphics.drawSpecial(source -> {
+            VertexConsumer buffer = source.getBuffer(RenderType.gui());
+            
+            float a = (float) (color >> 24 & 255) / 255.0F;
+            float r = (float) (color >> 16 & 255) / 255.0F;
+            float g = (float) (color >> 8 & 255) / 255.0F;
+            float b = (float) (color & 255) / 255.0F;
+            Matrix4f pose = graphics.pose().last().pose();
+            
+            for (float y = y1 - offset[0]; y < y2; y += 7) {
+                buffer.addVertex(pose, x + 1, Mth.clamp(y, y1, y2), 0).setColor(r, g, b, a);
+                buffer.addVertex(pose, x, Mth.clamp(y, y1, y2), 0).setColor(r, g, b, a);
+                buffer.addVertex(pose, x, Mth.clamp(y + 4, y1, y2), 0).setColor(r, g, b, a);
+                buffer.addVertex(pose, x + 1, Mth.clamp(y + 4, y1, y2), 0).setColor(r, g, b, a);
+            }
+        });
     }
     
     private boolean updateBounds(Rectangle fullBounds) {

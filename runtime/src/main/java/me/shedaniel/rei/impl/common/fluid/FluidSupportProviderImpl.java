@@ -29,7 +29,7 @@ import dev.architectury.event.CompoundEventResult;
 import dev.architectury.fluid.FluidStack;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.fluid.FluidSupportProvider;
-import me.shedaniel.rei.api.common.plugins.REIPlugin;
+import me.shedaniel.rei.api.common.plugins.REICommonPlugin;
 import me.shedaniel.rei.api.common.registry.ReloadStage;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.ApiStatus;
@@ -52,7 +52,7 @@ public class FluidSupportProviderImpl extends ForwardingList<FluidSupportProvide
     }
     
     @Override
-    public void acceptPlugin(REIPlugin<?> plugin) {
+    public void acceptPlugin(REICommonPlugin plugin) {
         plugin.registerFluidSupport(this);
     }
     

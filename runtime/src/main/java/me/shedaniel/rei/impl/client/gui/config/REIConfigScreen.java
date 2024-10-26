@@ -112,7 +112,7 @@ public class REIConfigScreen extends Screen implements ConfigAccess {
     }
     
     private void cleanRequiresLevel() {
-        if (!(REIRuntime.getInstance().getPreviousContainerScreen() == null || Minecraft.getInstance().getConnection() == null || Minecraft.getInstance().getConnection().getRecipeManager() == null)) {
+        if (!(REIRuntime.getInstance().getPreviousContainerScreen() == null || Minecraft.getInstance().getConnection() == null)) {
             return;
         }
         

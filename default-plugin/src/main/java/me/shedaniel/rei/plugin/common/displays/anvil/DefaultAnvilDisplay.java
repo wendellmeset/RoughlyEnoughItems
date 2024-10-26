@@ -23,13 +23,19 @@
 
 package me.shedaniel.rei.plugin.common.displays.anvil;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.display.Display;
+import me.shedaniel.rei.api.common.display.DisplaySerializer;
 import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.util.EntryIngredients;
 import me.shedaniel.rei.plugin.common.BuiltinPlugin;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AnvilMenu;
@@ -40,6 +46,25 @@ import org.jetbrains.annotations.ApiStatus;
 import java.util.*;
 
 public class DefaultAnvilDisplay extends BasicDisplay {
+    public static final DisplaySerializer<DefaultAnvilDisplay> SERIALIZER = DisplaySerializer.of(
+            RecordCodecBuilder.mapCodec(instance -> instance.group(
+                    EntryIngredient.codec().listOf().fieldOf("inputs").forGetter(DefaultAnvilDisplay::getInputEntries),
+                    EntryIngredient.codec().listOf().fieldOf("outputs").forGetter(DefaultAnvilDisplay::getOutputEntries),
+                    ResourceLocation.CODEC.optionalFieldOf("location").forGetter(DefaultAnvilDisplay::getDisplayLocation),
+                    Codec.INT.optionalFieldOf("cost").forGetter(d -> d.cost.stream().boxed().findFirst())
+            ).apply(instance, (inputs, outputs, location, cost) -> new DefaultAnvilDisplay(inputs, outputs, location, cost.stream().mapToInt(i -> i).findFirst()))),
+            StreamCodec.composite(
+                    EntryIngredient.streamCodec().apply(ByteBufCodecs.list()),
+                    DefaultAnvilDisplay::getInputEntries,
+                    EntryIngredient.streamCodec().apply(ByteBufCodecs.list()),
+                    DefaultAnvilDisplay::getOutputEntries,
+                    ByteBufCodecs.optional(ResourceLocation.STREAM_CODEC),
+                    DefaultAnvilDisplay::getDisplayLocation,
+                    ByteBufCodecs.optional(ByteBufCodecs.INT),
+                    d -> d.cost.stream().boxed().findFirst(),
+                    (inputs, outputs, location, cost) -> new DefaultAnvilDisplay(inputs, outputs, location, cost.stream().mapToInt(i -> i).findFirst())
+            ));
+    
     private final OptionalInt cost;
     
     public DefaultAnvilDisplay(AnvilRecipe recipe) {
@@ -72,16 +97,13 @@ public class DefaultAnvilDisplay extends BasicDisplay {
         return BuiltinPlugin.ANVIL;
     }
     
-    public OptionalInt getCost() {
-        return cost;
+    @Override
+    public DisplaySerializer<? extends Display> getSerializer() {
+        return SERIALIZER;
     }
     
-    public static BasicDisplay.Serializer<DefaultAnvilDisplay> serializer() {
-        return BasicDisplay.Serializer.of(DefaultAnvilDisplay::new, (display, tag) -> {
-            if (display.getCost().isPresent()) {
-                tag.putInt("Cost", display.getCost().getAsInt());
-            }
-        });
+    public OptionalInt getCost() {
+        return cost;
     }
     
     @ApiStatus.Experimental

@@ -23,18 +23,38 @@
 
 package me.shedaniel.rei.plugin.common.displays;
 
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.display.Display;
+import me.shedaniel.rei.api.common.display.DisplaySerializer;
 import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.plugin.common.BuiltinPlugin;
+import net.minecraft.network.codec.StreamCodec;
 
-import java.util.Collections;
 import java.util.List;
 
 public class DefaultTillingDisplay extends BasicDisplay {
+    public static final DisplaySerializer<DefaultTillingDisplay> SERIALIZER = DisplaySerializer.of(
+            RecordCodecBuilder.mapCodec(instance -> instance.group(
+                    EntryIngredient.codec().fieldOf("in").forGetter(DefaultTillingDisplay::getIn),
+                    EntryIngredient.codec().fieldOf("out").forGetter(DefaultTillingDisplay::getOut)
+            ).apply(instance, DefaultTillingDisplay::new)),
+            StreamCodec.composite(
+                    EntryIngredient.streamCodec(),
+                    DefaultTillingDisplay::getIn,
+                    EntryIngredient.streamCodec(),
+                    DefaultTillingDisplay::getOut,
+                    DefaultTillingDisplay::new
+            ));
+    
     public DefaultTillingDisplay(EntryStack<?> in, EntryStack<?> out) {
-        this(Collections.singletonList(EntryIngredient.of(in)), Collections.singletonList(EntryIngredient.of(out)));
+        this(List.of(EntryIngredient.of(in)), List.of(EntryIngredient.of(out)));
+    }
+    
+    public DefaultTillingDisplay(EntryIngredient in, EntryIngredient out) {
+        this(List.of(in), List.of(out));
     }
     
     public DefaultTillingDisplay(List<EntryIngredient> inputs, List<EntryIngredient> outputs) {
@@ -54,7 +74,8 @@ public class DefaultTillingDisplay extends BasicDisplay {
         return BuiltinPlugin.TILLING;
     }
     
-    public static BasicDisplay.Serializer<DefaultTillingDisplay> serializer() {
-        return BasicDisplay.Serializer.ofSimpleRecipeLess(DefaultTillingDisplay::new);
+    @Override
+    public DisplaySerializer<? extends Display> getSerializer() {
+        return SERIALIZER;
     }
 }

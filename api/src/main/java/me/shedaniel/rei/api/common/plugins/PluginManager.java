@@ -34,7 +34,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -46,17 +45,13 @@ public interface PluginManager<P extends REIPlugin<?>> extends ParentReloadable<
         return ClientInternals.getPluginManager();
     }
     
-    static PluginManager<REIPlugin<?>> getInstance() {
+    static PluginManager<REICommonPlugin> getInstance() {
         return Internals.getPluginManager();
     }
     
-    static PluginManager<REIServerPlugin> getServerInstance() {
-        return Internals.getServerPluginManager();
-    }
-    
     static List<PluginManager<? extends REIPlugin<?>>> getActiveInstances() {
-        return EnvExecutor.getEnvSpecific(() -> () -> Arrays.asList(getInstance(), getClientInstance(), getServerInstance()),
-                () -> () -> Arrays.asList(getInstance(), getServerInstance()));
+        return EnvExecutor.getEnvSpecific(() -> () -> List.of(getInstance(), getClientInstance()),
+                () -> () -> List.of(getInstance()));
     }
     
     static boolean areAnyReloading() {

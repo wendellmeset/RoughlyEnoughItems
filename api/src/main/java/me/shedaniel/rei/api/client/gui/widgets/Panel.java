@@ -24,26 +24,25 @@
 package me.shedaniel.rei.api.client.gui.widgets;
 
 import me.shedaniel.rei.api.client.REIRuntime;
+import me.shedaniel.rei.api.client.gui.widgets.utils.PanelTextures;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.function.Predicate;
 
 public abstract class Panel extends WidgetWithBounds {
-    public abstract int getXTextureOffset();
+    public abstract void setTexture(ResourceLocation texture, ResourceLocation darkTexture);
     
-    public abstract void setXTextureOffset(int xTextureOffset);
+    public final void setTexture(PanelTextures textures) {
+        setTexture(textures.texture(), textures.darkTexture());
+    }
     
-    public final Panel xTextureOffset(int xTextureOffset) {
-        setXTextureOffset(xTextureOffset);
+    public final Panel texture(ResourceLocation texture, ResourceLocation darkTexture) {
+        setTexture(texture, darkTexture);
         return this;
     }
     
-    public abstract int getYTextureOffset();
-    
-    public abstract void setYTextureOffset(int yTextureOffset);
-    
-    public final Panel yTextureOffset(int yTextureOffset) {
-        setYTextureOffset(yTextureOffset);
-        return this;
+    public final Panel texture(PanelTextures textures) {
+        return texture(textures.texture(), textures.darkTexture());
     }
     
     public abstract int getColor();

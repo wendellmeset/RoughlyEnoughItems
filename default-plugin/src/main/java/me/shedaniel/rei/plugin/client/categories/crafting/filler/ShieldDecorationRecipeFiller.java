@@ -58,9 +58,9 @@ public class ShieldDecorationRecipeFiller implements CraftingRecipeFiller<Shield
             
             for (int i = 0; i < 2; i++) {
                 List<BannerPatternLayers.Layer> layers = new ArrayList<>();
-                Optional<Registry<BannerPattern>> registry = BasicDisplay.registryAccess().registry(Registries.BANNER_PATTERN);
+                Optional<Registry<BannerPattern>> registry = BasicDisplay.registryAccess().lookup(Registries.BANNER_PATTERN);
                 if (registry.isEmpty()) return Collections.emptyList();
-                Holder<BannerPattern>[] allPatterns = registry.get().holders().toArray(Holder[]::new);
+                Holder<BannerPattern>[] allPatterns = registry.get().listElements().toArray(Holder[]::new);
                 for (int j = 0; j < 2; j++) {
                     Holder<BannerPattern> pattern = allPatterns[random.nextInt(allPatterns.length - 1) + 1];
                     layers.add(new BannerPatternLayers.Layer(pattern, colors[random.nextInt(colors.length)]));
@@ -91,9 +91,10 @@ public class ShieldDecorationRecipeFiller implements CraftingRecipeFiller<Shield
         
         EntryIngredient.unifyFocuses(inputs, outputs);
         
-        displays.add(new DefaultCustomShapelessDisplay(recipe,
+        displays.add(new DefaultCustomShapelessDisplay(
                 List.of(inputs, shield),
-                List.of(outputs)));
+                List.of(outputs),
+                Optional.of(recipe.id().location())));
         
         return displays;
     }

@@ -27,6 +27,7 @@ import com.google.common.collect.Lists;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.serialization.Codec;
 import dev.architectury.hooks.item.ItemStackHooks;
 import dev.architectury.utils.Env;
 import dev.architectury.utils.EnvExecutor;
@@ -57,11 +58,13 @@ import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.component.DataComponentPatch;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
@@ -170,28 +173,18 @@ public class ItemEntryDefinition implements EntryDefinition<ItemStack>, EntrySer
     }
     
     @Override
-    public boolean supportSaving() {
-        return true;
-    }
-    
-    @Override
-    public boolean supportReading() {
-        return true;
-    }
-    
-    @Override
     public boolean acceptsNull() {
         return false;
     }
     
     @Override
-    public CompoundTag save(EntryStack<ItemStack> entry, ItemStack value) {
-        return (CompoundTag) value.save(BasicDisplay.registryAccess());
+    public Codec<ItemStack> codec() {
+        return ItemStack.CODEC;
     }
     
     @Override
-    public ItemStack read(CompoundTag tag) {
-        return ItemStack.parseOptional(BasicDisplay.registryAccess(), tag);
+    public StreamCodec<RegistryFriendlyByteBuf, ItemStack> streamCodec() {
+        return ItemStack.OPTIONAL_STREAM_CODEC;
     }
     
     private static final ReferenceSet<Item> SEARCH_BLACKLISTED = new ReferenceOpenHashSet<>();
@@ -283,11 +276,13 @@ public class ItemEntryDefinition implements EntryDefinition<ItemStack>, EntrySer
             modelViewStack.mul(graphics.pose().last().pose());
             modelViewStack.translate(bounds.x, bounds.y, 0);
             modelViewStack.scale(bounds.width / 16f, (bounds.getWidth() + bounds.getHeight()) / 2f / 16f, 1.0F);
-            RenderSystem.applyModelViewMatrix();
-            renderOverlay(new GuiGraphics(Minecraft.getInstance(), graphics.bufferSource()), entry, bounds);
+            graphics.drawSpecial(source -> {
+                if (source instanceof MultiBufferSource.BufferSource multiBufferSource) {
+                    renderOverlay(new GuiGraphics(Minecraft.getInstance(), multiBufferSource), entry, bounds);
+                }
+            });
             modelViewStack.popMatrix();
             endGL(entry, model);
-            RenderSystem.applyModelViewMatrix();
         }
         
         @Override
@@ -335,10 +330,12 @@ public class ItemEntryDefinition implements EntryDefinition<ItemStack>, EntrySer
             modelViewStack.mul(graphics.pose().last().pose());
             modelViewStack.translate(bounds.x, bounds.y, 0);
             modelViewStack.scale(bounds.width / 16f, (bounds.getWidth() + bounds.getHeight()) / 2f / 16f, 1.0F);
-            RenderSystem.applyModelViewMatrix();
-            renderOverlay(new GuiGraphics(Minecraft.getInstance(), graphics.bufferSource()), entry, bounds);
+            graphics.drawSpecial(source -> {
+                if (source instanceof MultiBufferSource.BufferSource multiBufferSource) {
+                    renderOverlay(new GuiGraphics(Minecraft.getInstance(), multiBufferSource), entry, bounds);
+                }
+            });
             modelViewStack.popMatrix();
-            RenderSystem.applyModelViewMatrix();
         }
         
         public void renderOverlay(GuiGraphics graphics, EntryStack<ItemStack> entry, Rectangle bounds) {
@@ -372,7 +369,7 @@ public class ItemEntryDefinition implements EntryDefinition<ItemStack>, EntrySer
             for (int i = 1; i < components.size(); i++) {
                 tooltip.add(components.get(i));
             }
-            return tooltip;
+            return tooltip.withTooltipStyle(entry.getValue().get(DataComponents.TOOLTIP_STYLE));
         }
     }
 }

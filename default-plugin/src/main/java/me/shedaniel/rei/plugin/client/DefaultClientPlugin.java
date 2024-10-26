@@ -56,8 +56,9 @@ import me.shedaniel.rei.plugin.client.categories.beacon.DefaultBeaconBaseCategor
 import me.shedaniel.rei.plugin.client.categories.beacon.DefaultBeaconPaymentCategory;
 import me.shedaniel.rei.plugin.client.categories.cooking.DefaultCookingCategory;
 import me.shedaniel.rei.plugin.client.categories.crafting.DefaultCraftingCategory;
-import me.shedaniel.rei.plugin.client.categories.crafting.filler.*;
 import me.shedaniel.rei.plugin.client.categories.tag.DefaultTagCategory;
+import me.shedaniel.rei.plugin.client.displays.ClientsidedCookingDisplay;
+import me.shedaniel.rei.plugin.client.displays.ClientsidedCraftingDisplay;
 import me.shedaniel.rei.plugin.client.exclusionzones.DefaultPotionEffectExclusionZones;
 import me.shedaniel.rei.plugin.client.exclusionzones.DefaultRecipeBookExclusionZones;
 import me.shedaniel.rei.plugin.client.favorites.GameModeFavoriteEntry;
@@ -71,10 +72,6 @@ import me.shedaniel.rei.plugin.common.displays.beacon.DefaultBeaconBaseDisplay;
 import me.shedaniel.rei.plugin.common.displays.beacon.DefaultBeaconPaymentDisplay;
 import me.shedaniel.rei.plugin.common.displays.brewing.BrewingRecipe;
 import me.shedaniel.rei.plugin.common.displays.brewing.DefaultBrewingDisplay;
-import me.shedaniel.rei.plugin.common.displays.cooking.DefaultBlastingDisplay;
-import me.shedaniel.rei.plugin.common.displays.cooking.DefaultSmeltingDisplay;
-import me.shedaniel.rei.plugin.common.displays.cooking.DefaultSmokingDisplay;
-import me.shedaniel.rei.plugin.common.displays.crafting.DefaultCraftingDisplay;
 import me.shedaniel.rei.plugin.common.displays.tag.DefaultTagDisplay;
 import me.shedaniel.rei.plugin.common.displays.tag.TagNodes;
 import net.fabricmc.api.EnvType;
@@ -83,6 +80,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.*;
 import net.minecraft.client.gui.screens.recipebook.RecipeUpdateListener;
 import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -97,14 +95,18 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionBrewing;
 import net.minecraft.world.item.alchemy.PotionContents;
-import net.minecraft.world.item.crafting.*;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.display.FurnaceRecipeDisplay;
+import net.minecraft.world.item.crafting.display.ShapedCraftingRecipeDisplay;
+import net.minecraft.world.item.crafting.display.ShapelessCraftingRecipeDisplay;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.EnchantmentInstance;
+import net.minecraft.world.item.enchantment.Repairable;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.ComposterBlock;
 import net.minecraft.world.level.block.WeatheringCopper;
-import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
@@ -121,25 +123,12 @@ import java.util.stream.Stream;
 @Environment(EnvType.CLIENT)
 @ApiStatus.Internal
 public class DefaultClientPlugin implements REIClientPlugin, BuiltinClientPlugin {
-    private static final CraftingRecipeFiller<?>[] CRAFTING_RECIPE_FILLERS = new CraftingRecipeFiller[]{
-            new TippedArrowRecipeFiller(),
-            new ShulkerBoxColoringFiller(),
-            new BannerDuplicateRecipeFiller(),
-            new ShieldDecorationRecipeFiller(),
-            new SuspiciousStewRecipeFiller(),
-            new BookCloningRecipeFiller(),
-            new FireworkRocketRecipeFiller(),
-            new ArmorDyeRecipeFiller(),
-            new MapCloningRecipeFiller(),
-            new MapExtendingRecipeFiller()
-    };
-    
     public DefaultClientPlugin() {
         ClientInternals.attachInstance((Supplier<Object>) () -> this, "builtinClientPlugin");
     }
     
     @Override
-    public void registerBrewingRecipe(Ingredient input, Ingredient ingredient, ItemStack output) {
+    public void registerBrewingRecipe(EntryIngredient input, EntryIngredient ingredient, EntryIngredient output) {
         DisplayRegistry.getInstance().add(new BrewingRecipe(input, ingredient, output));
     }
     
@@ -220,9 +209,9 @@ public class DefaultClientPlugin implements REIClientPlugin, BuiltinClientPlugin
     public void registerCategories(CategoryRegistry registry) {
         registry.add(
                 new DefaultCraftingCategory(),
-                new DefaultCookingCategory(SMELTING, EntryStacks.of(Items.FURNACE), "category.rei.smelting"),
-                new DefaultCookingCategory(SMOKING, EntryStacks.of(Items.SMOKER), "category.rei.smoking"),
-                new DefaultCookingCategory(BLASTING, EntryStacks.of(Items.BLAST_FURNACE), "category.rei.blasting"),
+                new DefaultCookingCategory(SMELTING, EntryStacks.of(Items.FURNACE), "category.rei.smelting", 200),
+                new DefaultCookingCategory(SMOKING, EntryStacks.of(Items.SMOKER), "category.rei.smoking", 100),
+                new DefaultCookingCategory(BLASTING, EntryStacks.of(Items.BLAST_FURNACE), "category.rei.blasting", 100),
                 new DefaultCampfireCategory(),
                 new DefaultStoneCuttingCategory(),
                 new DefaultFuelCategory(),
@@ -267,10 +256,6 @@ public class DefaultClientPlugin implements REIClientPlugin, BuiltinClientPlugin
             return EventResult.pass();
         });
         
-        for (CraftingRecipeFiller<?> filler : CRAFTING_RECIPE_FILLERS) {
-            filler.registerCategories(registry);
-        }
-        
         Set<Item> axes = Sets.newHashSet(), hoes = Sets.newHashSet(), shovels = Sets.newHashSet();
         EntryRegistry.getInstance().getEntryStacks().filter(stack -> stack.getValueType() == ItemStack.class).map(stack -> ((ItemStack) stack.getValue()).getItem()).forEach(item -> {
             if (item instanceof AxeItem && axes.add(item)) {
@@ -308,33 +293,44 @@ public class DefaultClientPlugin implements REIClientPlugin, BuiltinClientPlugin
     public void registerDisplays(DisplayRegistry registry) {
         CategoryRegistry.getInstance().add(new DefaultInformationCategory(), new DefaultTagCategory());
         
-        registry.registerRecipeFiller(CraftingRecipe.class, RecipeType.CRAFTING, DefaultCraftingDisplay::of);
-        registry.registerRecipeFiller(SmeltingRecipe.class, RecipeType.SMELTING, DefaultSmeltingDisplay::new);
-        registry.registerRecipeFiller(SmokingRecipe.class, RecipeType.SMOKING, DefaultSmokingDisplay::new);
-        registry.registerRecipeFiller(BlastingRecipe.class, RecipeType.BLASTING, DefaultBlastingDisplay::new);
-        registry.registerRecipeFiller(CampfireCookingRecipe.class, RecipeType.CAMPFIRE_COOKING, DefaultCampfireDisplay::new);
-        registry.registerRecipeFiller(StonecutterRecipe.class, RecipeType.STONECUTTING, DefaultStoneCuttingDisplay::new);
-        registry.registerRecipeFiller(SmithingTransformRecipe.class, RecipeType.SMITHING, DefaultSmithingDisplay::ofTransforming);
-        registry.registerRecipesFiller(SmithingTrimRecipe.class, RecipeType.SMITHING, DefaultSmithingDisplay::fromTrimming);
-        registry.registerFiller(AnvilRecipe.class, DefaultAnvilDisplay::new);
-        registry.registerFiller(BrewingRecipe.class, DefaultBrewingDisplay::new);
-        registry.registerFiller(TagKey.class, tagKey -> {
-            if (tagKey.isFor(Registries.ITEM)) {
-                return DefaultTagDisplay.ofItems(tagKey);
-            } else if (tagKey.isFor(Registries.BLOCK)) {
-                return DefaultTagDisplay.ofItems(tagKey);
-            } else if (tagKey.isFor(Registries.FLUID)) {
-                return DefaultTagDisplay.ofFluids(tagKey);
-            }
-            
-            return null;
-        });
-        for (Map.Entry<Item, Integer> entry : AbstractFurnaceBlockEntity.getFuel().entrySet()) {
-            registry.add(new DefaultFuelDisplay(Collections.singletonList(EntryIngredients.of(entry.getKey())), Collections.emptyList(), entry.getValue()));
-        }
-        for (CraftingRecipeFiller<?> filler : CRAFTING_RECIPE_FILLERS) {
-            filler.registerDisplays(registry);
-        }
+        registry.beginRecipeFiller(ShapedCraftingRecipeDisplay.class)
+                .filterType(ShapedCraftingRecipeDisplay.TYPE)
+                .fill(ClientsidedCraftingDisplay.Shaped::new);
+        registry.beginRecipeFiller(ShapelessCraftingRecipeDisplay.class)
+                .filterType(ShapelessCraftingRecipeDisplay.TYPE)
+                .fill(ClientsidedCraftingDisplay.Shapeless::new);
+        registry.beginRecipeFiller(FurnaceRecipeDisplay.class)
+                .filterType(FurnaceRecipeDisplay.TYPE)
+                .filter((display, r) -> EntryIngredients.ofSlotDisplay(display.craftingStation()).contains(EntryStacks.of(Items.FURNACE)))
+                .fill(ClientsidedCookingDisplay.Smelting::new);
+        registry.beginRecipeFiller(FurnaceRecipeDisplay.class)
+                .filterType(FurnaceRecipeDisplay.TYPE)
+                .filter((display, r) -> EntryIngredients.ofSlotDisplay(display.craftingStation()).contains(EntryStacks.of(Items.SMOKER)))
+                .fill(ClientsidedCookingDisplay.Smoking::new);
+        registry.beginRecipeFiller(FurnaceRecipeDisplay.class)
+                .filterType(FurnaceRecipeDisplay.TYPE)
+                .filter((display, r) -> EntryIngredients.ofSlotDisplay(display.craftingStation()).contains(EntryStacks.of(Items.BLAST_FURNACE)))
+                .fill(ClientsidedCookingDisplay.Blasting::new);
+        registry.beginFiller(AnvilRecipe.class)
+                .fill(DefaultAnvilDisplay::new);
+        registry.beginFiller(BrewingRecipe.class)
+                .fill(DefaultBrewingDisplay::new);
+        registry.beginFiller(TagKey.class)
+                .fill(tagKey -> {
+                    if (tagKey.isFor(Registries.ITEM)) {
+                        return DefaultTagDisplay.ofItems(tagKey);
+                    } else if (tagKey.isFor(Registries.BLOCK)) {
+                        return DefaultTagDisplay.ofItems(tagKey);
+                    } else if (tagKey.isFor(Registries.FLUID)) {
+                        return DefaultTagDisplay.ofFluids(tagKey);
+                    }
+                    
+                    return null;
+                });
+        // TODO: Fuel
+//        for (Map.Entry<Item, Integer> entry : AbstractFurnaceBlockEntity.getFuel().entrySet()) {
+//            registry.add(new DefaultFuelDisplay(Collections.singletonList(EntryIngredients.of(entry.getKey())), Collections.emptyList(), entry.getValue()));
+//        }
         if (ComposterBlock.COMPOSTABLES.isEmpty()) {
             ComposterBlock.bootStrap();
         }
@@ -371,14 +367,19 @@ public class DefaultClientPlugin implements REIClientPlugin, BuiltinClientPlugin
                     Holder<Potion> from = mix.from();
                     Ingredient ingredient = mix.ingredient();
                     Holder<Potion> to = mix.to();
-                    Ingredient base = Ingredient.of(Arrays.stream(container.getItems())
-                            .map(ItemStack::copy)
-                            .peek(stack -> stack.set(DataComponents.POTION_CONTENTS, new PotionContents(from))));
-                    ItemStack output = Arrays.stream(container.getItems())
-                            .map(ItemStack::copy)
-                            .peek(stack -> stack.set(DataComponents.POTION_CONTENTS, new PotionContents(to)))
-                            .findFirst().orElse(ItemStack.EMPTY);
-                    registerBrewingRecipe(base, ingredient, output);
+                    EntryIngredient base = EntryIngredients.ofIngredient(container)
+                            .map(stack -> {
+                                EntryStack<?> copied = stack.copy();
+                                copied.<ItemStack>castValue().set(DataComponents.POTION_CONTENTS, new PotionContents(from));
+                                return copied;
+                            });
+                    EntryIngredient output = EntryIngredients.ofIngredient(container)
+                            .map(stack -> {
+                                EntryStack<?> copied = stack.copy();
+                                copied.<ItemStack>castValue().set(DataComponents.POTION_CONTENTS, new PotionContents(to));
+                                return copied;
+                            });
+                    registerBrewingRecipe(base, EntryIngredients.ofIngredient(ingredient), output);
                     potions.add(from);
                     potions.add(to);
                 }
@@ -390,10 +391,10 @@ public class DefaultClientPlugin implements REIClientPlugin, BuiltinClientPlugin
                     Holder<Item> to = mix.to();
                     ItemStack baseStack = new ItemStack(from);
                     baseStack.set(DataComponents.POTION_CONTENTS, new PotionContents(potion));
-                    Ingredient base = Ingredient.of(baseStack);
+                    EntryIngredient base = EntryIngredients.of(baseStack);
                     ItemStack output = new ItemStack(to);
                     output.set(DataComponents.POTION_CONTENTS, new PotionContents(potion));
-                    registerBrewingRecipe(base, ingredient, output);
+                    registerBrewingRecipe(base, EntryIngredients.ofIngredient(ingredient), EntryIngredients.of(output));
                 }
             }
         } else {
@@ -403,39 +404,30 @@ public class DefaultClientPlugin implements REIClientPlugin, BuiltinClientPlugin
         for (Item item : BuiltInRegistries.ITEM) {
             ItemStack stack = item.getDefaultInstance();
             if (!stack.isDamageableItem()) continue;
-            EntryIngredient repairMaterialBase = null;
-            if (item instanceof TieredItem tieredItem) {
-                Tier tier = tieredItem.getTier();
-                repairMaterialBase = EntryIngredients.ofIngredient(tier.getRepairIngredient());
-            } else if (item instanceof ArmorItem armorItem) {
-                Holder<ArmorMaterial> material = armorItem.getMaterial();
-                repairMaterialBase = EntryIngredients.ofIngredient(material.value().repairIngredient().get());
-            } else if (item instanceof ShieldItem shieldItem) {
-                repairMaterialBase = EntryIngredients.ofItemTag(ItemTags.PLANKS);
-                repairMaterialBase.filter(s -> shieldItem.isValidRepairItem(stack, s.castValue()));
-            } else if (item instanceof ElytraItem elytraItem) {
-                repairMaterialBase = EntryIngredients.of(Items.PHANTOM_MEMBRANE);
-                repairMaterialBase.filter(s -> elytraItem.isValidRepairItem(stack, s.castValue()));
-            }
-            if (repairMaterialBase == null || repairMaterialBase.isEmpty()) continue;
-            for (int[] i = {1}; i[0] <= 4; i[0]++) {
-                ItemStack baseStack = item.getDefaultInstance();
-                int toRepair = i[0] == 4 ? baseStack.getMaxDamage() : baseStack.getMaxDamage() / 4 * i[0];
-                baseStack.setDamageValue(toRepair);
-                EntryIngredient repairMaterial = repairMaterialBase.map(s -> {
-                    EntryStack<?> newStack = s.copy();
-                    newStack.<ItemStack>castValue().setCount(i[0]);
-                    return newStack;
-                });
-                Optional<Pair<ItemStack, Integer>> output = DefaultAnvilDisplay.calculateOutput(baseStack, repairMaterial.get(0).castValue());
-                if (output.isEmpty()) continue;
-                registry.add(new DefaultAnvilDisplay(List.of(EntryIngredients.of(baseStack), repairMaterial),
-                        Collections.singletonList(EntryIngredients.of(output.get().getLeft())), Optional.empty(), OptionalInt.of(output.get().getRight())));
+            if (item.components().has(DataComponents.REPAIRABLE)) {
+                Repairable repairable = item.components().get(DataComponents.REPAIRABLE);
+                EntryIngredient repairMaterialBase = EntryIngredients.ofItemsHolderSet(repairable.items());
+                if (repairMaterialBase.isEmpty()) continue;
+                
+                for (int[] i = {1}; i[0] <= 4; i[0]++) {
+                    ItemStack baseStack = item.getDefaultInstance();
+                    int toRepair = i[0] == 4 ? baseStack.getMaxDamage() : baseStack.getMaxDamage() / 4 * i[0];
+                    baseStack.setDamageValue(toRepair);
+                    EntryIngredient repairMaterial = repairMaterialBase.map(s -> {
+                        EntryStack<?> newStack = s.copy();
+                        newStack.<ItemStack>castValue().setCount(i[0]);
+                        return newStack;
+                    });
+                    Optional<Pair<ItemStack, Integer>> output = DefaultAnvilDisplay.calculateOutput(baseStack, repairMaterial.get(0).castValue());
+                    if (output.isEmpty()) continue;
+                    registry.add(new DefaultAnvilDisplay(List.of(EntryIngredients.of(baseStack), repairMaterial),
+                            Collections.singletonList(EntryIngredients.of(output.get().getLeft())), Optional.empty(), OptionalInt.of(output.get().getRight())));
+                }
             }
         }
-        List<Pair<EnchantmentInstance, ItemStack>> enchantmentBooks = BasicDisplay.registryAccess().registry(Registries.ENCHANTMENT)
+        List<Pair<EnchantmentInstance, ItemStack>> enchantmentBooks = BasicDisplay.registryAccess().lookup(Registries.ENCHANTMENT)
                 .stream()
-                .flatMap(Registry::holders)
+                .flatMap(HolderLookup::listElements)
                 .flatMap(holder -> {
                     if (!holder.isBound()) return Stream.empty();
                     Enchantment enchantment = holder.value();
@@ -448,7 +440,7 @@ public class DefaultClientPlugin implements REIClientPlugin, BuiltinClientPlugin
                     }
                 })
                 .map(instance -> {
-                    return Pair.of(instance, EnchantedBookItem.createForEnchantment(instance));
+                    return Pair.of(instance, EnchantmentHelper.createBook(instance));
                 })
                 .toList();
         EntryRegistry.getInstance().getEntryStacks().forEach(stack -> {
@@ -465,7 +457,7 @@ public class DefaultClientPlugin implements REIClientPlugin, BuiltinClientPlugin
         });
         
         for (Registry<?> reg : BuiltInRegistries.REGISTRY) {
-            reg.getTags().forEach(tagPair -> registry.add(tagPair.getFirst()));
+            reg.getTags().forEach(tagPair -> tagPair.unwrap().ifLeft(registry::add));
         }
     }
     
@@ -475,7 +467,8 @@ public class DefaultClientPlugin implements REIClientPlugin, BuiltinClientPlugin
     
     @Override
     public void registerExclusionZones(ExclusionZones zones) {
-        zones.register(EffectRenderingInventoryScreen.class, new DefaultPotionEffectExclusionZones());
+        zones.register(InventoryScreen.class, new DefaultPotionEffectExclusionZones<>());
+        zones.register(CreativeModeInventoryScreen.class, new DefaultPotionEffectExclusionZones<>());
         zones.register(RecipeUpdateListener.class, new DefaultRecipeBookExclusionZones());
     }
     
@@ -533,8 +526,8 @@ public class DefaultClientPlugin implements REIClientPlugin, BuiltinClientPlugin
     }
     
     public static class DummyShovelItem extends ShovelItem {
-        public DummyShovelItem(Tier tier, Properties properties) {
-            super(tier, properties);
+        public DummyShovelItem(ToolMaterial material, float damage, float speed, Properties properties) {
+            super(material, damage, speed, properties);
         }
         
         public static Map<Block, BlockState> getPathBlocksMap() {
@@ -543,8 +536,8 @@ public class DefaultClientPlugin implements REIClientPlugin, BuiltinClientPlugin
     }
     
     public static class DummyAxeItem extends AxeItem {
-        public DummyAxeItem(Tier tier, Properties properties) {
-            super(tier, properties);
+        public DummyAxeItem(ToolMaterial material, float damage, float speed, Properties properties) {
+            super(material, damage, speed, properties);
         }
         
         public static Map<Block, Block> getStrippedBlocksMap() {

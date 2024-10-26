@@ -24,25 +24,35 @@
 package me.shedaniel.rei.plugin.common.displays.cooking;
 
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.display.Display;
+import me.shedaniel.rei.api.common.display.DisplaySerializer;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.plugin.common.BuiltinPlugin;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.BlastingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 
 import java.util.List;
+import java.util.Optional;
 
 public class DefaultBlastingDisplay extends DefaultCookingDisplay {
+    public static DisplaySerializer<DefaultSmokingDisplay> SERIALIZER = serializer(DefaultSmokingDisplay::new);
+    
     public DefaultBlastingDisplay(RecipeHolder<BlastingRecipe> recipe) {
         super(recipe);
     }
     
-    public DefaultBlastingDisplay(List<EntryIngredient> input, List<EntryIngredient> output, CompoundTag tag) {
-        super(input, output, tag);
+    public DefaultBlastingDisplay(List<EntryIngredient> input, List<EntryIngredient> output, Optional<ResourceLocation> id, float xp, double cookTime) {
+        super(input, output, id, xp, cookTime);
     }
     
     @Override
     public CategoryIdentifier<?> getCategoryIdentifier() {
         return BuiltinPlugin.BLASTING;
+    }
+    
+    @Override
+    public DisplaySerializer<? extends Display> getSerializer() {
+        return SERIALIZER;
     }
 }

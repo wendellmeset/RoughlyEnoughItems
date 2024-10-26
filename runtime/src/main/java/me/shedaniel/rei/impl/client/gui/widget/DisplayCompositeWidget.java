@@ -28,12 +28,12 @@ import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.config.ConfigObject;
 import me.shedaniel.rei.api.client.favorites.FavoriteEntry;
 import me.shedaniel.rei.api.client.favorites.FavoriteEntryType;
-import me.shedaniel.rei.api.client.gui.config.RecipeBorderType;
 import me.shedaniel.rei.api.client.gui.drag.DraggedAcceptorResult;
 import me.shedaniel.rei.api.client.gui.drag.DraggingContext;
 import me.shedaniel.rei.api.client.gui.drag.component.DraggableComponent;
 import me.shedaniel.rei.api.client.gui.drag.component.DraggableComponentProviderWidget;
 import me.shedaniel.rei.api.client.gui.widgets.*;
+import me.shedaniel.rei.api.client.gui.widgets.utils.PanelTextures;
 import me.shedaniel.rei.api.common.display.Display;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.util.CollectionUtils;
@@ -188,7 +188,7 @@ public class DisplayCompositeWidget extends DelegateWidgetWithBounds implements 
             
             graphics.pose().pushPose();
             if (bounds.width <= Math.max(18, this.bounds.width / 2 - 6) && bounds.height <= Math.max(18, this.bounds.height / 2 - 6) && this.onFavoritesRegion) {
-                this.panel.yTextureOffset(RecipeBorderType.LIGHTER.getYOffset());
+                this.panel.texture(PanelTextures.LIGHTER);
                 this.panel.getBounds().setBounds(bounds);
                 this.panel.render(graphics, mouseX, mouseY, delta);
                 graphics.pose().pushPose();
@@ -197,7 +197,7 @@ public class DisplayCompositeWidget extends DelegateWidgetWithBounds implements 
                 this.slot.render(graphics, mouseX, mouseY, delta);
                 graphics.pose().popPose();
             } else {
-                this.panel.yTextureOffset(ConfigObject.getInstance().getRecipeBorderType().getYOffset());
+                this.panel.texture(ConfigObject.getInstance().getRecipeBorderType());
                 graphics.pose().pushPose();
                 graphics.pose().translate(bounds.getX(), bounds.getY(), 1);
                 graphics.pose().scale(bounds.width / (float) this.bounds.getWidth(), bounds.height / (float) this.bounds.getHeight(), 1);

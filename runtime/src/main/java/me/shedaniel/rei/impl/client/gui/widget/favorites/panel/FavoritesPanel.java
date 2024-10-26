@@ -25,7 +25,6 @@ package me.shedaniel.rei.impl.client.gui.widget.favorites.panel;
 
 import me.shedaniel.clothconfig2.ClothConfigInitializer;
 import me.shedaniel.clothconfig2.api.LazyResettable;
-import me.shedaniel.clothconfig2.api.ScissorsHandler;
 import me.shedaniel.clothconfig2.api.animator.ProgressValueAnimator;
 import me.shedaniel.clothconfig2.api.animator.ValueAnimator;
 import me.shedaniel.clothconfig2.api.scroll.ScrollingContainer;
@@ -33,7 +32,6 @@ import me.shedaniel.math.Point;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.favorites.FavoriteEntry;
 import me.shedaniel.rei.api.client.favorites.FavoriteEntryType;
-import me.shedaniel.rei.api.client.gui.drag.DraggableStack;
 import me.shedaniel.rei.api.client.gui.drag.component.DraggableComponent;
 import me.shedaniel.rei.api.client.gui.widgets.WidgetWithBounds;
 import me.shedaniel.rei.api.common.entry.EntryStack;
@@ -94,7 +92,7 @@ public class FavoritesPanel extends WidgetWithBounds {
         scroller.updatePosition(delta);
         
         if (expendState.value()) {
-            ScissorsHandler.INSTANCE.scissor(innerBounds);
+            graphics.enableScissor(innerBounds.x, innerBounds.y, innerBounds.getMaxX(), innerBounds.getMaxY());
             graphics.pose().pushPose();
             graphics.pose().translate(0, -scroller.scrollAmount(), 0);
             int y = innerBounds.y;
@@ -103,7 +101,7 @@ public class FavoritesPanel extends WidgetWithBounds {
                 y += row.getRowHeight();
             }
             graphics.pose().popPose();
-            ScissorsHandler.INSTANCE.removeLastScissor();
+            graphics.disableScissor();
         }
     }
     

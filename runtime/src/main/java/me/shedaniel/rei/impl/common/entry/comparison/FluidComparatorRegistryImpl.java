@@ -26,7 +26,7 @@ package me.shedaniel.rei.impl.common.entry.comparison;
 import dev.architectury.fluid.FluidStack;
 import me.shedaniel.rei.api.common.entry.comparison.EntryComparator;
 import me.shedaniel.rei.api.common.entry.comparison.FluidComparatorRegistry;
-import me.shedaniel.rei.api.common.plugins.REIPlugin;
+import me.shedaniel.rei.api.common.plugins.REICommonPlugin;
 import net.minecraft.world.level.material.Fluid;
 
 public class FluidComparatorRegistryImpl extends EntryComparatorRegistryImpl<FluidStack, Fluid> implements FluidComparatorRegistry {
@@ -50,7 +50,7 @@ public class FluidComparatorRegistryImpl extends EntryComparatorRegistryImpl<Flu
     }
     
     @Override
-    public void acceptPlugin(REIPlugin<?> plugin) {
+    public void acceptPlugin(REICommonPlugin plugin) {
         plugin.registerFluidComparators(this);
     }
 }

@@ -23,6 +23,7 @@
 
 package me.shedaniel.rei.api.client.registry.display.reason;
 
+import net.minecraft.world.item.crafting.display.RecipeDisplayId;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
@@ -39,6 +40,15 @@ public interface DisplayAdditionReason {
     DisplayAdditionReason RECIPE_MANAGER = simple();
     
     static DisplayAdditionReason simple() {
-        return new DisplayAdditionReason() {};
+        return new DisplayAdditionReason() {
+        };
+    }
+    
+    static DisplayAdditionReason.WithId withId(RecipeDisplayId id) {
+        return () -> id;
+    }
+    
+    interface WithId extends DisplayAdditionReason {
+        RecipeDisplayId id();
     }
 }

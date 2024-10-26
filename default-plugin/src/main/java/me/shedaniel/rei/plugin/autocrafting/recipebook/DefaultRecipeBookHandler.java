@@ -27,20 +27,16 @@ import me.shedaniel.rei.api.client.ClientHelper;
 import me.shedaniel.rei.api.client.registry.transfer.TransferHandler;
 import me.shedaniel.rei.api.common.display.Display;
 import me.shedaniel.rei.api.common.display.SimpleGridMenuDisplay;
-import me.shedaniel.rei.api.common.transfer.info.MenuTransferException;
-import me.shedaniel.rei.plugin.common.displays.cooking.DefaultCookingDisplay;
-import me.shedaniel.rei.plugin.common.displays.crafting.DefaultCraftingDisplay;
+import me.shedaniel.rei.plugin.client.displays.ClientsidedCraftingDisplay;
+import me.shedaniel.rei.plugin.client.displays.ClientsidedRecipeBookDisplay;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gui.screens.recipebook.RecipeUpdateListener;
+import net.minecraft.client.gui.screens.inventory.AbstractRecipeBookScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.CraftingMenu;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.RecipeBookMenu;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeHolder;
-
-import java.util.Optional;
+import net.minecraft.world.item.crafting.display.RecipeDisplayId;
 
 @Environment(EnvType.CLIENT)
 public class DefaultRecipeBookHandler implements TransferHandler {
@@ -49,7 +45,7 @@ public class DefaultRecipeBookHandler implements TransferHandler {
         if (context.getDisplay() instanceof SimpleGridMenuDisplay && ClientHelper.getInstance().canUseMovePackets())
             return ApplicabilityResult.createNotApplicable();
         Display display = context.getDisplay();
-        if (!(context.getMenu() instanceof RecipeBookMenu<?, ?> container))
+        if (!(context.getMenu() instanceof RecipeBookMenu container))
             return ApplicabilityResult.createNotApplicable();
         if (container == null)
             return ApplicabilityResult.createNotApplicable();
@@ -58,10 +54,10 @@ public class DefaultRecipeBookHandler implements TransferHandler {
     
     @Override
     public Result handle(Context context) {
-        RecipeBookMenu<?, ?> container = (RecipeBookMenu<?, ?>) context.getMenu();
+        RecipeBookMenu container = (RecipeBookMenu) context.getMenu();
         Display display = context.getDisplay();
-        if (display instanceof DefaultCraftingDisplay<?> craftingDisplay) {
-            if (craftingDisplay.getOptionalRecipe().isPresent()) {
+        if (display instanceof ClientsidedCraftingDisplay craftingDisplay) {
+            if (craftingDisplay.recipeDisplayId().isPresent()) {
                 int h = -1, w = -1;
                 if (container instanceof CraftingMenu) {
                     h = 3;
@@ -72,30 +68,26 @@ public class DefaultRecipeBookHandler implements TransferHandler {
                 }
                 if (h == -1 || w == -1)
                     return Result.createNotApplicable();
-                RecipeHolder<?> recipe = craftingDisplay.getOptionalRecipe().get();
+                RecipeDisplayId id = craftingDisplay.recipeDisplayId().get();
                 if (craftingDisplay.getHeight() > h || craftingDisplay.getWidth() > w)
                     return Result.createFailed(Component.translatable("error.rei.transfer.too_small", h, w));
-                if (!context.getMinecraft().player.getRecipeBook().contains(recipe))
-                    return Result.createNotApplicable();
                 if (!context.isActuallyCrafting())
                     return Result.createSuccessful();
                 context.getMinecraft().setScreen(context.getContainerScreen());
-                if (context.getContainerScreen() instanceof RecipeUpdateListener)
-                    ((RecipeUpdateListener) context.getContainerScreen()).getRecipeBookComponent().ghostRecipe.clear();
-                context.getMinecraft().gameMode.handlePlaceRecipe(container.containerId, recipe, context.isStackedCrafting());
+                if (context.getContainerScreen() instanceof AbstractRecipeBookScreen<?> screen)
+                    screen.recipeBookComponent.ghostSlots.clear();
+                context.getMinecraft().gameMode.handlePlaceRecipe(container.containerId, id, context.isStackedCrafting());
                 return Result.createSuccessful();
             }
-        } else if (display instanceof DefaultCookingDisplay defaultDisplay) {
-            if (defaultDisplay.getOptionalRecipe().isPresent()) {
-                RecipeHolder<?> recipe = (defaultDisplay).getOptionalRecipe().get();
-                if (!context.getMinecraft().player.getRecipeBook().contains(recipe))
-                    return Result.createNotApplicable();
+        } else if (display instanceof ClientsidedRecipeBookDisplay defaultDisplay) {
+            if (defaultDisplay.recipeDisplayId().isPresent()) {
+                RecipeDisplayId id = defaultDisplay.recipeDisplayId().get();
                 if (!context.isActuallyCrafting())
                     return Result.createSuccessful();
                 context.getMinecraft().setScreen(context.getContainerScreen());
-                if (context.getContainerScreen() instanceof RecipeUpdateListener)
-                    ((RecipeUpdateListener) context.getContainerScreen()).getRecipeBookComponent().ghostRecipe.clear();
-                context.getMinecraft().gameMode.handlePlaceRecipe(container.containerId, recipe, context.isStackedCrafting());
+                if (context.getContainerScreen() instanceof AbstractRecipeBookScreen<?> screen)
+                    screen.recipeBookComponent.ghostSlots.clear();
+                context.getMinecraft().gameMode.handlePlaceRecipe(container.containerId, id, context.isStackedCrafting());
                 return Result.createSuccessful();
             }
         }

@@ -30,7 +30,7 @@ import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.entry.settings.EntrySettingsAdapter;
 import me.shedaniel.rei.api.common.entry.settings.EntrySettingsAdapterRegistry;
 import me.shedaniel.rei.api.common.entry.type.EntryType;
-import me.shedaniel.rei.api.common.plugins.REIPlugin;
+import me.shedaniel.rei.api.common.plugins.REICommonPlugin;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -42,14 +42,14 @@ public class EntrySettingsAdapterRegistryImpl implements EntrySettingsAdapterReg
     private final Map<EntryStack.Settings<?>, Multimap<EntryType<?>, EntrySettingsAdapter<?, ?>>> providers = new HashMap<>();
     
     @Override
-    public <T,S> void register(EntryType<T> type, EntryStack.Settings<S> settings, EntrySettingsAdapter<T,S> provider) {
+    public <T, S> void register(EntryType<T> type, EntryStack.Settings<S> settings, EntrySettingsAdapter<T, S> provider) {
         Multimap<EntryType<?>, EntrySettingsAdapter<?, ?>> multimap = this.providers.computeIfAbsent(settings, $ -> Multimaps.newMultimap(new Reference2ObjectOpenHashMap<>(), ArrayList::new));
         multimap.put(type, provider);
     }
     
     @Override
     @Nullable
-    public <T,S> S adapt(EntryStack<T> stack, EntryStack.Settings<S> settings, @Nullable S value) {
+    public <T, S> S adapt(EntryStack<T> stack, EntryStack.Settings<S> settings, @Nullable S value) {
         Multimap<EntryType<?>, EntrySettingsAdapter<?, ?>> multimap = providers.get(settings);
         if (multimap != null) {
             for (EntrySettingsAdapter<T, S> adapter : (Collection<EntrySettingsAdapter<T, S>>) (Collection<? extends EntrySettingsAdapter<?, ?>>) multimap.get(stack.getType())) {
@@ -65,7 +65,7 @@ public class EntrySettingsAdapterRegistryImpl implements EntrySettingsAdapterReg
     }
     
     @Override
-    public void acceptPlugin(REIPlugin<?> plugin) {
+    public void acceptPlugin(REICommonPlugin plugin) {
         plugin.registerEntrySettingsAdapters(this);
     }
 }

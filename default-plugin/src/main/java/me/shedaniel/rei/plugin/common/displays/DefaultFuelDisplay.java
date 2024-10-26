@@ -23,16 +23,38 @@
 
 package me.shedaniel.rei.plugin.common.displays;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.display.Display;
+import me.shedaniel.rei.api.common.display.DisplaySerializer;
 import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.plugin.common.BuiltinPlugin;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 
 import java.util.List;
 
 public class DefaultFuelDisplay extends BasicDisplay {
-    private int fuelTime;
+    public static final DisplaySerializer<DefaultFuelDisplay> SERIALIZER = DisplaySerializer.of(
+            RecordCodecBuilder.mapCodec(instance -> instance.group(
+                    EntryIngredient.codec().listOf().fieldOf("inputs").forGetter(DefaultFuelDisplay::getInputEntries),
+                    EntryIngredient.codec().listOf().fieldOf("outputs").forGetter(DefaultFuelDisplay::getOutputEntries),
+                    Codec.INT.fieldOf("fuelTime").forGetter(DefaultFuelDisplay::getFuelTime)
+            ).apply(instance, DefaultFuelDisplay::new)),
+            StreamCodec.composite(
+                    EntryIngredient.streamCodec().apply(ByteBufCodecs.list()),
+                    DefaultFuelDisplay::getInputEntries,
+                    EntryIngredient.streamCodec().apply(ByteBufCodecs.list()),
+                    DefaultFuelDisplay::getOutputEntries,
+                    ByteBufCodecs.INT,
+                    DefaultFuelDisplay::getFuelTime,
+                    DefaultFuelDisplay::new
+            ));
+    
+    private final int fuelTime;
     
     public DefaultFuelDisplay(List<EntryIngredient> inputs, List<EntryIngredient> outputs, CompoundTag tag) {
         this(inputs, outputs, tag.getInt("fuelTime"));
@@ -48,13 +70,12 @@ public class DefaultFuelDisplay extends BasicDisplay {
         return BuiltinPlugin.FUEL;
     }
     
-    public int getFuelTime() {
-        return fuelTime;
+    @Override
+    public DisplaySerializer<? extends Display> getSerializer() {
+        return SERIALIZER;
     }
     
-    public static BasicDisplay.Serializer<DefaultFuelDisplay> serializer() {
-        return BasicDisplay.Serializer.ofRecipeLess(DefaultFuelDisplay::new, (display, tag) -> {
-            tag.putInt("fuelTime", display.fuelTime);
-        });
+    public int getFuelTime() {
+        return fuelTime;
     }
 }

@@ -30,7 +30,7 @@ import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.entry.InputIngredient;
 import me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes;
 import me.shedaniel.rei.api.common.util.CollectionUtils;
-import me.shedaniel.rei.plugin.common.displays.crafting.DefaultCraftingDisplay;
+import me.shedaniel.rei.plugin.common.displays.crafting.CraftingDisplay;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
@@ -48,7 +48,7 @@ public class InventoryCraftingTransferHandler implements TransferHandler, Transf
         ApplicabilityResult applicable = parent.checkApplicable(context);
         if (!applicable.isApplicable()) return applicable;
         
-        DefaultCraftingDisplay<?> display = (DefaultCraftingDisplay<?>) context.getDisplay();
+        CraftingDisplay display = (CraftingDisplay) context.getDisplay();
         if (display != null && (display.getWidth() > 2 || display.getHeight() > 2)) {
             return ApplicabilityResult.createApplicableWithError(Component.translatable("error.rei.transfer.too_small", 2, 2));
         }
@@ -58,7 +58,7 @@ public class InventoryCraftingTransferHandler implements TransferHandler, Transf
     
     @Override
     public Result handle(Context context) {
-        List<InputIngredient<EntryStack<?>>> inputs = ((DefaultCraftingDisplay<?>) context.getDisplay()).getInputIngredients(2, 2);
+        List<InputIngredient<EntryStack<?>>> inputs = ((CraftingDisplay) context.getDisplay()).getInputIngredients(2, 2);
         return parent.handleSimpleTransfer(context, parent.getMissingInputRenderer(),
                 CollectionUtils.map(inputs, entry -> InputIngredient.withType(entry, VanillaEntryTypes.ITEM)),
                 parent.getInputSlots(context), parent.getInventorySlots(context));

@@ -33,6 +33,7 @@ import dev.architectury.event.events.client.ClientPlayerEvent;
 import dev.architectury.event.events.client.ClientRecipeUpdateEvent;
 import dev.architectury.event.events.client.ClientScreenInputEvent;
 import dev.architectury.networking.NetworkManager;
+import dev.architectury.networking.transformers.SplitPacketTransformer;
 import dev.architectury.utils.value.BooleanValue;
 import me.shedaniel.math.Point;
 import me.shedaniel.rei.api.client.REIRuntime;
@@ -48,17 +49,19 @@ import me.shedaniel.rei.api.client.gui.widgets.TooltipContext;
 import me.shedaniel.rei.api.client.overlay.ScreenOverlay;
 import me.shedaniel.rei.api.client.plugins.REIClientPlugin;
 import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
+import me.shedaniel.rei.api.client.registry.display.DisplayRegistry;
 import me.shedaniel.rei.api.client.registry.screen.ClickArea;
 import me.shedaniel.rei.api.client.registry.screen.OverlayDecider;
 import me.shedaniel.rei.api.client.registry.screen.ScreenRegistry;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.plugins.PluginManager;
 import me.shedaniel.rei.api.common.plugins.PluginView;
-import me.shedaniel.rei.api.common.plugins.REIPlugin;
+import me.shedaniel.rei.api.common.plugins.REICommonPlugin;
 import me.shedaniel.rei.api.common.registry.ReloadStage;
 import me.shedaniel.rei.api.common.util.CollectionUtils;
 import me.shedaniel.rei.api.common.util.EntryStacks;
 import me.shedaniel.rei.impl.ClientInternals;
+import me.shedaniel.rei.impl.client.ClientHelperImpl;
 import me.shedaniel.rei.impl.client.REIRuntimeImpl;
 import me.shedaniel.rei.impl.client.config.ConfigManagerImpl;
 import me.shedaniel.rei.impl.client.config.addon.ConfigAddonRegistryImpl;
@@ -86,10 +89,12 @@ import me.shedaniel.rei.impl.common.InternalLogger;
 import me.shedaniel.rei.impl.common.entry.type.EntryRegistryImpl;
 import me.shedaniel.rei.impl.common.entry.type.collapsed.CollapsibleEntryRegistryImpl;
 import me.shedaniel.rei.impl.common.entry.type.types.EmptyEntryDefinition;
+import me.shedaniel.rei.impl.common.networking.DisplaySyncPacket;
 import me.shedaniel.rei.impl.common.plugins.PluginManagerImpl;
 import me.shedaniel.rei.impl.common.plugins.ReloadManagerImpl;
 import me.shedaniel.rei.impl.common.util.InstanceHelper;
 import me.shedaniel.rei.impl.common.util.IssuesDetector;
+import me.shedaniel.rei.plugin.test.REITestCommonPlugin;
 import me.shedaniel.rei.plugin.test.REITestPlugin;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -100,36 +105,32 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.CraftingScreen;
-import net.minecraft.client.gui.screens.recipebook.GhostRecipe;
 import net.minecraft.client.gui.screens.recipebook.RecipeBookComponent;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundRecipeBookAddPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.inventory.CraftingMenu;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.world.item.crafting.RecipeAccess;
+import net.minecraft.world.item.crafting.display.RecipeDisplayEntry;
+import net.minecraft.world.item.crafting.display.RecipeDisplayId;
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.ConcurrentModificationException;
-import java.util.List;
+import java.util.*;
 import java.util.function.*;
 import java.util.stream.Stream;
 
 @Environment(EnvType.CLIENT)
 public class RoughlyEnoughItemsCoreClient {
-    public static final Event<BiConsumer<RecipeManager, RegistryAccess>> PRE_UPDATE_RECIPES = EventFactory.createLoop();
+    public static final Event<BiConsumer<RecipeAccess, RegistryAccess>> PRE_UPDATE_RECIPES = EventFactory.createLoop();
     public static final Event<Runnable> POST_UPDATE_TAGS = EventFactory.createLoop();
     public static boolean isLeftMousePressed = false;
     
@@ -209,7 +210,6 @@ public class RoughlyEnoughItemsCoreClient {
         ClientInternals.attachInstanceSupplier(new FilteringRuleTypeRegistryImpl(), "filteringRuleTypeRegistry");
         ClientInternals.attachInstanceSupplier(new PluginManagerImpl<>(
                 REIClientPlugin.class,
-                view -> view.then(PluginView.getInstance()),
                 new EntryRendererRegistryImpl(),
                 new ViewsImpl(),
                 new InputMethodRegistryImpl(),
@@ -246,7 +246,8 @@ public class RoughlyEnoughItemsCoreClient {
         NetworkManager.registerReceiver(NetworkManager.s2c(), RoughlyEnoughItemsNetwork.NOT_ENOUGH_ITEMS_PACKET, (buf, context) -> {
             Screen currentScreen = Minecraft.getInstance().screen;
             if (currentScreen instanceof CraftingScreen craftingScreen) {
-                RecipeBookComponent recipeBookGui = craftingScreen.getRecipeBookComponent();
+                // TODO: Recipe Ghost
+                /*RecipeBookComponent recipeBookGui = craftingScreen.getRecipeBookComponent();
                 GhostRecipe ghostSlots = recipeBookGui.ghostRecipe;
                 ghostSlots.clear();
                 
@@ -269,14 +270,16 @@ public class RoughlyEnoughItemsCoreClient {
                         Slot slot = container.getSlot(i + container.getResultSlotIndex() + 1);
                         ghostSlots.addIngredient(Ingredient.of(stacks.toArray(new ItemStack[0])), slot.x, slot.y);
                     }
-                }
+                }*/
             }
         });
+        NetworkManager.registerReceiver(NetworkManager.s2c(), DisplaySyncPacket.TYPE, DisplaySyncPacket.STREAM_CODEC, List.of(new SplitPacketTransformer()), DisplaySyncPacket::handle);
     }
     
     private void loadTestPlugins() {
-        if (System.getProperty("rei.test", "false").equals("true")) {
+        if (System.getProperty("rei.test", "false").equals("true") || true) {
             PluginView.getClientInstance().registerPlugin(new REITestPlugin());
+            PluginView.getInstance().registerPlugin(new REITestCommonPlugin());
         }
     }
     
@@ -308,11 +311,31 @@ public class RoughlyEnoughItemsCoreClient {
         Minecraft client = Minecraft.getInstance();
         final ResourceLocation recipeButtonTex = ResourceLocation.withDefaultNamespace("textures/gui/recipe_button.png");
         MutableLong endReload = new MutableLong(-1);
-        PRE_UPDATE_RECIPES.register((recipeManager, registryAccess) -> {
+        PRE_UPDATE_RECIPES.register((recipeAccess, registryAccess) -> {
             reloadPlugins(null, ReloadStage.START, registryAccess);
         });
         ClientRecipeUpdateEvent.EVENT.register(recipeManager -> {
             reloadPlugins(endReload, ReloadStage.END);
+        });
+        ClientRecipeUpdateEvent.ADD.register((recipeAccess, entries) -> {
+            if (ClientHelperImpl.getInstance().canUsePackets()) {
+                return;
+            }
+            
+            InternalLogger.getInstance().debug("Received server's request to add %d recipes.", entries.size());
+            DisplayRegistryImpl registry = (DisplayRegistryImpl) DisplayRegistry.getInstance();
+            List<RecipeDisplayEntry> mapped = CollectionUtils.map(entries, ClientboundRecipeBookAddPacket.Entry::contents);
+            registry.addJob(() -> registry.addRecipes(mapped));
+        });
+        ClientRecipeUpdateEvent.REMOVE.register((recipeAccess, entries) -> {
+            if (ClientHelperImpl.getInstance().canUsePackets()) {
+                return;
+            }
+            
+            InternalLogger.getInstance().debug("Received server's request to remove %d recipes.", entries.size());
+            DisplayRegistryImpl registry = (DisplayRegistryImpl) DisplayRegistry.getInstance();
+            Set<RecipeDisplayId> ids = new HashSet<>(entries);
+            registry.addJob(() -> registry.removeRecipes(ids));
         });
         ClientPlayerEvent.CLIENT_PLAYER_QUIT.register(player -> {
             InternalLogger.getInstance().debug("Player quit, clearing reload tasks!");
@@ -320,10 +343,10 @@ public class RoughlyEnoughItemsCoreClient {
             ReloadManagerImpl.terminateReloadTasks();
         });
         ClientGuiEvent.INIT_PRE.register((screen, access) -> {
-            List<ReloadStage> stages = ((PluginManagerImpl<REIPlugin<?>>) PluginManager.getInstance()).getObservedStages();
+            List<ReloadStage> stages = ((PluginManagerImpl<REICommonPlugin>) PluginManager.getInstance()).getObservedStages();
             
             if (Minecraft.getInstance().level != null && Minecraft.getInstance().player != null && stages.contains(ReloadStage.START)
-                && !stages.contains(ReloadStage.END) && !PluginManager.areAnyReloading() && screen instanceof AbstractContainerScreen) {
+                    && !stages.contains(ReloadStage.END) && !PluginManager.areAnyReloading() && screen instanceof AbstractContainerScreen) {
                 if (ReloadManagerImpl.countRunningReloadTasks() > 0) {
                     return EventResult.pass();
                 }
@@ -374,7 +397,7 @@ public class RoughlyEnoughItemsCoreClient {
                 return EventResult.pass();
             resetFocused(screen);
             if (REIRuntime.getInstance().isOverlayVisible() && getOverlay().mouseReleased(mouseX, mouseY, button)
-                && resetFocused(screen)) {
+                    && resetFocused(screen)) {
                 return EventResult.interruptFalse();
             }
             return EventResult.pass();
@@ -384,7 +407,7 @@ public class RoughlyEnoughItemsCoreClient {
                 return EventResult.pass();
             resetFocused(screen);
             if (REIRuntime.getInstance().isOverlayVisible() && getOverlay().mouseScrolled(mouseX, mouseY, amountX, amountY)
-                && resetFocused(screen))
+                    && resetFocused(screen))
                 return EventResult.interruptFalse();
             return EventResult.pass();
         });
@@ -400,7 +423,7 @@ public class RoughlyEnoughItemsCoreClient {
             }
             resetFocused(screen);
             if (getOverlay().charTyped(character, keyCode)
-                && resetFocused(screen))
+                    && resetFocused(screen))
                 return EventResult.interruptFalse();
             return EventResult.pass();
         });
@@ -409,7 +432,7 @@ public class RoughlyEnoughItemsCoreClient {
                 return EventResult.pass();
             resetFocused(screen);
             if (getOverlay().mouseDragged(mouseX1, mouseY1, button, mouseX2, mouseY2)
-                && resetFocused(screen))
+                    && resetFocused(screen))
                 return EventResult.interruptFalse();
             return EventResult.pass();
         });
@@ -431,7 +454,7 @@ public class RoughlyEnoughItemsCoreClient {
             }
             resetFocused(screen);
             if (getOverlay().keyPressed(i, i1, i2)
-                && resetFocused(screen))
+                    && resetFocused(screen))
                 return EventResult.interruptFalse();
             return EventResult.pass();
         });
@@ -447,7 +470,7 @@ public class RoughlyEnoughItemsCoreClient {
             }
             resetFocused(screen);
             if (getOverlay().keyReleased(i, i1, i2)
-                && resetFocused(screen))
+                    && resetFocused(screen))
                 return EventResult.interruptFalse();
             return EventResult.pass();
         });

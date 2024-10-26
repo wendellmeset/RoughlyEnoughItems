@@ -23,29 +23,36 @@
 
 package me.shedaniel.rei.plugin.common.displays.crafting;
 
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import me.shedaniel.rei.api.common.display.Display;
+import me.shedaniel.rei.api.common.display.DisplaySerializer;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
-import me.shedaniel.rei.api.common.registry.RecipeManagerContext;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeHolder;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
 
-public class DefaultCustomShapelessDisplay extends DefaultCraftingDisplay<Recipe<?>> {
-    public DefaultCustomShapelessDisplay(@Nullable RecipeHolder<?> possibleRecipe, List<EntryIngredient> input, List<EntryIngredient> output) {
-        this(null, possibleRecipe, input, output);
-    }
+public class DefaultCustomShapelessDisplay extends DefaultCraftingDisplay {
+    public static final DisplaySerializer<DefaultCustomShapelessDisplay> SERIALIZER = DisplaySerializer.of(
+            RecordCodecBuilder.mapCodec(instance -> instance.group(
+                    EntryIngredient.codec().listOf().fieldOf("inputs").forGetter(DefaultCustomShapelessDisplay::getInputEntries),
+                    EntryIngredient.codec().listOf().fieldOf("outputs").forGetter(DefaultCustomShapelessDisplay::getOutputEntries),
+                    ResourceLocation.CODEC.optionalFieldOf("location").forGetter(DefaultCustomShapelessDisplay::getDisplayLocation)
+            ).apply(instance, DefaultCustomShapelessDisplay::new)),
+            StreamCodec.composite(
+                    EntryIngredient.streamCodec().apply(ByteBufCodecs.list()),
+                    DefaultCustomShapelessDisplay::getInputEntries,
+                    EntryIngredient.streamCodec().apply(ByteBufCodecs.list()),
+                    DefaultCustomShapelessDisplay::getOutputEntries,
+                    ByteBufCodecs.optional(ResourceLocation.STREAM_CODEC),
+                    DefaultCustomShapelessDisplay::getDisplayLocation,
+                    DefaultCustomShapelessDisplay::new
+            ));
     
-    public DefaultCustomShapelessDisplay(@Nullable ResourceLocation location, @Nullable RecipeHolder<?> possibleRecipe, List<EntryIngredient> input, List<EntryIngredient> output) {
-        super(input, output, Optional.ofNullable((RecipeHolder<Recipe<?>>) possibleRecipe));
-    }
-    
-    public static DefaultCustomShapelessDisplay simple(List<EntryIngredient> input, List<EntryIngredient> output, Optional<ResourceLocation> location) {
-        RecipeHolder<?> optionalRecipe = location.flatMap(resourceLocation -> RecipeManagerContext.getInstance().getRecipeManager().byKey(resourceLocation))
-                .orElse(null);
-        return new DefaultCustomShapelessDisplay(location.orElse(null), optionalRecipe, input, output);
+    public DefaultCustomShapelessDisplay(List<EntryIngredient> input, List<EntryIngredient> output, Optional<ResourceLocation> location) {
+        super(input, output, location);
     }
     
     @Override
@@ -59,18 +66,8 @@ public class DefaultCustomShapelessDisplay extends DefaultCraftingDisplay<Recipe
     }
     
     @Override
-    public int getInputWidth() {
-        return Math.min(getInputEntries().size(), 3);
-    }
-    
-    @Override
     public int getInputWidth(int craftingWidth, int craftingHeight) {
         return craftingWidth * craftingHeight <= getInputEntries().size() ? craftingWidth : Math.min(getInputEntries().size(), 3);
-    }
-    
-    @Override
-    public int getInputHeight() {
-        return (int) Math.ceil(getInputEntries().size() / (double) getInputWidth());
     }
     
     @Override
@@ -81,5 +78,10 @@ public class DefaultCustomShapelessDisplay extends DefaultCraftingDisplay<Recipe
     @Override
     public boolean isShapeless() {
         return true;
+    }
+    
+    @Override
+    public DisplaySerializer<? extends Display> getSerializer() {
+        return SERIALIZER;
     }
 }

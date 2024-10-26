@@ -23,8 +23,7 @@
 
 package me.shedaniel.rei.impl.client.gui.widget.basewidgets;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import me.shedaniel.clothconfig2.api.TickableWidget;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.gui.widgets.TextField;
@@ -35,7 +34,7 @@ import net.minecraft.client.gui.ComponentPath;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.navigation.FocusNavigationEvent;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
@@ -485,21 +484,19 @@ public class TextFieldWidget extends WidgetWithBounds implements TickableWidget,
             x1 = this.bounds.x + this.bounds.width;
         }
         
-        int r = (color >> 16 & 255);
-        int g = (color >> 8 & 255);
-        int b = (color & 255);
-        Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder buffer = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        RenderSystem.enableBlend();
-        RenderSystem.blendFuncSeparate(770, 771, 1, 0);
-        Matrix4f matrix = graphics.pose().last().pose();
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
-        buffer.addVertex(matrix, x1, y2, 50f).setColor(r, g, b, 120);
-        buffer.addVertex(matrix, x2, y2, 50f).setColor(r, g, b, 120);
-        buffer.addVertex(matrix, x2, y1, 50f).setColor(r, g, b, 120);
-        buffer.addVertex(matrix, x1, y1, 50f).setColor(r, g, b, 120);
-        BufferUploader.drawWithShader(buffer.buildOrThrow());
-        RenderSystem.disableBlend();
+        int finalX1 = x1, finalX2 = x2, finalY1 = y1, finalY2 = y2;
+        graphics.drawSpecial(source -> {
+            int r = (color >> 16 & 255);
+            int g = (color >> 8 & 255);
+            int b = (color & 255);
+            
+            VertexConsumer buffer = source.getBuffer(RenderType.gui());
+            Matrix4f matrix = graphics.pose().last().pose();
+            buffer.addVertex(matrix, finalX1, finalY2, 50f).setColor(r, g, b, 120);
+            buffer.addVertex(matrix, finalX2, finalY2, 50f).setColor(r, g, b, 120);
+            buffer.addVertex(matrix, finalX2, finalY1, 50f).setColor(r, g, b, 120);
+            buffer.addVertex(matrix, finalX1, finalY1, 50f).setColor(r, g, b, 120);
+        });
     }
     
     @Override

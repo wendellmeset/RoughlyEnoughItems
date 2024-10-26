@@ -166,7 +166,7 @@ public class DefaultBeaconPaymentCategory implements DisplayCategory<DefaultBeac
                 }
             }
             try (CloseableScissors scissors = scissor(graphics, scrolling.getBounds())) {
-                scrolling.renderScrollBar(graphics, 0xff000000, 1, REIRuntime.getInstance().isDarkThemeEnabled() ? 0.8f : 1f);
+                scrolling.renderScrollBar(graphics, 0xff000000, REIRuntime.getInstance().isDarkThemeEnabled() ? 0.8f : 1f);
             }
         }
         

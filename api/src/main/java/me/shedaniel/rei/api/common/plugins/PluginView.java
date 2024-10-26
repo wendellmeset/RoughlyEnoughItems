@@ -38,12 +38,8 @@ public interface PluginView<P extends REIPlugin<?>> {
         return ClientInternals.getPluginManager().view();
     }
     
-    static PluginView<REIPlugin<?>> getInstance() {
+    static PluginView<REICommonPlugin> getInstance() {
         return Internals.getPluginManager().view();
-    }
-    
-    static PluginView<REIServerPlugin> getServerInstance() {
-        return Internals.getServerPluginManager().view();
     }
     
     /**

@@ -48,6 +48,7 @@ import me.shedaniel.rei.impl.common.entry.type.collapsed.CollapsedStack;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 
@@ -213,7 +214,7 @@ public class PaginatedEntryListWidget extends CollapsingEntryListWidget {
             Rectangle bounds = leftButton.getBounds();
             graphics.pose().pushPose();
             graphics.pose().translate(0, 0, 1);
-            graphics.blit(InternalTextures.ARROW_LEFT_TEXTURE, bounds.x + 4, bounds.y + 4, 0, 0, 8, 8, 8, 8);
+            graphics.blit(RenderType::guiTextured, InternalTextures.ARROW_LEFT_TEXTURE, bounds.x + 4, bounds.y + 4, 0, 0, 8, 8, 8, 8);
             graphics.pose().popPose();
         }));
         this.rightButton = Widgets.createButton(new Rectangle(overlayBounds.getMaxX() - 18, overlayBounds.y + (ConfigObject.getInstance().getSearchFieldLocation() == SearchFieldLocation.TOP_SIDE ? 24 : 0) + 5, 16, 16), Component.translatable(""))
@@ -231,7 +232,7 @@ public class PaginatedEntryListWidget extends CollapsingEntryListWidget {
             Rectangle bounds = rightButton.getBounds();
             graphics.pose().pushPose();
             graphics.pose().translate(0, 0, 1);
-            graphics.blit(InternalTextures.ARROW_RIGHT_TEXTURE, bounds.x + 4, bounds.y + 4, 0, 0, 8, 8, 8, 8);
+            graphics.blit(RenderType::guiTextured, InternalTextures.ARROW_RIGHT_TEXTURE, bounds.x + 4, bounds.y + 4, 0, 0, 8, 8, 8, 8);
             graphics.pose().popPose();
         }));
         this.additionalWidgets.add(Widgets.createClickableLabel(new Point(overlayBounds.x + (overlayBounds.width / 2), overlayBounds.y + (ConfigObject.getInstance().getSearchFieldLocation() == SearchFieldLocation.TOP_SIDE ? 24 : 0) + 10), Component.empty(), label -> {

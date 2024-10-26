@@ -23,7 +23,7 @@
 
 package me.shedaniel.rei.api.common.entry.comparison;
 
-import me.shedaniel.rei.api.common.plugins.REIPlugin;
+import me.shedaniel.rei.api.common.plugins.REICommonPlugin;
 import me.shedaniel.rei.api.common.registry.Reloadable;
 
 /**
@@ -31,7 +31,7 @@ import me.shedaniel.rei.api.common.registry.Reloadable;
  * The default comparator is {@link EntryComparator#noop()} when fuzzy, which does not compare the NBT of the entries;
  * and nbt when exact.
  */
-public interface EntryComparatorRegistry<T, S> extends Reloadable<REIPlugin<?>> {
+public interface EntryComparatorRegistry<T, S> extends Reloadable<REICommonPlugin> {
     /**
      * Registers an {@link EntryComparator} for the given entry {@link S}.
      *

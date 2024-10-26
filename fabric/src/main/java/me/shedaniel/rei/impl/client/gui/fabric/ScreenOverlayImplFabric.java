@@ -34,8 +34,10 @@ import net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPosition
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.Style;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -72,15 +74,15 @@ public class ScreenOverlayImplFabric extends ScreenOverlayImpl {
                 }
             }
         }
-        renderTooltipInner(graphics, lines, tooltip.getX(), tooltip.getY());
+        renderTooltipInner(graphics, lines, tooltip.getX(), tooltip.getY(), tooltip.getTooltipStyle());
     }
     
-    public static void renderTooltipInner(GuiGraphics graphics, List<ClientTooltipComponent> lines, int mouseX, int mouseY) {
+    public static void renderTooltipInner(GuiGraphics graphics, List<ClientTooltipComponent> lines, int mouseX, int mouseY, @Nullable ResourceLocation tooltipStyle) {
         if (lines.isEmpty()) {
             return;
         }
         graphics.pose().pushPose();
-        graphics.renderTooltipInternal(Minecraft.getInstance().font, lines, mouseX, mouseY, DefaultTooltipPositioner.INSTANCE);
+        graphics.renderTooltipInternal(Minecraft.getInstance().font, lines, mouseX, mouseY, DefaultTooltipPositioner.INSTANCE, tooltipStyle);
         graphics.pose().popPose();
     }
 }

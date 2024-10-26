@@ -25,7 +25,7 @@ package me.shedaniel.rei.impl.common.entry.comparison;
 
 import me.shedaniel.rei.api.common.entry.comparison.EntryComparator;
 import me.shedaniel.rei.api.common.entry.comparison.ItemComparatorRegistry;
-import me.shedaniel.rei.api.common.plugins.REIPlugin;
+import me.shedaniel.rei.api.common.plugins.REICommonPlugin;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
@@ -50,7 +50,7 @@ public class ItemComparatorRegistryImpl extends EntryComparatorRegistryImpl<Item
     }
     
     @Override
-    public void acceptPlugin(REIPlugin<?> plugin) {
+    public void acceptPlugin(REICommonPlugin plugin) {
         plugin.registerItemComparators(this);
     }
 }

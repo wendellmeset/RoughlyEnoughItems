@@ -25,6 +25,8 @@ package me.shedaniel.rei;
 
 import dev.architectury.networking.NetworkManager;
 import dev.architectury.networking.transformers.SplitPacketTransformer;
+import dev.architectury.platform.Platform;
+import dev.architectury.utils.Env;
 import io.netty.buffer.Unpooled;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.display.Display;
@@ -34,14 +36,15 @@ import me.shedaniel.rei.api.common.entry.InputIngredient;
 import me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes;
 import me.shedaniel.rei.api.common.transfer.info.stack.SlotAccessor;
 import me.shedaniel.rei.api.common.transfer.info.stack.SlotAccessorRegistry;
+import me.shedaniel.rei.impl.common.networking.DisplaySyncPacket;
 import me.shedaniel.rei.impl.common.transfer.InputSlotCrafter;
-import me.shedaniel.rei.impl.common.transfer.LegacyInputSlotCrafter;
 import me.shedaniel.rei.impl.common.transfer.NewInputSlotCrafter;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -57,7 +60,6 @@ import net.minecraft.world.item.ItemStack;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 public class RoughlyEnoughItemsNetwork {
     public static final ResourceLocation DELETE_ITEMS_PACKET = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "delete_item");
@@ -65,9 +67,9 @@ public class RoughlyEnoughItemsNetwork {
     public static final ResourceLocation CREATE_ITEMS_HOTBAR_PACKET = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "create_item_hotbar");
     public static final ResourceLocation CREATE_ITEMS_GRAB_PACKET = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "create_item_grab");
     public static final ResourceLocation CREATE_ITEMS_MESSAGE_PACKET = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "ci_msg");
-    public static final ResourceLocation MOVE_ITEMS_PACKET = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "move_items");
     public static final ResourceLocation MOVE_ITEMS_NEW_PACKET = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "move_items_new");
     public static final ResourceLocation NOT_ENOUGH_ITEMS_PACKET = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "og_not_enough");
+    public static final ResourceLocation SYNC_DISPLAYS_PACKET = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "sync_displays");
     
     public static void onInitialize() {
         NetworkManager.registerReceiver(NetworkManager.c2s(), DELETE_ITEMS_PACKET, Collections.singletonList(new SplitPacketTransformer()), (buf, context) -> {
@@ -140,39 +142,6 @@ public class RoughlyEnoughItemsNetwork {
                 player.displayClientMessage(Component.translatable("text.rei.failed_cheat_items"), false);
             }
         });
-        NetworkManager.registerReceiver(NetworkManager.c2s(), MOVE_ITEMS_PACKET, Collections.singletonList(new SplitPacketTransformer()), (packetByteBuf, context) -> {
-            ServerPlayer player = (ServerPlayer) context.getPlayer();
-            CategoryIdentifier<Display> category = CategoryIdentifier.of(packetByteBuf.readResourceLocation());
-            AbstractContainerMenu container = player.containerMenu;
-            InventoryMenu playerContainer = player.inventoryMenu;
-            try {
-                boolean shift = packetByteBuf.readBoolean();
-                try {
-                    LegacyInputSlotCrafter<AbstractContainerMenu, Container, Display> crafter = LegacyInputSlotCrafter.start(category, container, player, packetByteBuf.readNbt(), shift);
-                } catch (InputSlotCrafter.NotEnoughMaterialsException e) {
-                    if (!(container instanceof RecipeBookMenu)) {
-                        return;
-                    }
-                    // TODO Implement Ghost Recipes
-                    /*FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-                    buf.writeInt(input.size());
-                    for (List<ItemStack> stacks : input) {
-                        buf.writeInt(stacks.size());
-                        for (ItemStack stack : stacks) {
-                            buf.writeItem(stack);
-                        }
-                    }
-                    NetworkManager.sendToPlayer(player, NOT_ENOUGH_ITEMS_PACKET, buf);*/
-                } catch (IllegalStateException e) {
-                    player.sendSystemMessage(Component.translatable(e.getMessage()).withStyle(ChatFormatting.RED));
-                } catch (Exception e) {
-                    player.sendSystemMessage(Component.translatable("error.rei.internal.error", e.getMessage()).withStyle(ChatFormatting.RED));
-                    e.printStackTrace();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
         NetworkManager.registerReceiver(NetworkManager.c2s(), MOVE_ITEMS_NEW_PACKET, Collections.singletonList(new SplitPacketTransformer()), (packetByteBuf, context) -> {
             ServerPlayer player = (ServerPlayer) context.getPlayer();
             CategoryIdentifier<Display> category = CategoryIdentifier.of(packetByteBuf.readResourceLocation());
@@ -184,7 +153,7 @@ public class RoughlyEnoughItemsNetwork {
                     CompoundTag nbt = packetByteBuf.readNbt();
                     int version = nbt.getInt("Version");
                     if (version != 1) throw new IllegalStateException("Server and client REI protocol version mismatch! Server: 1, Client: " + version);
-                    List<InputIngredient<ItemStack>> inputs = readInputs(nbt.getList("Inputs", Tag.TAG_COMPOUND));
+                    List<InputIngredient<ItemStack>> inputs = readInputs(context.registryAccess(), nbt.getList("Inputs", Tag.TAG_COMPOUND));
                     List<SlotAccessor> input = readSlots(container, player, nbt.getList("InputSlots", Tag.TAG_COMPOUND));
                     List<SlotAccessor> inventory = readSlots(container, player, nbt.getList("InventorySlots", Tag.TAG_COMPOUND));
                     NewInputSlotCrafter<AbstractContainerMenu, Container> crafter = new NewInputSlotCrafter<>(container, input, inventory, inputs);
@@ -203,6 +172,9 @@ public class RoughlyEnoughItemsNetwork {
                 e.printStackTrace();
             }
         });
+        if (Platform.getEnvironment() == Env.SERVER) {
+            NetworkManager.registerS2CPayloadType(DisplaySyncPacket.TYPE, DisplaySyncPacket.STREAM_CODEC, List.of(new SplitPacketTransformer()));
+        }
     }
     
     private static List<SlotAccessor> readSlots(AbstractContainerMenu menu, Player player, ListTag tag) {
@@ -213,11 +185,11 @@ public class RoughlyEnoughItemsNetwork {
         return slots;
     }
     
-    private static List<InputIngredient<ItemStack>> readInputs(ListTag tag) {
+    private static List<InputIngredient<ItemStack>> readInputs(RegistryAccess registryAccess, ListTag tag) {
         List<InputIngredient<ItemStack>> inputs = new ArrayList<>();
         for (Tag t : tag) {
             CompoundTag compoundTag = (CompoundTag) t;
-            InputIngredient<EntryStack<?>> stacks = InputIngredient.of(compoundTag.getInt("Index"), EntryIngredient.read(compoundTag.getList("Ingredient", Tag.TAG_COMPOUND)));
+            InputIngredient<EntryStack<?>> stacks = InputIngredient.of(compoundTag.getInt("Index"), EntryIngredient.codec().parse(registryAccess.createSerializationContext(NbtOps.INSTANCE), compoundTag.getList("Ingredient", Tag.TAG_COMPOUND)).getOrThrow());
             inputs.add(InputIngredient.withType(stacks, VanillaEntryTypes.ITEM));
         }
         return inputs;

@@ -79,9 +79,10 @@ public class BookCloningRecipeFiller implements CraftingRecipeFiller<BookCloning
                 cloned.setCount(i);
                 output.add(EntryStacks.of(cloned));
             }
-            displays.add(new DefaultCustomShapelessDisplay(recipe,
+            displays.add(new DefaultCustomShapelessDisplay(
                     CollectionUtils.map(inputs, EntryIngredient.Builder::build),
-                    List.of(output.build())));
+                    List.of(output.build()),
+                    Optional.of(recipe.id().location())));
         }
         
         return displays;

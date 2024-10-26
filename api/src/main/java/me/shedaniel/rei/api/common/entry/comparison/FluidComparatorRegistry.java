@@ -30,7 +30,7 @@ import net.minecraft.world.level.material.Fluid;
 /**
  * {@inheritDoc}
  *
- * @see me.shedaniel.rei.api.common.plugins.REIPlugin#registerFluidComparators(FluidComparatorRegistry)
+ * @see me.shedaniel.rei.api.common.plugins.REICommonPlugin#registerFluidComparators(FluidComparatorRegistry)
  */
 public interface FluidComparatorRegistry extends EntryComparatorRegistry<FluidStack, Fluid> {
     /**

@@ -68,7 +68,7 @@ public class ConfigGroupWidget {
         WidgetWithBounds contents;
         
         if (applyPreview) {
-            applyPreview = REIRuntime.getInstance().getPreviousContainerScreen() != null && Minecraft.getInstance().getConnection() != null && Minecraft.getInstance().getConnection().getRecipeManager() != null;
+            applyPreview = REIRuntime.getInstance().getPreviousContainerScreen() != null && Minecraft.getInstance().getConnection() != null;
         }
         
         if (applyPreview && SPECIAL_GROUPS.containsKey(entry.getId())) {

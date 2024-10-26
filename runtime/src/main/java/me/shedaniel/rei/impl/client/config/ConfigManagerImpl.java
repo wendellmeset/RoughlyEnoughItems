@@ -26,6 +26,7 @@ package me.shedaniel.rei.impl.client.config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.gui.ConfigScreenProvider;
@@ -165,11 +166,11 @@ public class ConfigManagerImpl implements ConfigManager {
             }
         });
         builder.registerDeserializer(Tag.class, EntryStackProvider.class, (value, marshaller) -> {
-            return EntryStackProvider.defer((CompoundTag) value);
+            return EntryStackProvider.defer(value);
         });
         builder.registerDeserializer(String.class, EntryStackProvider.class, (value, marshaller) -> {
             try {
-                return EntryStackProvider.defer(TagParser.parseTag(value));
+                return EntryStackProvider.defer(new TagParser(new StringReader(value)).readValue());
             } catch (CommandSyntaxException e) {
                 e.printStackTrace();
                 return EntryStackProvider.ofStack(EntryStack.empty());

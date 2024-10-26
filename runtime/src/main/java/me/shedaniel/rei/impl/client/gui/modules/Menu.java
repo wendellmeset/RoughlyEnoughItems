@@ -25,7 +25,6 @@ package me.shedaniel.rei.impl.client.gui.modules;
 
 import com.google.common.collect.Lists;
 import me.shedaniel.clothconfig2.ClothConfigInitializer;
-import me.shedaniel.clothconfig2.api.ScissorsHandler;
 import me.shedaniel.clothconfig2.api.animator.ValueAnimator;
 import me.shedaniel.clothconfig2.api.scroll.ScrollingContainer;
 import me.shedaniel.math.FloatingRectangle;
@@ -160,7 +159,7 @@ public class Menu extends WidgetWithBounds implements LateRenderable {
             currentY += child.getEntryHeight();
         }
         currentY = innerBounds.y - scrolling.scrollAmountInt();
-        ScissorsHandler.INSTANCE.scissor(scrolling.getScissorBounds());
+        graphics.enableScissor(scrolling.getScissorBounds().x, scrolling.getScissorBounds().y, scrolling.getScissorBounds().getMaxX(), scrolling.getScissorBounds().getMaxY());
         for (FavoriteMenuEntry child : children()) {
             boolean rendering = currentY + child.getEntryHeight() >= innerBounds.y && currentY <= innerBounds.getMaxY();
             boolean containsMouse = contains && mouseY >= currentY && mouseY < currentY + child.getEntryHeight();
@@ -170,9 +169,9 @@ public class Menu extends WidgetWithBounds implements LateRenderable {
             }
             currentY += child.getEntryHeight();
         }
-        ScissorsHandler.INSTANCE.removeLastScissor();
+        graphics.disableScissor();
         setFocused(focused);
-        scrolling.renderScrollBar(graphics, 0, 1, REIRuntime.getInstance().isDarkThemeEnabled() ? 0.8f : 1f);
+        scrolling.renderScrollBar(graphics, 0, REIRuntime.getInstance().isDarkThemeEnabled() ? 0.8f : 1f);
         scrolling.updatePosition(delta);
     }
     

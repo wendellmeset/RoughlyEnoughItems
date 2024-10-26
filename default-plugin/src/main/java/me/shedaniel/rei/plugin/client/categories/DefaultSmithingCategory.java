@@ -37,6 +37,7 @@ import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.util.EntryStacks;
 import me.shedaniel.rei.plugin.common.BuiltinPlugin;
+import me.shedaniel.rei.plugin.common.SmithingDisplay;
 import me.shedaniel.rei.plugin.common.displays.DefaultSmithingDisplay;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
@@ -46,9 +47,9 @@ import org.jetbrains.annotations.ApiStatus;
 
 import java.util.List;
 
-public class DefaultSmithingCategory implements DisplayCategory<DefaultSmithingDisplay> {
+public class DefaultSmithingCategory implements DisplayCategory<SmithingDisplay> {
     @Override
-    public CategoryIdentifier<? extends DefaultSmithingDisplay> getCategoryIdentifier() {
+    public CategoryIdentifier<? extends SmithingDisplay> getCategoryIdentifier() {
         return BuiltinPlugin.SMITHING;
     }
     
@@ -63,7 +64,7 @@ public class DefaultSmithingCategory implements DisplayCategory<DefaultSmithingD
     }
     
     @Override
-    public List<Widget> setupDisplay(DefaultSmithingDisplay display, Rectangle bounds) {
+    public List<Widget> setupDisplay(SmithingDisplay display, Rectangle bounds) {
         Point startPoint = new Point(bounds.getCenterX() - 31, bounds.getCenterY() - 13);
         List<Widget> widgets = Lists.newArrayList();
         widgets.add(Widgets.createRecipeBase(bounds));
@@ -98,8 +99,8 @@ public class DefaultSmithingCategory implements DisplayCategory<DefaultSmithingD
     }
     
     @ApiStatus.Experimental
-    private static EntryIngredient getOutput(DefaultSmithingDisplay display, RegistryAccess registryAccess, EntryStack<?> template, EntryStack<?> base, EntryStack<?> addition) {
-        if (display.getType() == DefaultSmithingDisplay.SmithingRecipeType.TRIM) {
+    private static EntryIngredient getOutput(SmithingDisplay display, RegistryAccess registryAccess, EntryStack<?> template, EntryStack<?> base, EntryStack<?> addition) {
+        if (display.type() == SmithingDisplay.SmithingRecipeType.TRIM) {
             EntryIngredient output = DefaultSmithingDisplay.getTrimmingOutput(registryAccess, template, base, addition);
             if (!output.isEmpty()) return output;
         }

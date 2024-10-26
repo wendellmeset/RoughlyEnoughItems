@@ -48,8 +48,8 @@ import me.shedaniel.rei.api.common.util.EntryIngredients;
 import me.shedaniel.rei.api.common.util.EntryStacks;
 import me.shedaniel.rei.impl.client.gui.craftable.CraftableFilterCalculator;
 import me.shedaniel.rei.impl.client.gui.widget.AutoCraftingEvaluator;
+import me.shedaniel.rei.impl.client.registry.display.DisplayCache;
 import me.shedaniel.rei.impl.client.registry.display.DisplayRegistryImpl;
-import me.shedaniel.rei.impl.client.registry.display.DisplaysHolder;
 import me.shedaniel.rei.impl.client.util.CrashReportUtils;
 import me.shedaniel.rei.impl.common.InternalLogger;
 import me.shedaniel.rei.impl.common.util.HashedEntryStackWrapper;
@@ -105,13 +105,13 @@ public class ViewsImpl implements Views {
         List<EntryStack<?>> recipesForStacksWildcard = CollectionUtils.flatMap(recipesForStacks, wildcardFunction);
         List<EntryStack<?>> usagesForStacksWildcard = CollectionUtils.flatMap(usagesForStacks, wildcardFunction);
         DisplayRegistry displayRegistry = DisplayRegistry.getInstance();
-        DisplaysHolder displaysHolder = ((DisplayRegistryImpl) displayRegistry).displaysHolder();
+        DisplayCache displayCache = ((DisplayRegistryImpl) displayRegistry).cache();
         
         Map<DisplayCategory<?>, Set<Display>> result = Maps.newHashMap();
         forCategories(processingVisibilityHandlers, filteringCategories, displayRegistry, result, (configuration, categoryId, displays, set) -> {
             if (categories.contains(categoryId)) { // If the category is in the search, add all displays
                 for (Display display : displays) {
-                    if (!processingVisibilityHandlers || ((DisplayRegistryImpl) displayRegistry).isDisplayVisible(configuration.getCategory(), display)) {
+                    if (!processingVisibilityHandlers || displayRegistry.isDisplayVisible(configuration.getCategory(), display)) {
                         set.add(display);
                     }
                 }
@@ -121,15 +121,15 @@ public class ViewsImpl implements Views {
                 return;
             }
             for (Display display : displays) {
-                if (processingVisibilityHandlers && !((DisplayRegistryImpl) displayRegistry).isDisplayVisible(configuration.getCategory(), display)) continue;
+                if (processingVisibilityHandlers && !displayRegistry.isDisplayVisible(configuration.getCategory(), display)) continue;
                 if (!recipesForStacks.isEmpty()) {
-                    if (isRecipesFor(displaysHolder, recipesForStacks, display)) {
+                    if (isRecipesFor(displayCache, recipesForStacks, display)) {
                         set.add(display);
                         continue;
                     }
                 }
                 if (!usagesForStacks.isEmpty()) {
-                    if (isUsagesFor(displaysHolder, usagesForStacks, display)) {
+                    if (isUsagesFor(displayCache, usagesForStacks, display)) {
                         set.add(display);
                     }
                 }
@@ -171,15 +171,15 @@ public class ViewsImpl implements Views {
             forCategories(processingVisibilityHandlers, filteringCategories, displayRegistry, result, (configuration, categoryId, displays, set) -> {
                 if (categories.contains(categoryId)) return;
                 for (Display display : displays) {
-                    if (processingVisibilityHandlers && !((DisplayRegistryImpl) displayRegistry).isDisplayVisible(configuration.getCategory(), display)) continue;
+                    if (processingVisibilityHandlers && !displayRegistry.isDisplayVisible(configuration.getCategory(), display)) continue;
                     if (!recipesForStacksWildcard.isEmpty()) {
-                        if (isRecipesFor(displaysHolder, recipesForStacksWildcard, display)) {
+                        if (isRecipesFor(displayCache, recipesForStacksWildcard, display)) {
                             set.add(display);
                             continue;
                         }
                     }
                     if (!usagesForStacksWildcard.isEmpty()) {
-                        if (isUsagesFor(displaysHolder, usagesForStacksWildcard, display)) {
+                        if (isUsagesFor(displayCache, usagesForStacksWildcard, display)) {
                             set.add(display);
                         }
                     }
@@ -193,7 +193,7 @@ public class ViewsImpl implements Views {
                 if (isStackWorkStationOfCategory(configuration, usagesFor)) {
                     categories.add(categoryId);
                     if (processingVisibilityHandlers) {
-                        set.addAll(CollectionUtils.filterToSet(displays, display -> ((DisplayRegistryImpl) displayRegistry).isDisplayVisible(configuration.getCategory(), display)));
+                        set.addAll(CollectionUtils.filterToSet(displays, display -> displayRegistry.isDisplayVisible(configuration.getCategory(), display)));
                     } else {
                         set.addAll(displays);
                     }
@@ -268,20 +268,20 @@ public class ViewsImpl implements Views {
         return map.get(key);
     }
     
-    public static boolean isRecipesFor(@Nullable DisplaysHolder displaysHolder, List<EntryStack<?>> stacks, Display display) {
-        if (displaysHolder != null && displaysHolder.cache().isCached(display)) {
+    public static boolean isRecipesFor(@Nullable DisplayCache displayCache, List<EntryStack<?>> stacks, Display display) {
+        if (displayCache != null && displayCache.isCached(display)) {
             for (EntryStack<?> recipesFor : stacks) {
-                return displaysHolder.cache().getDisplaysByOutput(recipesFor).contains(display);
+                return displayCache.getDisplaysByOutput(recipesFor).contains(display);
             }
         }
         
         return checkUsages(stacks, display, display.getOutputEntries());
     }
     
-    public static boolean isUsagesFor(@Nullable DisplaysHolder displaysHolder, List<EntryStack<?>> stacks, Display display) {
-        if (displaysHolder != null && displaysHolder.cache().isCached(display)) {
+    public static boolean isUsagesFor(@Nullable DisplayCache displayCache, List<EntryStack<?>> stacks, Display display) {
+        if (displayCache != null && displayCache.isCached(display)) {
             for (EntryStack<?> recipesFor : stacks) {
-                return displaysHolder.cache().getDisplaysByInput(recipesFor).contains(display);
+                return displayCache.getDisplaysByInput(recipesFor).contains(display);
             }
         }
         
@@ -454,8 +454,7 @@ public class ViewsImpl implements Views {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof WrappedDisplaySpec)) return false;
-            WrappedDisplaySpec wrapped = (WrappedDisplaySpec) o;
+            if (!(o instanceof WrappedDisplaySpec wrapped)) return false;
             return hash == wrapped.hash && merger.canMerge(display, wrapped.display);
         }
         

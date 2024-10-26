@@ -26,7 +26,6 @@ package me.shedaniel.rei.impl.client.gui.screen;
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.systems.RenderSystem;
 import me.shedaniel.clothconfig2.ClothConfigInitializer;
-import me.shedaniel.clothconfig2.api.ScissorsHandler;
 import me.shedaniel.clothconfig2.api.scroll.ScrollingContainer;
 import me.shedaniel.math.Point;
 import me.shedaniel.math.Rectangle;
@@ -366,7 +365,7 @@ public class CompositeDisplayViewingScreen extends AbstractDisplayViewingScreen 
         public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
             int yOffset = 0;
             graphics.pose().pushPose();
-            ScissorsHandler.INSTANCE.scissor(scrolling.getBounds());
+            graphics.enableScissor(scrolling.getBounds().x, scrolling.getBounds().y, scrolling.getBounds().getMaxX(), scrolling.getBounds().getMaxY());
             for (Button button : buttonList) {
                 button.getBounds().y = scrollListBounds.y + 1 + yOffset - scrolling.scrollAmountInt();
                 if (button.getBounds().getMaxY() > scrollListBounds.getMinY() && button.getBounds().getMinY() < scrollListBounds.getMaxY()) {
@@ -380,8 +379,8 @@ public class CompositeDisplayViewingScreen extends AbstractDisplayViewingScreen 
                     Optional.ofNullable(displayRenderers.get(i).getTooltip(TooltipContext.of(new Point(mouseX, mouseY), Item.TooltipContext.of(minecraft.level)))).ifPresent(Tooltip::queue);
                 }
             }
-            scrolling.renderScrollBar(graphics, 0, scrollBarAlpha, REIRuntime.getInstance().isDarkThemeEnabled() ? 0.8f : 1f);
-            ScissorsHandler.INSTANCE.removeLastScissor();
+            scrolling.renderScrollBar(graphics, 0, scrollBarAlpha);
+            graphics.disableScissor();
             graphics.pose().popPose();
         }
         

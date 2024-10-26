@@ -23,7 +23,6 @@
 
 package me.shedaniel.rei.api.client.favorites;
 
-import me.shedaniel.clothconfig2.api.ScissorsHandler;
 import me.shedaniel.clothconfig2.api.animator.NumberAnimator;
 import me.shedaniel.clothconfig2.api.animator.ValueAnimator;
 import me.shedaniel.math.Rectangle;
@@ -96,7 +95,7 @@ public class CompoundFavoriteRenderer implements Renderer {
         Vector4f vector4f2 = new Vector4f(bounds.getMaxX(), bounds.getMaxY(), 0, 1.0F);
         graphics.pose().last().pose().transform(vector4f2);
         scissorArea.setBounds((int) vector4f.x(), (int) vector4f.y(), (int) vector4f2.x() - (int) vector4f.x(), (int) vector4f2.y() - (int) vector4f.y());
-        ScissorsHandler.INSTANCE.scissor(scissorArea);
+        graphics.enableScissor(scissorArea.x, scissorArea.y, scissorArea.getMaxX(), scissorArea.getMaxY());
         graphics.pose().pushPose();
         graphics.pose().translate(0, this.offset.floatValue() * -bounds.getHeight(), 0);
         for (int i = 0; i < count; i++) {
@@ -104,7 +103,7 @@ public class CompoundFavoriteRenderer implements Renderer {
             graphics.pose().translate(0, bounds.height, 0);
         }
         graphics.pose().popPose();
-        ScissorsHandler.INSTANCE.removeLastScissor();
+        graphics.disableScissor();
     }
     
     private void updateAnimator(float delta) {

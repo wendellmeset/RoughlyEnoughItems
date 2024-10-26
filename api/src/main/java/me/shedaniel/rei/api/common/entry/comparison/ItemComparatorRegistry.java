@@ -30,7 +30,7 @@ import net.minecraft.world.item.ItemStack;
 /**
  * {@inheritDoc}
  *
- * @see me.shedaniel.rei.api.common.plugins.REIPlugin#registerItemComparators(ItemComparatorRegistry)
+ * @see me.shedaniel.rei.api.common.plugins.REICommonPlugin#registerItemComparators(ItemComparatorRegistry)
  */
 public interface ItemComparatorRegistry extends EntryComparatorRegistry<ItemStack, Item> {
     /**

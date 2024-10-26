@@ -23,17 +23,7 @@
 
 package me.shedaniel.rei.plugin.common.displays.brewing;
 
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
+import me.shedaniel.rei.api.common.entry.EntryIngredient;
 
-public class BrewingRecipe {
-    public final Ingredient input;
-    public final Ingredient ingredient;
-    public final ItemStack output;
-    
-    public BrewingRecipe(Ingredient input, Ingredient ingredient, ItemStack output) {
-        this.input = input;
-        this.ingredient = ingredient;
-        this.output = output;
-    }
+public record BrewingRecipe(EntryIngredient input, EntryIngredient ingredient, EntryIngredient output) {
 }

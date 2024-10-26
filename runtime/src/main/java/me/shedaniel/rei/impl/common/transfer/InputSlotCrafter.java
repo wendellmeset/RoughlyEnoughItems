@@ -23,21 +23,17 @@
 
 package me.shedaniel.rei.impl.common.transfer;
 
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
 import me.shedaniel.rei.api.common.entry.InputIngredient;
-import me.shedaniel.rei.api.common.transfer.RecipeFinder;
+import me.shedaniel.rei.api.common.transfer.ItemRecipeFinder;
 import me.shedaniel.rei.api.common.transfer.info.stack.SlotAccessor;
-import me.shedaniel.rei.api.common.util.CollectionUtils;
-import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -59,14 +55,14 @@ public abstract class InputSlotCrafter<T extends AbstractContainerMenu, C extend
         // Return the already placed items on the grid
         this.cleanInputs();
         
-        RecipeFinder recipeFinder = new RecipeFinder();
+        ItemRecipeFinder recipeFinder = new ItemRecipeFinder();
         this.populateRecipeFinder(recipeFinder);
-        NonNullList<Ingredient> ingredients = NonNullList.create();
+        List<List<ItemStack>> ingredients = new ArrayList<>();
         for (InputIngredient<ItemStack> itemStacks : this.getInputs()) {
-            ingredients.add(CollectionUtils.toIngredient(itemStacks.get()));
+            ingredients.add(itemStacks.get());
         }
         
-        if (recipeFinder.findRecipe(ingredients, null)) {
+        if (recipeFinder.findRecipe(ingredients, 1, null)) {
             this.fillInputSlots(recipeFinder, ingredients, hasShift);
         } else {
             this.cleanInputs();
@@ -83,22 +79,21 @@ public abstract class InputSlotCrafter<T extends AbstractContainerMenu, C extend
     
     protected abstract List<InputIngredient<ItemStack>> getInputs();
     
-    protected abstract void populateRecipeFinder(RecipeFinder recipeFinder);
+    protected abstract void populateRecipeFinder(ItemRecipeFinder recipeFinder);
     
     protected abstract void markDirty();
     
-    public void alignRecipeToGrid(Iterable<SlotAccessor> inputStacks, Iterator<Integer> recipeItemIds, int craftsAmount) {
+    public void alignRecipeToGrid(Iterable<SlotAccessor> inputStacks, Iterator<ItemStack> recipeItems, int craftsAmount) {
         for (SlotAccessor inputStack : inputStacks) {
-            if (!recipeItemIds.hasNext()) {
+            if (!recipeItems.hasNext()) {
                 return;
             }
             
-            this.acceptAlignedInput(recipeItemIds.next(), inputStack, craftsAmount);
+            this.acceptAlignedInput(recipeItems.next(), inputStack, craftsAmount);
         }
     }
     
-    public void acceptAlignedInput(Integer recipeItemId, SlotAccessor inputStack, int craftsAmount) {
-        ItemStack toBeTakenStack = RecipeFinder.getStackFromId(recipeItemId);
+    public void acceptAlignedInput(ItemStack toBeTakenStack, SlotAccessor inputStack, int craftsAmount) {
         if (!toBeTakenStack.isEmpty()) {
             for (int i = 0; i < craftsAmount; ++i) {
                 this.fillInputSlot(inputStack, toBeTakenStack);
@@ -131,20 +126,22 @@ public abstract class InputSlotCrafter<T extends AbstractContainerMenu, C extend
         }
     }
     
-    protected void fillInputSlots(RecipeFinder recipeFinder, NonNullList<Ingredient> ingredients, boolean hasShift) {
-        int recipeCrafts = recipeFinder.countRecipeCrafts(ingredients, null);
+    protected void fillInputSlots(ItemRecipeFinder recipeFinder, List<List<ItemStack>> ingredients, boolean hasShift) {
+        int recipeCrafts = recipeFinder.countRecipeCrafts(ingredients, Integer.MAX_VALUE, null);
         int amountToFill = hasShift ? recipeCrafts : 1;
-        IntList recipeItemIds = new IntArrayList();
-        if (recipeFinder.findRecipe(ingredients, recipeItemIds, amountToFill)) {
+        List<ItemStack> recipeItems = new ArrayList<>();
+        if (recipeFinder.findRecipe(ingredients, amountToFill, recipeItems::add)) {
             int finalCraftsAmount = amountToFill;
             
-            for (int itemId : recipeItemIds) {
-                finalCraftsAmount = Math.min(finalCraftsAmount, RecipeFinder.getStackFromId(itemId).getMaxStackSize());
+            for (ItemStack itemId : recipeItems) {
+                finalCraftsAmount = Math.min(finalCraftsAmount, itemId.getMaxStackSize());
             }
             
-            if (recipeFinder.findRecipe(ingredients, recipeItemIds, finalCraftsAmount)) {
+            recipeItems.clear();
+            
+            if (recipeFinder.findRecipe(ingredients, finalCraftsAmount, recipeItems::add)) {
                 this.cleanInputs();
-                this.alignRecipeToGrid(inputStacks, recipeItemIds.iterator(), finalCraftsAmount);
+                this.alignRecipeToGrid(inputStacks, recipeItems.iterator(), finalCraftsAmount);
             }
         }
     }

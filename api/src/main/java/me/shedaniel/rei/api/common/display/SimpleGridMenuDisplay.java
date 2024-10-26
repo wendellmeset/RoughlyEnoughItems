@@ -48,31 +48,9 @@ public interface SimpleGridMenuDisplay extends Display {
      * Returns the input width of the input entries.
      *
      * @return the input width of the input entries
-     * @deprecated use {@link #getInputWidth(int, int)} instead
-     */
-    @Deprecated(forRemoval = true)
-    default int getInputWidth() {
-        return getWidth();
-    }
-    
-    /**
-     * Returns the input height of the input entries.
-     *
-     * @return the input height of the input entries
-     * @deprecated use {@link #getInputHeight(int, int)} instead
-     */
-    @Deprecated(forRemoval = true)
-    default int getInputHeight() {
-        return getHeight();
-    }
-    
-    /**
-     * Returns the input width of the input entries.
-     *
-     * @return the input width of the input entries
      */
     default int getInputWidth(int craftingWidth, int craftingHeight) {
-        return getInputWidth();
+        return getWidth();
     }
     
     /**
@@ -81,6 +59,6 @@ public interface SimpleGridMenuDisplay extends Display {
      * @return the input height of the input entries
      */
     default int getInputHeight(int craftingWidth, int craftingHeight) {
-        return getInputHeight();
+        return getHeight();
     }
 }

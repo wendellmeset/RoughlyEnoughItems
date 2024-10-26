@@ -55,7 +55,7 @@ public class ConfigAddonsEntry extends AbstractConfigListEntry<Unit> {
         super(Component.empty(), false);
         this.width = width;
         this.buttonWidget.setMessage(REIRuntime.getInstance().getPreviousContainerScreen() != null && Minecraft.getInstance().getConnection() != null
-                && Minecraft.getInstance().getConnection().getRecipeManager() != null ? Component.translatable("text.rei.addons")
+                && Minecraft.getInstance().getConnection().registryAccess() != null ? Component.translatable("text.rei.addons")
                 : Component.translatable("config.roughlyenoughitems.filteredEntries.loadWorldFirst"));
     }
     
@@ -78,7 +78,7 @@ public class ConfigAddonsEntry extends AbstractConfigListEntry<Unit> {
         super.render(graphics, index, y, x, entryWidth, entryHeight, mouseX, mouseY, isSelected, delta);
         Window window = Minecraft.getInstance().getWindow();
         this.buttonWidget.active = REIRuntime.getInstance().getPreviousContainerScreen() != null && Minecraft.getInstance().getConnection() != null
-                                   && Minecraft.getInstance().getConnection().getRecipeManager() != null && this.isEditable();
+                                   && Minecraft.getInstance().getConnection().registryAccess() != null && this.isEditable();
         this.buttonWidget.setY(y);
         this.buttonWidget.setX(x + entryWidth / 2 - width / 2);
         this.buttonWidget.setWidth(width);

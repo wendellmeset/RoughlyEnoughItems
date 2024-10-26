@@ -23,13 +23,13 @@
 
 package me.shedaniel.rei.impl.client.gui;
 
+import com.mojang.blaze3d.ProjectionType;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.VertexSorting;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.gui.widgets.Widget;
 import me.shedaniel.rei.impl.client.gui.toast.ExportRecipeIdentifierToast;
@@ -82,16 +82,16 @@ public final class RecipeDisplayExporter {
     private static void exportRecipe(Rectangle rectangle, DisplaySpec display, List<Widget> widgets) {
         Minecraft client = Minecraft.getInstance();
         Window window = client.getWindow();
-        RenderTarget renderTarget = new TextureTarget(window.getWidth(), window.getHeight(), true, false);
+        RenderTarget renderTarget = new TextureTarget(window.getWidth(), window.getHeight(), true);
+        renderTarget.setClearColor(0, 0, 0, 0);
         renderTarget.bindWrite(true);
-        RenderSystem.clear(256, Minecraft.ON_OSX);
+        RenderSystem.clear(256);
         Matrix4f matrix4f = new Matrix4f().setOrtho(0.0F, (float) ((double) window.getWidth() / window.getGuiScale()), (float) ((double) window.getHeight() / window.getGuiScale()), 0.0F, 1000.0F, 3000.0F);
-        RenderSystem.setProjectionMatrix(matrix4f, VertexSorting.ORTHOGRAPHIC_Z);
+        RenderSystem.setProjectionMatrix(matrix4f, ProjectionType.ORTHOGRAPHIC);
         Matrix4fStack poseStack = RenderSystem.getModelViewStack();
         poseStack.pushMatrix();
         poseStack.identity();
         poseStack.translate(0.0F, 0.0F, -2000.0F);
-        RenderSystem.applyModelViewMatrix();
         Lighting.setupFor3DItems();
         GuiGraphics graphics = new GuiGraphics(client, client.renderBuffers().bufferSource());
         for (Widget widget : widgets) {
@@ -107,7 +107,7 @@ public final class RecipeDisplayExporter {
         NativeImage strippedImage = new NativeImage(outWidth, outHeight, false);
         for (int y = 0; y < outHeight; ++y) {
             for (int x = 0; x < outWidth; ++x) {
-                strippedImage.setPixelRGBA(x, y, nativeImage.getPixelRGBA(x + (int) (rectangle.x * window.getGuiScale()), y + (int) (rectangle.y * window.getGuiScale())));
+                strippedImage.setPixel(x, y, nativeImage.getPixel(x + (int) (rectangle.x * window.getGuiScale()), y + (int) (rectangle.y * window.getGuiScale())));
             }
         }
         Util.ioPool().execute(() -> {
@@ -124,9 +124,8 @@ public final class RecipeDisplayExporter {
         });
         
         renderTarget.destroyBuffers();
-        Minecraft.getInstance().levelRenderer.graphicsChanged();
+        // Minecraft.getInstance().levelRenderer.graphicsChanged();
         Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
         poseStack.popMatrix();
-        RenderSystem.applyModelViewMatrix();
     }
 }

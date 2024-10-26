@@ -26,9 +26,8 @@ package me.shedaniel.rei.impl.client.config.entries;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import me.shedaniel.clothconfig2.ClothConfigInitializer;
-import me.shedaniel.clothconfig2.api.ScissorsHandler;
 import me.shedaniel.clothconfig2.api.scroll.ScrollingContainer;
 import me.shedaniel.math.Point;
 import me.shedaniel.math.Rectangle;
@@ -52,7 +51,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
@@ -140,7 +139,7 @@ public class FilteringScreen extends Screen {
                             FilteringListEntry entry = entries.get(i);
                             entry.getBounds().y = entry.backupY - scrolling.scrollAmountInt();
                             if (entry.isSelected() && !entry.isFiltered()) {
-                        configFiltered.add(stack);
+                                configFiltered.add(stack);
                                 entry.dirty = true;
                             }
                         }
@@ -155,7 +154,7 @@ public class FilteringScreen extends Screen {
                             EntryStack<?> stack = entryStacks.get(i);
                             FilteringListEntry entry = entries.get(i);
                             entry.getBounds().y = entry.backupY - scrolling.scrollAmountInt();
-                    if (entry.isSelected() && configFiltered.remove(stack)) {
+                            if (entry.isSelected() && configFiltered.remove(stack)) {
                                 entry.dirty = true;
                             }
                         }
@@ -219,7 +218,7 @@ public class FilteringScreen extends Screen {
         UpdatedListWidget.renderAs(minecraft, width, height, bounds.y, height, graphics, delta);
         if (bounds.isEmpty())
             return;
-        ScissorsHandler.INSTANCE.scissor(bounds);
+        graphics.enableScissor(bounds.x, bounds.y, bounds.getMaxX(), bounds.getMaxY());
         for (FilteringListEntry entry : entries)
             entry.clearStacks();
         int skip = Math.max(0, Mth.floor(scrolling.scrollAmount() / (float) entrySize()));
@@ -238,7 +237,7 @@ public class FilteringScreen extends Screen {
         }
         manager.render(graphics, mouseX, mouseY, delta);
         updatePosition(delta);
-        scrolling.renderScrollBar(graphics, 0, 1.0F, REIRuntime.getInstance().isDarkThemeEnabled() ? 0.8F : 1F);
+        scrolling.renderScrollBar(graphics, 0, REIRuntime.getInstance().isDarkThemeEnabled() ? 0.8F : 1F);
         graphics.pose().pushPose();
         graphics.pose().translate(0, 0, 300);
         this.searchField.render(graphics, mouseX, mouseY, delta);
@@ -248,19 +247,15 @@ public class FilteringScreen extends Screen {
         this.showButton.render(graphics, mouseX, mouseY, delta);
         graphics.pose().popPose();
         
-        ScissorsHandler.INSTANCE.removeLastScissor();
-        Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder buffer = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-        RenderSystem.enableBlend();
-        RenderSystem.blendFuncSeparate(770, 771, 0, 1);
-        RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
-        Matrix4f matrix = graphics.pose().last().pose();
-        buffer.addVertex(matrix, 0, bounds.y + 4, 0.0F).setUv(0.0F, 1.0F).setColor(0, 0, 0, 0);
-        buffer.addVertex(matrix, width, bounds.y + 4, 0.0F).setUv(1.0F, 1.0F).setColor(0, 0, 0, 0);
-        buffer.addVertex(matrix, width, bounds.y, 0.0F).setUv(1.0F, 0.0F).setColor(0, 0, 0, 255);
-        buffer.addVertex(matrix, 0, bounds.y, 0.0F).setUv(0.0F, 0.0F).setColor(0, 0, 0, 255);
-        BufferUploader.drawWithShader(buffer.buildOrThrow());
-        RenderSystem.disableBlend();
+        graphics.disableScissor();
+        graphics.drawSpecial(source -> {
+            Matrix4f matrix = graphics.pose().last().pose();
+            VertexConsumer buffer = source.getBuffer(RenderType.gui());
+            buffer.addVertex(matrix, 0, bounds.y + 4, 0.0F).setColor(0, 0, 0, 0);
+            buffer.addVertex(matrix, width, bounds.y + 4, 0.0F).setColor(0, 0, 0, 0);
+            buffer.addVertex(matrix, width, bounds.y, 0.0F).setColor(0, 0, 0, 255);
+            buffer.addVertex(matrix, 0, bounds.y, 0.0F).setColor(0, 0, 0, 255);
+        });
         
         this.backButton.render(graphics, mouseX, mouseY, delta);
         
@@ -322,7 +317,7 @@ public class FilteringScreen extends Screen {
     
     public boolean matches(EntryStack<?> stack) {
         EntrySerializer<?> serializer = stack.getDefinition().getSerializer();
-        if (serializer == null || !serializer.supportReading() || !serializer.supportSaving()) {
+        if (serializer == null) {
             return false;
         }
         return lastFilter.test(stack);

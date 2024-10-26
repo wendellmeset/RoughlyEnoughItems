@@ -27,37 +27,62 @@ import com.google.common.base.Stopwatch;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import dev.architectury.event.EventResult;
+import dev.architectury.event.events.client.ClientTickEvent;
 import me.shedaniel.rei.api.client.plugins.REIClientPlugin;
 import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
 import me.shedaniel.rei.api.client.registry.display.DisplayCategory;
 import me.shedaniel.rei.api.client.registry.display.DisplayRegistry;
 import me.shedaniel.rei.api.client.registry.display.DynamicDisplayGenerator;
 import me.shedaniel.rei.api.client.registry.display.reason.DisplayAdditionReason;
-import me.shedaniel.rei.api.client.registry.display.reason.DisplayAdditionReasons;
 import me.shedaniel.rei.api.client.registry.display.visibility.DisplayVisibilityPredicate;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.display.Display;
 import me.shedaniel.rei.api.common.plugins.PluginManager;
 import me.shedaniel.rei.api.common.registry.ReloadStage;
+import me.shedaniel.rei.impl.client.gui.widget.favorites.history.DisplayHistoryManager;
 import me.shedaniel.rei.impl.common.InternalLogger;
-import me.shedaniel.rei.impl.common.registry.RecipeManagerContextImpl;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeHolder;
+import me.shedaniel.rei.impl.common.plugins.ReloadManagerImpl;
+import me.shedaniel.rei.impl.common.registry.displays.AbstractDisplayRegistry;
+import me.shedaniel.rei.impl.common.registry.displays.DisplayConsumerImpl;
+import me.shedaniel.rei.impl.common.registry.displays.DisplaysHolderImpl;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.item.crafting.display.RecipeDisplayEntry;
+import net.minecraft.world.item.crafting.display.RecipeDisplayId;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiPredicate;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
-public class DisplayRegistryImpl extends RecipeManagerContextImpl<REIClientPlugin> implements DisplayRegistry {
+public class DisplayRegistryImpl extends AbstractDisplayRegistry<REIClientPlugin, DisplayRegistryImpl.ClientDisplaysHolder> implements DisplayRegistry, DisplayConsumerImpl, DisplayGeneratorsRegistryImpl {
+    public static final Object SYNCED = new Object();
     private final Map<CategoryIdentifier<?>, List<DynamicDisplayGenerator<?>>> displayGenerators = new ConcurrentHashMap<>();
     private final List<DynamicDisplayGenerator<?>> globalDisplayGenerators = new ArrayList<>();
     private final List<DisplayVisibilityPredicate> visibilityPredicates = new ArrayList<>();
-    private final List<DisplayFiller<?>> fillers = new ArrayList<>();
+    private final List<Runnable> jobs = new ArrayList<>();
     private long lastAddWarning = -1;
-    private DisplaysHolder displaysHolder = new DisplaysHolderImpl(false);
+    
+    public DisplayRegistryImpl() {
+        super(ClientDisplaysHolder::new);
+        
+        int[] tick = {0};
+        ClientTickEvent.CLIENT_POST.register(instance -> {
+            if (tick[0]++ % 20 == 0 && !PluginManager.areAnyReloading() && ReloadManagerImpl.countRunningReloadTasks() == 0 && Minecraft.getInstance().getConnection() != null) {
+                for (Runnable job : this.jobs) {
+                    try {
+                        job.run();
+                    } catch (Throwable throwable) {
+                        InternalLogger.getInstance().error("Failed to run job", throwable);
+                    }
+                }
+                
+                this.jobs.clear();
+            }
+        });
+    }
+    
+    public void addJob(Runnable job) {
+        this.jobs.add(job);
+    }
     
     @Override
     public void acceptPlugin(REIClientPlugin plugin) {
@@ -65,12 +90,7 @@ public class DisplayRegistryImpl extends RecipeManagerContextImpl<REIClientPlugi
     }
     
     @Override
-    public int displaySize() {
-        return this.displaysHolder.size();
-    }
-    
-    @Override
-    public void add(Display display, @Nullable Object origin) {
+    public boolean add(Display display, @Nullable Object origin) {
         if (!PluginManager.areAnyReloading()) {
             if (lastAddWarning < 0 || System.currentTimeMillis() - lastAddWarning > 5000) {
                 InternalLogger.getInstance().warn("Detected runtime DisplayRegistry modification, this can be extremely dangerous!");
@@ -79,37 +99,17 @@ public class DisplayRegistryImpl extends RecipeManagerContextImpl<REIClientPlugi
             lastAddWarning = System.currentTimeMillis();
         }
         
-        if (DisplayValidator.validate(display)) {
-            this.displaysHolder.add(display, origin);
-        }
+        return DisplayValidator.validate(display) && super.add(display, origin);
     }
     
     @Override
-    public Map<CategoryIdentifier<?>, List<Display>> getAll() {
-        return this.displaysHolder.getUnmodifiable();
+    public List<DynamicDisplayGenerator<?>> globalDisplayGenerators() {
+        return globalDisplayGenerators;
     }
     
     @Override
-    public <A extends Display> void registerGlobalDisplayGenerator(DynamicDisplayGenerator<A> generator) {
-        globalDisplayGenerators.add(generator);
-        InternalLogger.getInstance().debug("Added global display generator: %s", generator);
-    }
-    
-    @Override
-    public <A extends Display> void registerDisplayGenerator(CategoryIdentifier<A> categoryId, DynamicDisplayGenerator<A> generator) {
-        displayGenerators.computeIfAbsent(categoryId, location -> new ArrayList<>())
-                .add(generator);
-        InternalLogger.getInstance().debug("Added display generator for category [%s]: %s", categoryId, generator);
-    }
-    
-    @Override
-    public Map<CategoryIdentifier<?>, List<DynamicDisplayGenerator<?>>> getCategoryDisplayGenerators() {
-        return Collections.unmodifiableMap(displayGenerators);
-    }
-    
-    @Override
-    public List<DynamicDisplayGenerator<?>> getGlobalDisplayGenerators() {
-        return Collections.unmodifiableList(globalDisplayGenerators);
+    public Map<CategoryIdentifier<?>, List<DynamicDisplayGenerator<?>>> categoryDisplayGenerators() {
+        return displayGenerators;
     }
     
     @Override
@@ -125,6 +125,7 @@ public class DisplayRegistryImpl extends RecipeManagerContextImpl<REIClientPlugi
         return isDisplayVisible(category, display);
     }
     
+    @Override
     public boolean isDisplayVisible(DisplayCategory<?> category, Display display) {
         if (category == null) throw new NullPointerException("Failed to resolve category: " + display.getCategoryIdentifier());
         for (DisplayVisibilityPredicate predicate : visibilityPredicates) {
@@ -147,52 +148,15 @@ public class DisplayRegistryImpl extends RecipeManagerContextImpl<REIClientPlugi
     }
     
     @Override
-    public <T, D extends Display> void registerFiller(Class<T> typeClass, Predicate<? extends T> predicate, Function<? extends T, D> filler) {
-        registerFiller(o -> typeClass.isInstance(o) && ((Predicate<T>) predicate).test((T) o), o -> ((Function<T, D>) filler).apply((T) o));
-    }
-    
-    @Override
-    public <T, D extends Display> void registerDisplaysFiller(Class<T> typeClass, Predicate<? extends T> predicate, Function<? extends T, @Nullable Collection<? extends D>> filler) {
-        registerDisplaysFiller(o -> typeClass.isInstance(o) && ((Predicate<T>) predicate).test((T) o), o -> ((Function<T, Collection<? extends D>>) filler).apply((T) o));
-    }
-    
-    @Override
-    public <T, D extends Display> void registerFiller(Class<T> typeClass, BiPredicate<? extends T, DisplayAdditionReasons> predicate, Function<? extends T, D> filler) {
-        fillers.add(DisplayFiller.of((o, s) -> typeClass.isInstance(o) && ((BiPredicate<Object, DisplayAdditionReasons>) predicate).test(o, s), (Function<Object, D>) filler));
-        InternalLogger.getInstance().debug("Added display filter: %s for %s", filler, typeClass.getName());
-    }
-    
-    @Override
-    public <T, D extends Display> void registerDisplaysFiller(Class<T> typeClass, BiPredicate<? extends T, DisplayAdditionReasons> predicate, Function<? extends T, @Nullable Collection<? extends D>> filler) {
-        fillers.add(new DisplayFiller<>((o, s) -> typeClass.isInstance(o) && ((BiPredicate<Object, DisplayAdditionReasons>) predicate).test(o, s), (Function<Object, Collection<? extends D>>) filler));
-        InternalLogger.getInstance().debug("Added display filter: %s for %s", filler, typeClass.getName());
-    }
-    
-    @Override
-    public <D extends Display> void registerFiller(Predicate<?> predicate, Function<?, D> filler) {
-        fillers.add(DisplayFiller.of((o, s) -> ((Predicate<Object>) predicate).test(o), (Function<Object, D>) filler));
-        InternalLogger.getInstance().debug("Added display filter: %s", filler);
-    }
-    
-    @Override
-    public <D extends Display> void registerDisplaysFiller(Predicate<?> predicate, Function<?, @Nullable Collection<? extends D>> filler) {
-        fillers.add(new DisplayFiller<>((o, s) -> ((Predicate<Object>) predicate).test(o), (Function<Object, Collection<? extends D>>) filler));
-        InternalLogger.getInstance().debug("Added display filter: %s", filler);
-    }
-    
-    @Override
     public void startReload() {
         super.startReload();
-        this.displaysHolder = new DisplaysHolderImpl(true);
         this.displayGenerators.clear();
         this.visibilityPredicates.clear();
-        this.fillers.clear();
     }
     
     @Override
     public void endReload() {
-        InternalLogger.getInstance().debug("Found preliminary %d displays", displaySize());
-        fillSortedRecipes();
+        InternalLogger.getInstance().debug("Found %d displays", size());
         
         for (CategoryIdentifier<?> identifier : getAll().keySet()) {
             if (CategoryRegistry.getInstance().tryGet(identifier).isEmpty()) {
@@ -201,25 +165,65 @@ public class DisplayRegistryImpl extends RecipeManagerContextImpl<REIClientPlugi
         }
         
         removeFailedDisplays();
-        this.displaysHolder.endReload();
-        InternalLogger.getInstance().debug("%d displays registration have completed", displaySize());
+        this.cache().endReload();
+        InternalLogger.getInstance().debug("%d displays registration have completed", size());
+        
+        for (Runnable job : this.jobs) {
+            try {
+                job.run();
+            } catch (Throwable throwable) {
+                InternalLogger.getInstance().error("Failed to run job", throwable);
+            }
+        }
+        
+        this.jobs.clear();
     }
     
-    private void fillSortedRecipes() {
+    public void addRecipes(List<RecipeDisplayEntry> entries) {
         Stopwatch stopwatch = Stopwatch.createStarted();
-        int lastSize = displaySize();
-        if (!fillers.isEmpty()) {
-            List<RecipeHolder<?>> allSortedRecipes = getAllSortedRecipes();
-            for (int i = allSortedRecipes.size() - 1; i >= 0; i--) {
-                RecipeHolder<?> recipe = allSortedRecipes.get(i);
+        int lastSize = size();
+        if (!fillers().isEmpty()) {
+            for (RecipeDisplayEntry entry : entries) {
                 try {
-                    addWithReason(recipe, DisplayAdditionReason.RECIPE_MANAGER);
+                    for (Display display : tryFillDisplay(entry.display(), DisplayAdditionReason.RECIPE_MANAGER, DisplayAdditionReason.withId(entry.id()))) {
+                        add(display, entry);
+                    }
                 } catch (Throwable e) {
-                    InternalLogger.getInstance().error("Failed to fill display for recipe: %s [%s]", recipe.value(), recipe.id(), e);
+                    InternalLogger.getInstance().error("Failed to fill display for recipe: %s [%s]", entry.display(), entry.id(), e);
                 }
             }
         }
-        InternalLogger.getInstance().debug("Filled %d displays from recipe manager in %s", displaySize() - lastSize, stopwatch.stop());
+        InternalLogger.getInstance().debug("Filled %d displays from vanilla server in %s", size() - lastSize, stopwatch.stop());
+    }
+    
+    public void removeRecipes(Set<RecipeDisplayId> ids) {
+        List<Display> toRemove = new LinkedList<>();
+        WeakHashMap<Display, Object> origins = this.holder().origins();
+        for (Map.Entry<Display, Object> entry : origins.entrySet()) {
+            if (entry.getValue() instanceof RecipeDisplayEntry displayEntry) {
+                if (ids.contains(displayEntry.id())) {
+                    toRemove.add(entry.getKey());
+                }
+            }
+        }
+        
+        for (Display display : toRemove) {
+            this.holder().remove(display);
+        }
+    }
+    
+    public void removeSyncedRecipes() {
+        List<Display> toRemove = new LinkedList<>();
+        WeakHashMap<Display, Object> origins = this.holder().origins();
+        for (Map.Entry<Display, Object> entry : origins.entrySet()) {
+            if (entry.getValue() == SYNCED) {
+                toRemove.add(entry.getKey());
+            }
+        }
+        
+        for (Display display : toRemove) {
+            this.holder().remove(display);
+        }
     }
     
     private void removeFailedDisplays() {
@@ -238,7 +242,7 @@ public class DisplayRegistryImpl extends RecipeManagerContextImpl<REIClientPlugi
                 .forEach(entry -> {
                     InternalLogger.getInstance().debug("- %s: %d failed display" + (entry.getValue().size() == 1 ? "" : "s"), entry.getKey(), entry.getValue().size());
                     for (Display display : entry.getValue()) {
-                        this.displaysHolder.remove(display);
+                        this.holder().remove(display);
                     }
                 });
     }
@@ -246,8 +250,8 @@ public class DisplayRegistryImpl extends RecipeManagerContextImpl<REIClientPlugi
     @Override
     public void postStage(ReloadStage stage) {
         if (stage != ReloadStage.END) return;
-        InternalLogger.getInstance().debug("Registered displays report (%d displays, %d cached / %d not cached)" + (displaySize() > 0 ? ":" : ""),
-                displaySize(), displaysHolder().cache().cachedSize(), displaysHolder().cache().notCachedSize());
+        InternalLogger.getInstance().debug("Registered displays report (%d displays, %d cached / %d not cached)" + (size() > 0 ? ":" : ""),
+                size(), cache().cachedSize(), cache().notCachedSize());
         getAll().entrySet().stream()
                 .sorted(Comparator.comparing(entry -> entry.getKey().toString()))
                 .forEach(entry -> {
@@ -255,55 +259,47 @@ public class DisplayRegistryImpl extends RecipeManagerContextImpl<REIClientPlugi
                 });
     }
     
-    public DisplaysHolder displaysHolder() {
-        return displaysHolder;
+    public DisplayCache cache() {
+        return holder().cache;
     }
     
-    @Override
-    public <T> Collection<Display> tryFillDisplay(T value, DisplayAdditionReason... reason) {
-        if (value instanceof Display) return Collections.singleton((Display) value);
-        List<Display> out = null;
-        DisplayAdditionReasons reasons = reason.length == 0 ? DisplayAdditionReasons.Impl.EMPTY : new DisplayAdditionReasons.Impl(reason);
-        for (DisplayFiller<?> filler : fillers) {
-            Collection<Display> displays = tryFillDisplayGenerics(filler, value, reasons);
-            if (displays != null && !displays.isEmpty()) {
-                if (out == null) out = new ArrayList<>();
-                for (Display display : displays) {
-                    if (display != null) out.add(display);
-                }
-            }
-        }
-        if (out != null) {
-            return out;
-        }
-        return Collections.emptyList();
-    }
-    
-    private <D extends Display> Collection<D> tryFillDisplayGenerics(DisplayFiller<? extends D> filler, Object value, DisplayAdditionReasons reasons) {
-        try {
-            if (filler.predicate.test(value, reasons)) {
-                return (Collection<D>) filler.mappingFunction.apply(value);
-            }
-        } catch (Throwable e) {
-            throw new RuntimeException("Failed to fill displays!", e);
+    public static class ClientDisplaysHolder extends DisplaysHolderImpl.ByKey {
+        private final DisplayCache cache = new DisplayCacheImpl(false);
+        
+        @Override
+        public void add(Display display, @Nullable Object origin) {
+            super.add(display, origin);
+            this.cache.add(display);
         }
         
-        return null;
-    }
-    
-    @Override
-    @Nullable
-    public Object getDisplayOrigin(Display display) {
-        return this.displaysHolder.getDisplayOrigin(display);
-    }
-    
-    private record DisplayFiller<D extends Display>(
-            BiPredicate<Object, DisplayAdditionReasons> predicate,
+        @Override
+        public boolean remove(Display display) {
+            if (super.remove(display)) {
+                this.cache.remove(display);
+                return true;
+            }
             
-            Function<Object, Collection<? extends D>> mappingFunction
-    ) {
-        public static <D extends Display> DisplayFiller<D> of(BiPredicate<Object, DisplayAdditionReasons> predicate, Function<Object, D> mappingFunction) {
-            return new DisplayFiller<>(predicate, o -> Collections.singleton(mappingFunction.apply(o)));
+            return false;
+        }
+        
+        @Override
+        @Nullable
+        public Object getDisplayOrigin(Display display) {
+            Object origin = super.getDisplayOrigin(display);
+            if (origin != null) {
+                return origin;
+            }
+            
+            return DisplayHistoryManager.INSTANCE.getPossibleOrigin(this, display);
+        }
+        
+        @Override
+        protected boolean checkCategory(CategoryIdentifier<?> key) {
+            return CategoryRegistry.getInstance().tryGet(key).isPresent();
+        }
+        
+        private WeakHashMap<Display, Object> origins() {
+            return this.originsMap;
         }
     }
 }

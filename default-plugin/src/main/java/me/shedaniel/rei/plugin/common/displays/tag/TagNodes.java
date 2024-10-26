@@ -197,7 +197,7 @@ public class TagNodes {
     }
     
     public static <T> void create(TagKey<T> tagKey, Consumer<DataResult<TagNode<T>>> callback) {
-        Registry<T> registry = ((Registry<Registry<T>>) BuiltInRegistries.REGISTRY).get((ResourceKey<Registry<T>>) tagKey.registry());
+        Registry<T> registry = ((Registry<Registry<T>>) BuiltInRegistries.REGISTRY).getValueOrThrow((ResourceKey<Registry<T>>) tagKey.registry());
         requestTagData(tagKey.registry(), result -> {
             callback.accept(result.flatMap(dataMap -> dataMap != null ? resolveTag(tagKey, registry, dataMap).orElse(DataResult.error(() -> "No tag data")) : DataResult.error(() -> "No tag data")));
         });
@@ -210,7 +210,7 @@ public class TagNodes {
         TagNode<T> self = TagNode.ofReference(tagKey);
         List<Holder<T>> holders = new ArrayList<>();
         for (int element : tagData.otherElements()) {
-            Optional<Holder.Reference<T>> holder = registry.getHolder(element);
+            Optional<Holder.Reference<T>> holder = registry.get(element);
             if (holder.isPresent()) {
                 holders.add(holder.get());
             }
@@ -220,7 +220,7 @@ public class TagNodes {
         }
         for (ResourceLocation childTagId : tagData.otherTags()) {
             TagKey<T> childTagKey = TagKey.create(tagKey.registry(), childTagId);
-            if (registry.getTag(childTagKey).isPresent()) {
+            if (registry.get(childTagKey).isPresent()) {
                 Optional<DataResult<TagNode<T>>> resultOptional = resolveTag(childTagKey, registry, tagDataMap);
                 if (resultOptional.isPresent()) {
                     DataResult<TagNode<T>> result = resultOptional.get();

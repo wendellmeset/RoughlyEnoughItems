@@ -24,19 +24,22 @@
 package me.shedaniel.rei.impl.client.gui.widget.favorites.history;
 
 import com.google.common.collect.Iterables;
+import com.mojang.serialization.DataResult;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.display.Display;
-import me.shedaniel.rei.api.common.display.DisplaySerializerRegistry;
+import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.api.common.plugins.PluginManager;
 import me.shedaniel.rei.impl.client.config.ConfigManagerImpl;
-import me.shedaniel.rei.impl.client.registry.display.DisplayKey;
-import me.shedaniel.rei.impl.client.registry.display.DisplaysHolder;
 import me.shedaniel.rei.impl.common.InternalLogger;
+import me.shedaniel.rei.impl.common.registry.displays.DisplayKey;
+import me.shedaniel.rei.impl.common.registry.displays.DisplaysHolder;
 import net.minecraft.Util;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +52,7 @@ public class DisplayHistoryManager {
     private long lastCheckTime = -1;
     
     @Nullable
-    public Object getPossibleOrigin(DisplaysHolder holder, Display display) {
+    public Object getPossibleOrigin(DisplaysHolder.ByKey holder, Display display) {
         DisplayEntry entry = displayToEntries.get(display);
         if (entry == null) return null;
         Optional<ResourceLocation> location = display.getDisplayLocation();
@@ -97,7 +100,8 @@ public class DisplayHistoryManager {
                 try {
                     CategoryIdentifier<?> categoryIdentifier = CategoryIdentifier.of(tag.getString("DisplayHistoryCategory"));
                     if (CategoryRegistry.getInstance().tryGet(categoryIdentifier).isPresent()) {
-                        Display display = DisplaySerializerRegistry.getInstance().read(categoryIdentifier, tag.getCompound("DisplayHistoryData"));
+                        DataResult<Display> result = Display.codec().parse(BasicDisplay.registryAccess().createSerializationContext(NbtOps.INSTANCE), tag.getCompound("DisplayHistoryData"));
+                        Display display = result.getOrThrow();
                         DisplayEntry newEntry = new DisplayEntry(parent, display, null);
                         newEntry.setUuid(UUID.fromString(uuid));
                         entries.put(newEntry.getUuid().toString(), newEntry);
@@ -163,11 +167,11 @@ public class DisplayHistoryManager {
             if (entry != null) {
                 compoundTag.putBoolean("DisplayHistoryContains", false);
                 Display display = entry.getDisplay();
-                boolean hasSerializer = DisplaySerializerRegistry.getInstance().hasSerializer(display.getCategoryIdentifier());
                 
-                if (hasSerializer) {
+                if (display.getSerializer() != null) {
                     try {
-                        compoundTag.put("DisplayHistoryData", DisplaySerializerRegistry.getInstance().save(display, new CompoundTag()));
+                        DataResult<Tag> displayTag = Display.codec().encodeStart(BasicDisplay.registryAccess().createSerializationContext(NbtOps.INSTANCE), display);
+                        compoundTag.put("DisplayHistoryData", displayTag.getOrThrow());
                         compoundTag.putBoolean("DisplayHistoryContains", true);
                     } catch (Exception e) {
                         InternalLogger.getInstance().warn("Failed to save display history entry", e);

@@ -23,7 +23,6 @@
 
 package me.shedaniel.rei.impl.client.gui.widget;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import dev.architectury.utils.value.IntValue;
 import me.shedaniel.clothconfig2.api.animator.NumberAnimator;
 import me.shedaniel.clothconfig2.api.animator.ValueAnimator;
@@ -34,6 +33,7 @@ import me.shedaniel.rei.api.client.registry.display.DisplayCategory;
 import me.shedaniel.rei.impl.client.gui.InternalTextures;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 
@@ -219,16 +219,12 @@ public class TabContainerWidget {
             if (isCompactTabButtons) {
                 graphics.pose().pushPose();
                 graphics.pose().translate(0, 0.5, 0);
-                RenderSystem.setShaderTexture(0, InternalTextures.ARROW_LEFT_SMALL_TEXTURE);
-                graphics.blit(InternalTextures.ARROW_LEFT_SMALL_TEXTURE, tabLeftBounds.x + 2, tabLeftBounds.y + 2, 0, 0, 6, 6, 6, 6);
-                RenderSystem.setShaderTexture(0, InternalTextures.ARROW_RIGHT_SMALL_TEXTURE);
-                graphics.blit(InternalTextures.ARROW_RIGHT_SMALL_TEXTURE, tabRightBounds.x + 2, tabRightBounds.y + 2, 0, 0, 6, 6, 6, 6);
+                graphics.blit(RenderType::guiTextured, InternalTextures.ARROW_LEFT_SMALL_TEXTURE, tabLeftBounds.x + 2, tabLeftBounds.y + 2, 0, 0, 6, 6, 6, 6);
+                graphics.blit(RenderType::guiTextured, InternalTextures.ARROW_RIGHT_SMALL_TEXTURE, tabRightBounds.x + 2, tabRightBounds.y + 2, 0, 0, 6, 6, 6, 6);
                 graphics.pose().popPose();
             } else {
-                RenderSystem.setShaderTexture(0, InternalTextures.ARROW_LEFT_TEXTURE);
-                graphics.blit(InternalTextures.ARROW_LEFT_TEXTURE, tabLeftBounds.x + 4, tabLeftBounds.y + 4, 0, 0, 8, 8, 8, 8);
-                RenderSystem.setShaderTexture(0, InternalTextures.ARROW_RIGHT_TEXTURE);
-                graphics.blit(InternalTextures.ARROW_RIGHT_TEXTURE, tabRightBounds.x + 4, tabRightBounds.y + 4, 0, 0, 8, 8, 8, 8);
+                graphics.blit(RenderType::guiTextured, InternalTextures.ARROW_LEFT_TEXTURE, tabLeftBounds.x + 4, tabLeftBounds.y + 4, 0, 0, 8, 8, 8, 8);
+                graphics.blit(RenderType::guiTextured, InternalTextures.ARROW_RIGHT_TEXTURE, tabRightBounds.x + 4, tabRightBounds.y + 4, 0, 0, 8, 8, 8, 8);
             }
         }), 0, 0, 1));
         return widgets;

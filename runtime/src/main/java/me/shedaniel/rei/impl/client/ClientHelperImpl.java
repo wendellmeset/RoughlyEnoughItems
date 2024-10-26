@@ -368,7 +368,7 @@ public class ClientHelperImpl implements ClientHelper {
     
     @Override
     public boolean canUseMovePackets() {
-        return NetworkManager.canServerReceive(RoughlyEnoughItemsNetwork.MOVE_ITEMS_PACKET);
+        return NetworkManager.canServerReceive(RoughlyEnoughItemsNetwork.MOVE_ITEMS_NEW_PACKET);
     }
     
     public void onInitializeClient() {

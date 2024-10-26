@@ -24,7 +24,6 @@
 package me.shedaniel.rei.api.client.gui.widgets;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import me.shedaniel.clothconfig2.api.ScissorsHandler;
 import me.shedaniel.math.Point;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.math.impl.PointHelper;
@@ -120,12 +119,8 @@ public abstract class Widget extends AbstractContainerEventHandler implements Re
     
     @ApiStatus.Experimental
     public static CloseableScissors scissor(GuiGraphics graphics, Rectangle bounds) {
-        return scissor(graphics.pose().last().pose(), bounds);
-    }
-    
-    @ApiStatus.Experimental
-    public static CloseableScissors scissor(Matrix4f matrix, Rectangle bounds) {
-        ScissorsHandler.INSTANCE.scissor(MatrixUtils.transform(matrix, bounds));
-        return ScissorsHandler.INSTANCE::removeLastScissor;
+        bounds = MatrixUtils.transform(graphics.pose().last().pose(), bounds);
+        graphics.enableScissor(bounds.x, bounds.y, bounds.getMaxX(), bounds.getMaxY());
+        return graphics::disableScissor;
     }
 }

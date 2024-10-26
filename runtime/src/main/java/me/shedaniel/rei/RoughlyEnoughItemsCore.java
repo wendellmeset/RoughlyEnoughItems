@@ -30,9 +30,7 @@ import dev.architectury.registry.ReloadListenerRegistry;
 import dev.architectury.utils.Env;
 import dev.architectury.utils.EnvExecutor;
 import me.shedaniel.rei.api.common.entry.type.EntryType;
-import me.shedaniel.rei.api.common.plugins.PluginView;
-import me.shedaniel.rei.api.common.plugins.REIPlugin;
-import me.shedaniel.rei.api.common.plugins.REIServerPlugin;
+import me.shedaniel.rei.api.common.plugins.REICommonPlugin;
 import me.shedaniel.rei.impl.Internals;
 import me.shedaniel.rei.impl.common.InternalLogger;
 import me.shedaniel.rei.impl.common.category.CategoryIdentifierImpl;
@@ -52,8 +50,7 @@ import me.shedaniel.rei.impl.common.logging.performance.PerformanceLoggerImpl;
 import me.shedaniel.rei.impl.common.plugins.PluginManagerImpl;
 import me.shedaniel.rei.impl.common.plugins.ReloadInterruptionContext;
 import me.shedaniel.rei.impl.common.plugins.ReloadManagerImpl;
-import me.shedaniel.rei.impl.common.registry.RecipeManagerContextImpl;
-import me.shedaniel.rei.impl.common.transfer.MenuInfoRegistryImpl;
+import me.shedaniel.rei.impl.common.registry.displays.ServerDisplayRegistryImpl;
 import me.shedaniel.rei.impl.common.transfer.SlotAccessorRegistryImpl;
 import me.shedaniel.rei.impl.common.util.InstanceHelper;
 import me.shedaniel.rei.impl.init.PluginDetector;
@@ -72,7 +69,6 @@ import java.util.ServiceLoader;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
 
 @ApiStatus.Internal
 public class RoughlyEnoughItemsCore {
@@ -134,31 +130,25 @@ public class RoughlyEnoughItemsCore {
         Internals.attachInstance(NbtHasherProviderImpl.INSTANCE, Internals.NbtHasherProvider.class);
         Internals.attachInstance(EntryIngredientImpl.INSTANCE, Internals.EntryIngredientProvider.class);
         Internals.attachInstanceSupplier(new PluginManagerImpl<>(
-                REIPlugin.class,
-                UnaryOperator.identity(),
+                REICommonPlugin.class,
+                new SlotAccessorRegistryImpl(),
                 new EntryTypeRegistryImpl(),
                 new EntrySettingsAdapterRegistryImpl(),
-                new RecipeManagerContextImpl<>(),
                 new ItemComparatorRegistryImpl(),
                 new FluidComparatorRegistryImpl(),
                 new DisplaySerializerRegistryImpl(),
+                new ServerDisplayRegistryImpl(),
                 new FluidSupportProviderImpl()), "commonPluginManager");
-        Internals.attachInstanceSupplier(new PluginManagerImpl<>(
-                REIServerPlugin.class,
-                view -> view.then(PluginView.getInstance()),
-                new MenuInfoRegistryImpl(),
-                new SlotAccessorRegistryImpl()), "serverPluginManager");
     }
     
     public void onInitialize() {
         PluginDetector detector = getPluginDetector();
         detector.detectCommonPlugins();
-        detector.detectServerPlugins();
         RoughlyEnoughItemsNetwork.onInitialize();
         
         if (Platform.getEnvironment() == Env.SERVER) {
             MutableLong lastReload = new MutableLong(-1);
-            ReloadListenerRegistry.register(PackType.SERVER_DATA, (preparationBarrier, resourceManager, profilerFiller, profilerFiller2, executor, executor2) -> {
+            ReloadListenerRegistry.register(PackType.SERVER_DATA, (preparationBarrier, resourceManager, executor, executor2) -> {
                 return preparationBarrier.wait(Unit.INSTANCE).thenRunAsync(() -> {
                     ReloadManagerImpl.reloadPlugins(null, ReloadInterruptionContext.ofNever());
                 }, executor2);

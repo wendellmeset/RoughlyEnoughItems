@@ -78,7 +78,7 @@ public class DisplayTooltipComponent implements TooltipComponent, ClientTooltipC
     }
     
     @Override
-    public int getHeight() {
+    public int getHeight(Font font) {
         return bounds.height + 4;
     }
     
@@ -88,7 +88,7 @@ public class DisplayTooltipComponent implements TooltipComponent, ClientTooltipC
     }
     
     @Override
-    public void renderImage(Font font, int x, int y, GuiGraphics graphics) {
+    public void renderImage(Font font, int x, int y, int width, int height, GuiGraphics graphics) {
         graphics.pose().pushPose();
         graphics.pose().translate(x + 2, y + 2, 0);
         graphics.pose().translate(-this.bounds.getX(), -this.bounds.getY(), 0);
@@ -99,7 +99,7 @@ public class DisplayTooltipComponent implements TooltipComponent, ClientTooltipC
             graphics.pose().pushPose();
             Rectangle transformedBounds = MatrixUtils.transform(MatrixUtils.inverse(graphics.pose().last().pose()), new Rectangle(x + 2, y + 2, bounds.width, bounds.height));
             Point mouse = MatrixUtils.transform(graphics.pose().last().pose(), PointHelper.ofMouse());
-            craftingResult.renderer.render(graphics, mouse.x, mouse.y, Minecraft.getInstance().getTimer().getRealtimeDeltaTicks(),
+            craftingResult.renderer.render(graphics, mouse.x, mouse.y, Minecraft.getInstance().getDeltaTracker().getRealtimeDeltaTicks(),
                     widgets, transformedBounds, display.provideInternalDisplay());
             graphics.pose().popPose();
         }

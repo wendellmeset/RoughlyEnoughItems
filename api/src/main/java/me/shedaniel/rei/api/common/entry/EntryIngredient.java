@@ -23,11 +23,12 @@
 
 package me.shedaniel.rei.api.common.entry;
 
+import com.mojang.serialization.Codec;
 import me.shedaniel.rei.api.common.entry.settings.EntryIngredientSetting;
-import me.shedaniel.rei.api.common.entry.type.EntryDefinition;
 import me.shedaniel.rei.impl.Internals;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,22 +110,12 @@ public interface EntryIngredient extends List<EntryStack<?>> {
         return Internals.getEntryIngredientProvider().builder(initialCapacity);
     }
     
-    /**
-     * Reads an {@link EntryIngredient} from the given {@link ListTag}.
-     *
-     * @param tag the tag
-     * @return the read {@link EntryIngredient}
-     * @throws NullPointerException          if an {@link EntryDefinition} is not found
-     * @throws UnsupportedOperationException if an {@link EntryDefinition} does not support reading from a tag
-     * @see EntryStack#read(CompoundTag)
-     */
-    static EntryIngredient read(ListTag tag) {
-        if (tag.isEmpty()) return empty();
-        EntryStack<?>[] stacks = new EntryStack[tag.size()];
-        for (int i = 0; i < tag.size(); i++) {
-            stacks[i] = EntryStack.read((CompoundTag) tag.get(i));
-        }
-        return Internals.getEntryIngredientProvider().of(stacks);
+    static Codec<EntryIngredient> codec() {
+        return EntryStack.codec().listOf().xmap(EntryIngredient::of, UnaryOperator.identity());
+    }
+    
+    static StreamCodec<RegistryFriendlyByteBuf, EntryIngredient> streamCodec() {
+        return EntryStack.streamCodec().apply(ByteBufCodecs.list()).map(EntryIngredient::of, UnaryOperator.identity());
     }
     
     /**
@@ -136,31 +127,6 @@ public interface EntryIngredient extends List<EntryStack<?>> {
     static Collector<EntryStack<?>, ?, EntryIngredient> collector() {
         return Collectors.collectingAndThen(Collectors.toList(), EntryIngredient::of);
     }
-    
-    /**
-     * Saves the entry ingredient to a {@link ListTag}. This is only supported if every entry stack has a serializer.
-     *
-     * @return the saved tag
-     * @throws UnsupportedOperationException if an {@link EntryDefinition} does not support saving to a tag
-     * @see EntrySerializer#supportSaving()
-     * @see EntryStack#saveStack()
-     * @since 8.3
-     */
-    default ListTag saveIngredient() {
-        return save();
-    }
-    
-    /**
-     * Saves the entry ingredient to a {@link ListTag}. This is only supported if every entry stack has a serializer.
-     *
-     * @return the saved tag
-     * @throws UnsupportedOperationException if an {@link EntryDefinition} does not support saving to a tag
-     * @see EntrySerializer#supportSaving()
-     * @see EntryStack#saveStack()
-     * @deprecated use {@link #saveIngredient()} instead
-     */
-    @Deprecated(forRemoval = true)
-    ListTag save();
     
     /**
      * Casts this {@link EntryStack} to a list of {@link EntryStack} of the given type.

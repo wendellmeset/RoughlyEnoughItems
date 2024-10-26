@@ -35,6 +35,7 @@ import net.minecraft.client.gui.components.events.ContainerEventHandler;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.ClickEvent;
@@ -408,7 +409,7 @@ public class ErrorsEntryListWidget extends DynamicSmoothScrollingEntryListWidget
             width = (entryWidth - 6) / 2;
             this.height = (int) ((double) width * ((double) image.getHeight() / (double) image.getWidth()));
             graphics.fill(x, y, x + width, y + height + 2, 0xFFFFFFFF);
-            graphics.innerBlit(id, x + 1, x + width - 1, y + 1, y + height + 1, 0, 0, 1, 0, 1);
+            graphics.innerBlit(RenderType::guiTextured, id, x + 1, x + width - 1, y + 1, y + height + 1, 0, 0, 1, 0, 1);
         }
         
         @Override

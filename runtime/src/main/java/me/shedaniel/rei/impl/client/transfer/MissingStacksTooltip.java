@@ -49,7 +49,7 @@ public class MissingStacksTooltip implements ClientTooltipComponent, TooltipComp
     }
     
     @Override
-    public int getHeight() {
+    public int getHeight(Font font) {
         int entrySize = EntryListWidget.entrySize();
         int w = Math.max(1, MAX_WIDTH / entrySize);
         int height = Math.min(6, Mth.ceil(stacks.size() / (float) w)) * entrySize + 2;
@@ -68,7 +68,7 @@ public class MissingStacksTooltip implements ClientTooltipComponent, TooltipComp
     }
     
     @Override
-    public void renderImage(Font font, int x, int y, GuiGraphics graphics) {
+    public void renderImage(Font font, int x, int y, int width, int height, GuiGraphics graphics) {
         int entrySize = EntryListWidget.entrySize();
         int w = Math.max(1, MAX_WIDTH / entrySize);
         int i = 0;
@@ -80,8 +80,9 @@ public class MissingStacksTooltip implements ClientTooltipComponent, TooltipComp
             i++;
             if (i / w > 5) {
                 Component text = Component.literal("+" + (stacks.size() - w * 6 + 1)).withStyle(ChatFormatting.GRAY);
-                font.drawInBatch(text, x1 + entrySize / 2 - font.width(text) / 2, y1 + entrySize / 2 - 1, -1, true, graphics.pose().last().pose(), graphics.bufferSource(), Font.DisplayMode.NORMAL, 0, 15728880);
-                graphics.flush();
+                graphics.drawSpecial(source -> {
+                    font.drawInBatch(text, x1 + entrySize / 2 - font.width(text) / 2, y1 + entrySize / 2 - 1, -1, true, graphics.pose().last().pose(), source, Font.DisplayMode.NORMAL, 0, 15728880);
+                });
                 break;
             } else {
                 EntryStack<?> stack;

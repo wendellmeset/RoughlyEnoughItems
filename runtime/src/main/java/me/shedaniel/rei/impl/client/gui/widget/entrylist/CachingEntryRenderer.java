@@ -23,7 +23,6 @@
 
 package me.shedaniel.rei.impl.client.gui.widget.entrylist;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.entry.renderer.BatchedEntryRenderer;
@@ -32,8 +31,8 @@ import me.shedaniel.rei.api.client.gui.widgets.TooltipContext;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.impl.client.gui.widget.CachedEntryListRender;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 
@@ -56,8 +55,6 @@ public class CachingEntryRenderer implements BatchedEntryRenderer<Object, Cached
     
     @Override
     public void startBatch(EntryStack<Object> entry, CachedEntryListRender.Sprite extraData, GuiGraphics graphics, float delta) {
-        RenderSystem.setShaderTexture(0, CachedEntryListRender.cachedTextureLocation);
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
     }
     
     @Override
@@ -84,7 +81,7 @@ public class CachingEntryRenderer implements BatchedEntryRenderer<Object, Cached
     
     @Override
     public void render(EntryStack<Object> entry, GuiGraphics graphics, Rectangle bounds, int mouseX, int mouseY, float delta) {
-        graphics.innerBlit(CachedEntryListRender.cachedTextureLocation, bounds.x, bounds.getMaxX(), bounds.y, bounds.getMaxY(), 0, sprite.u0, sprite.u1, sprite.v0, sprite.v1);
+        graphics.innerBlit(RenderType::guiTextured, CachedEntryListRender.cachedTextureLocation, bounds.x, bounds.getMaxX(), bounds.y, bounds.getMaxY(), sprite.u0, sprite.u1, sprite.v0, sprite.v1, -1);
     }
     
     @Override

@@ -267,7 +267,6 @@ public interface ConfigObject {
     
     RecipeBorderType getRecipeBorderType();
     
-    
     boolean isCompositeScrollBarPermanent();
     
     boolean doesRegisterRecipesInAnotherThread();

@@ -34,12 +34,12 @@ import me.shedaniel.rei.api.client.REIRuntime;
 import me.shedaniel.rei.api.client.favorites.FavoriteEntry;
 import me.shedaniel.rei.api.client.favorites.FavoriteEntryType;
 import me.shedaniel.rei.api.client.gui.Renderer;
-import me.shedaniel.rei.api.client.gui.config.RecipeBorderType;
 import me.shedaniel.rei.api.client.gui.drag.component.DraggableComponent;
 import me.shedaniel.rei.api.client.gui.drag.component.DraggableComponentProviderWidget;
 import me.shedaniel.rei.api.client.gui.drag.component.DraggableComponentVisitorWidget;
 import me.shedaniel.rei.api.client.gui.screen.DisplayScreen;
 import me.shedaniel.rei.api.client.gui.widgets.*;
+import me.shedaniel.rei.api.client.gui.widgets.utils.PanelTextures;
 import me.shedaniel.rei.api.client.plugins.REIClientPlugin;
 import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
 import me.shedaniel.rei.api.client.registry.display.DisplayCategory;
@@ -47,12 +47,11 @@ import me.shedaniel.rei.api.client.registry.display.DisplayRegistry;
 import me.shedaniel.rei.api.client.registry.entry.EntryRegistry;
 import me.shedaniel.rei.api.client.registry.screen.ExclusionZones;
 import me.shedaniel.rei.api.client.registry.screen.ScreenRegistry;
-import me.shedaniel.rei.api.client.registry.transfer.TransferHandlerRegistry;
 import me.shedaniel.rei.api.client.search.method.InputMethodRegistry;
 import me.shedaniel.rei.api.client.util.ClientEntryStacks;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.display.Display;
-import me.shedaniel.rei.api.common.display.DisplaySerializerRegistry;
+import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.plugins.PluginManager;
@@ -74,14 +73,16 @@ import me.shedaniel.rei.impl.common.InternalLogger;
 import me.shedaniel.rei.impl.common.entry.type.EntryRegistryImpl;
 import me.shedaniel.rei.impl.common.entry.type.EntryRegistryListener;
 import me.shedaniel.rei.impl.common.util.HNEntryStackWrapper;
-import me.shedaniel.rei.plugin.autocrafting.DefaultCategoryHandler;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.ApiStatus;
@@ -117,7 +118,7 @@ public class DefaultClientRuntimePlugin implements REIClientPlugin {
                 
                 @Override
                 public void render(GuiGraphics graphics, Rectangle bounds, int mouseX, int mouseY, float delta) {
-                    graphics.innerBlit(id, bounds.x, bounds.getMaxX(), bounds.y, bounds.getMaxY(), 0, 0, 1, 0, 1);
+                    graphics.innerBlit(RenderType::guiTextured, id, bounds.x, bounds.getMaxX(), bounds.y, bounds.getMaxY(), 0, 0, 1, 0, 1);
                 }
                 
                 @Override
@@ -177,11 +178,6 @@ public class DefaultClientRuntimePlugin implements REIClientPlugin {
     }
     
     @Override
-    public void registerTransferHandlers(TransferHandlerRegistry registry) {
-        registry.register(new DefaultCategoryHandler());
-    }
-    
-    @Override
     public void registerInputMethods(InputMethodRegistry registry) {
         registry.add(DefaultInputMethod.ID, DefaultInputMethod.INSTANCE);
         UniHanManager manager = new UniHanManager(Platform.getConfigFolder().resolve("roughlyenoughitems/unihan.zip"));
@@ -203,13 +199,13 @@ public class DefaultClientRuntimePlugin implements REIClientPlugin {
         
         @Override
         public DataResult<EntryStackFavoriteEntry> read(CompoundTag object) {
-            EntryStack<?> stack;
             try {
-                stack = EntryStack.read(object.getCompound(key));
+                return EntryStack.codec().parse(BasicDisplay.registryAccess().createSerializationContext(NbtOps.INSTANCE), object.getCompound(key))
+                        .map(EntryStackFavoriteEntry::new)
+                        .setLifecycle(Lifecycle.stable());
             } catch (Throwable throwable) {
                 return DataResult.error(throwable::getMessage);
             }
-            return DataResult.success(new EntryStackFavoriteEntry(stack), Lifecycle.stable());
         }
         
         @Override
@@ -217,14 +213,14 @@ public class DefaultClientRuntimePlugin implements REIClientPlugin {
             if (args.length == 0) return DataResult.error(() -> "Cannot create EntryStackFavoriteEntry from empty args!");
             if (!(args[0] instanceof EntryStack<?> stack))
                 return DataResult.error(() -> "Creation of EntryStackFavoriteEntry from args expected EntryStack as the first argument!");
-            if (!stack.supportSaving())
+            if (!stack.supportSerialization())
                 return DataResult.error(() -> "Creation of EntryStackFavoriteEntry from an unserializable stack!");
             return DataResult.success(new EntryStackFavoriteEntry(stack), Lifecycle.stable());
         }
         
         @Override
         public CompoundTag save(EntryStackFavoriteEntry entry, CompoundTag tag) {
-            tag.put(key, entry.stack.saveStack());
+            tag.put(key, EntryStack.codec().encodeStart(BasicDisplay.registryAccess().createSerializationContext(NbtOps.INSTANCE), entry.stack).getOrThrow());
             return tag;
         }
     }
@@ -290,8 +286,8 @@ public class DefaultClientRuntimePlugin implements REIClientPlugin {
         public DataResult<DisplayFavoriteEntry> read(CompoundTag object) {
             try {
                 if (object.contains("Data")) {
-                    Display display = DisplaySerializerRegistry.getInstance().read(CategoryIdentifier.of(object.getString("CategoryID")), object.getCompound("Data"));
-                    return DataResult.success(new DisplayFavoriteEntry(display, UUID.fromString(object.getString("UUID"))), Lifecycle.stable());
+                    DataResult<Display> result = Display.codec().parse(BasicDisplay.registryAccess().createSerializationContext(NbtOps.INSTANCE), object.getCompound("Data"));
+                    return DataResult.success(new DisplayFavoriteEntry(result.getOrThrow(), UUID.fromString(object.getString("UUID"))), Lifecycle.stable());
                 } else {
                     return DataResult.success(new DisplayFavoriteEntry(null, UUID.fromString(object.getString("UUID"))), Lifecycle.stable());
                 }
@@ -310,13 +306,14 @@ public class DefaultClientRuntimePlugin implements REIClientPlugin {
         
         @Override
         public CompoundTag save(DisplayFavoriteEntry entry, CompoundTag tag) {
-            boolean hasSerializer = DisplaySerializerRegistry.getInstance().hasSerializer(entry.display.getCategoryIdentifier());
+            boolean hasSerializer = entry.display.getSerializer() != null;
             tag.putString("CategoryID", entry.display.getCategoryIdentifier().toString());
             tag.putString("UUID", entry.uuid.toString());
             
             if (hasSerializer) {
                 try {
-                    tag.put("Data", DisplaySerializerRegistry.getInstance().save(entry.display, new CompoundTag()));
+                    DataResult<Tag> displayTag = Display.codec().encodeStart(BasicDisplay.registryAccess().createSerializationContext(NbtOps.INSTANCE), entry.display);
+                    tag.put("Data", displayTag.getOrThrow());
                 } catch (Exception e) {
                     InternalLogger.getInstance().warn("Failed to save display favorite entry", e);
                 }
@@ -353,7 +350,7 @@ public class DefaultClientRuntimePlugin implements REIClientPlugin {
         @Override
         public Renderer getRenderer(boolean showcase) {
             Panel panel = Widgets.createRecipeBase(new Rectangle(0, 0, 18, 18))
-                    .yTextureOffset(RecipeBorderType.LIGHTER.getYOffset());
+                    .texture(PanelTextures.LIGHTER);
             Slot slot = Widgets.createSlot(new Rectangle())
                     .disableBackground()
                     .disableHighlight()

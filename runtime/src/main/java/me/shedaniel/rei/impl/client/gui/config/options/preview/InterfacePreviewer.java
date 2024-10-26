@@ -80,8 +80,8 @@ public class InterfacePreviewer {
             ((PanelWidget) panel).setDarkBackgroundAlpha(themeAlpha);
         }).rendering(panel -> {
             RecipeBorderType type = access.get(AllREIConfigOptions.RECIPE_BORDER);
-            panel.yTextureOffset(type.getYOffset());
-            return type.isRendering();
+            panel.texture(type);
+            return true;
         }));
         Point startingPoint = new Point(displayBounds.x + 6, displayBounds.y + 6);
         widgets.add(Util.make(Widgets.createArrow(new Point(startingPoint.x + 58, startingPoint.y + 18)), arrow -> {

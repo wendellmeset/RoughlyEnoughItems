@@ -23,20 +23,40 @@
 
 package me.shedaniel.rei.plugin.common.displays;
 
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.display.Display;
+import me.shedaniel.rei.api.common.display.DisplaySerializer;
 import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.plugin.common.BuiltinPlugin;
+import net.minecraft.network.codec.StreamCodec;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.util.Collections;
 import java.util.List;
 
 @ApiStatus.Experimental
 public class DefaultOxidationScrapingDisplay extends BasicDisplay {
+    public static final DisplaySerializer<DefaultOxidationScrapingDisplay> SERIALIZER = DisplaySerializer.of(
+            RecordCodecBuilder.mapCodec(instance -> instance.group(
+                    EntryIngredient.codec().fieldOf("in").forGetter(DefaultOxidationScrapingDisplay::getIn),
+                    EntryIngredient.codec().fieldOf("out").forGetter(DefaultOxidationScrapingDisplay::getOut)
+            ).apply(instance, DefaultOxidationScrapingDisplay::new)),
+            StreamCodec.composite(
+                    EntryIngredient.streamCodec(),
+                    DefaultOxidationScrapingDisplay::getIn,
+                    EntryIngredient.streamCodec(),
+                    DefaultOxidationScrapingDisplay::getOut,
+                    DefaultOxidationScrapingDisplay::new
+            ));
+    
     public DefaultOxidationScrapingDisplay(EntryStack<?> in, EntryStack<?> out) {
-        this(Collections.singletonList(EntryIngredient.of(in)), Collections.singletonList(EntryIngredient.of(out)));
+        this(List.of(EntryIngredient.of(in)), List.of(EntryIngredient.of(out)));
+    }
+    
+    public DefaultOxidationScrapingDisplay(EntryIngredient in, EntryIngredient out) {
+        this(List.of(in), List.of(out));
     }
     
     public DefaultOxidationScrapingDisplay(List<EntryIngredient> inputs, List<EntryIngredient> outputs) {
@@ -56,7 +76,8 @@ public class DefaultOxidationScrapingDisplay extends BasicDisplay {
         return BuiltinPlugin.OXIDATION_SCRAPING;
     }
     
-    public static Serializer<DefaultOxidationScrapingDisplay> serializer() {
-        return Serializer.ofSimpleRecipeLess(DefaultOxidationScrapingDisplay::new);
+    @Override
+    public DisplaySerializer<? extends Display> getSerializer() {
+        return SERIALIZER;
     }
 }

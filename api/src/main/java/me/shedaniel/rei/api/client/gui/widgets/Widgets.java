@@ -30,6 +30,7 @@ import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.config.ConfigObject;
 import me.shedaniel.rei.api.client.gui.DrawableConsumer;
 import me.shedaniel.rei.api.client.gui.Renderer;
+import me.shedaniel.rei.api.client.gui.widgets.utils.PanelTextures;
 import me.shedaniel.rei.impl.ClientInternals;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -250,21 +251,15 @@ public final class Widgets {
     
     public static Panel createRecipeBase(Rectangle rectangle) {
         return ClientInternals.getWidgetsProvider().createPanelWidget(rectangle)
-                .yTextureOffset(ConfigObject.getInstance().getRecipeBorderType().getYOffset())
-                .rendering(Widgets::shouldRecipeBaseRender);
+                .texture(ConfigObject.getInstance().getRecipeBorderType());
     }
     
     public static Panel createRecipeBase(Rectangle rectangle, int color) {
         return createRecipeBase(rectangle).color(color);
     }
     
-    private static boolean shouldRecipeBaseRender(Panel panel) {
-        return ConfigObject.getInstance().getRecipeBorderType().isRendering() && ClientInternals.getWidgetsProvider().isRenderingPanel(panel);
-    }
-    
-    
     public static Panel createSlotBase(Rectangle rectangle) {
-        return ClientInternals.getWidgetsProvider().createPanelWidget(rectangle).yTextureOffset(-66).rendering(Widgets::shouldSlotBaseRender);
+        return ClientInternals.getWidgetsProvider().createPanelWidget(rectangle).texture(PanelTextures.SLOT).rendering(Widgets::shouldSlotBaseRender);
     }
     
     private static boolean shouldSlotBaseRender(Panel panel) {

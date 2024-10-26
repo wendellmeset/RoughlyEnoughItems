@@ -26,8 +26,6 @@ package me.shedaniel.rei.impl.init;
 import java.util.function.Supplier;
 
 public interface PluginDetector {
-    void detectServerPlugins();
-    
     void detectCommonPlugins();
     
     default Supplier<Runnable> detectClientPlugins() {

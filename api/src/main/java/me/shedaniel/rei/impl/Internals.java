@@ -31,9 +31,7 @@ import me.shedaniel.rei.api.common.entry.comparison.EntryComparator;
 import me.shedaniel.rei.api.common.entry.type.EntryDefinition;
 import me.shedaniel.rei.api.common.entry.type.EntryType;
 import me.shedaniel.rei.api.common.plugins.PluginManager;
-import me.shedaniel.rei.api.common.plugins.REIPlugin;
-import me.shedaniel.rei.api.common.plugins.REIServerPlugin;
-import me.shedaniel.rei.api.common.transfer.info.MenuInfoRegistry;
+import me.shedaniel.rei.api.common.plugins.REICommonPlugin;
 import me.shedaniel.rei.impl.common.InternalLogger;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponentMap;
@@ -51,11 +49,9 @@ public final class Internals {
     private static Supplier<EntryStackProvider> entryStackProvider = Internals::throwNotSetup;
     private static Supplier<EntryIngredientProvider> entryIngredientProvider = Internals::throwNotSetup;
     private static Function<ResourceLocation, EntryType<?>> entryTypeDeferred = (object) -> throwNotSetup();
-    private static Supplier<PluginManager<REIPlugin<?>>> commonPluginManager = Internals::throwNotSetup;
-    private static Supplier<PluginManager<REIServerPlugin>> serverPluginManager = Internals::throwNotSetup;
+    private static Supplier<PluginManager<REICommonPlugin>> commonPluginManager = Internals::throwNotSetup;
     private static Supplier<NbtHasherProvider> nbtHasherProvider = Internals::throwNotSetup;
     private static Function<String, CategoryIdentifier<?>> categoryIdentifier = (object) -> throwNotSetup();
-    private static Supplier<MenuInfoRegistry> stubMenuInfoRegistry = Internals::throwNotSetup;
     private static Supplier<InternalLogger> logger = Internals::throwNotSetup;
     private static Supplier<RegistryAccess> registryAccess = Internals::throwNotSetup;
     
@@ -100,12 +96,8 @@ public final class Internals {
         return entryTypeDeferred.apply(id);
     }
     
-    public static PluginManager<REIPlugin<?>> getPluginManager() {
+    public static PluginManager<REICommonPlugin> getPluginManager() {
         return commonPluginManager.get();
-    }
-    
-    public static PluginManager<REIServerPlugin> getServerPluginManager() {
-        return serverPluginManager.get();
     }
     
     public static EntryComparator<DataComponentMap> getComponentHasher(DataComponentType<?>[] ignoredKeys) {

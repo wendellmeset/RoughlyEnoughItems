@@ -38,7 +38,7 @@ import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.entry.InputIngredient;
 import me.shedaniel.rei.api.common.util.EntryStacks;
 import me.shedaniel.rei.plugin.common.BuiltinPlugin;
-import me.shedaniel.rei.plugin.common.displays.crafting.DefaultCraftingDisplay;
+import me.shedaniel.rei.plugin.common.displays.crafting.CraftingDisplay;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.network.chat.Component;
@@ -49,9 +49,9 @@ import java.util.Iterator;
 import java.util.List;
 
 @Environment(EnvType.CLIENT)
-public class DefaultCraftingCategory implements DisplayCategory<DefaultCraftingDisplay<?>> {
+public class DefaultCraftingCategory implements DisplayCategory<CraftingDisplay> {
     @Override
-    public CategoryIdentifier<? extends DefaultCraftingDisplay<?>> getCategoryIdentifier() {
+    public CategoryIdentifier<? extends CraftingDisplay> getCategoryIdentifier() {
         return BuiltinPlugin.CRAFTING;
     }
     
@@ -66,7 +66,7 @@ public class DefaultCraftingCategory implements DisplayCategory<DefaultCraftingD
     }
     
     @Override
-    public List<Widget> setupDisplay(DefaultCraftingDisplay<?> display, Rectangle bounds) {
+    public List<Widget> setupDisplay(CraftingDisplay display, Rectangle bounds) {
         Point startPoint = new Point(bounds.getCenterX() - 58, bounds.getCenterY() - 27);
         List<Widget> widgets = Lists.newArrayList();
         widgets.add(Widgets.createRecipeBase(bounds));
@@ -90,10 +90,10 @@ public class DefaultCraftingCategory implements DisplayCategory<DefaultCraftingD
     
     @Override
     @Nullable
-    public DisplayMerger<DefaultCraftingDisplay<?>> getDisplayMerger() {
+    public DisplayMerger<CraftingDisplay> getDisplayMerger() {
         return new DisplayMerger<>() {
             @Override
-            public boolean canMerge(DefaultCraftingDisplay<?> first, DefaultCraftingDisplay<?> second) {
+            public boolean canMerge(CraftingDisplay first, CraftingDisplay second) {
                 if (!first.getCategoryIdentifier().equals(second.getCategoryIdentifier())) return false;
                 if (!equals(first.getOrganisedInputEntries(3, 3), second.getOrganisedInputEntries(3, 3))) return false;
                 if (!equals(first.getOutputEntries(), second.getOutputEntries())) return false;
@@ -104,7 +104,7 @@ public class DefaultCraftingCategory implements DisplayCategory<DefaultCraftingD
             }
             
             @Override
-            public int hashOf(DefaultCraftingDisplay<?> display) {
+            public int hashOf(CraftingDisplay display) {
                 return display.getCategoryIdentifier().hashCode() * 31 * 31 * 31 + display.getOrganisedInputEntries(3, 3).hashCode() * 31 * 31 + display.getOutputEntries().hashCode();
             }
             

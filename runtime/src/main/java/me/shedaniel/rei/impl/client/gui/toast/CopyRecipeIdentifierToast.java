@@ -25,20 +25,23 @@ package me.shedaniel.rei.impl.client.gui.toast;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.toasts.Toast;
-import net.minecraft.client.gui.components.toasts.ToastComponent;
+import net.minecraft.client.gui.components.toasts.ToastManager;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public class CopyRecipeIdentifierToast implements Toast {
-    
     protected static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "textures/gui/toasts.png");
     private String title;
     private String subtitle;
     private long startTime;
+    private boolean changed;
+    private Toast.Visibility wantedVisibility = Visibility.HIDE;
     
     public CopyRecipeIdentifierToast(String title, @Nullable String subtitleNullable) {
         this.title = title;
@@ -46,21 +49,36 @@ public class CopyRecipeIdentifierToast implements Toast {
     }
     
     public static void addToast(String title, @Nullable String subtitleNullable) {
-        Minecraft.getInstance().getToasts().addToast(new CopyRecipeIdentifierToast(title, subtitleNullable));
+        Minecraft.getInstance().getToastManager().addToast(new CopyRecipeIdentifierToast(title, subtitleNullable));
     }
     
     @Override
-    public Visibility render(GuiGraphics graphics, ToastComponent toastManager, long var2) {
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        graphics.blit(TEXTURE, 0, 0, 0, 0, 160, 32);
-        if (this.subtitle == null) {
-            graphics.drawString(toastManager.getMinecraft().font, this.title, 18, 12, 11141120, false);
-        } else {
-            graphics.drawString(toastManager.getMinecraft().font, this.title, 18, 7, 11141120, false);
-            graphics.drawString(toastManager.getMinecraft().font, this.subtitle, 18, 18, -16777216, false);
+    public Visibility getWantedVisibility() {
+        return wantedVisibility;
+    }
+    
+    @Override
+    public void update(ToastManager toastManager, long l) {
+        if (this.changed) {
+            this.startTime = l;
+            this.changed = false;
         }
         
-        return var2 - this.startTime < 5000L ? Visibility.SHOW : Visibility.HIDE;
+        double d = (double) 5000L * toastManager.getNotificationDisplayTimeMultiplier();
+        long m = l - this.startTime;
+        this.wantedVisibility = (double) m < d ? Visibility.SHOW : Visibility.HIDE;
+    }
+    
+    @Override
+    public void render(GuiGraphics graphics, Font font, long var2) {
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        graphics.blit(RenderType::guiTextured, TEXTURE, 0, 0, 0, 0, 160, 32, 256, 256);
+        if (this.subtitle == null) {
+            graphics.drawString(font, this.title, 18, 12, 11141120, false);
+        } else {
+            graphics.drawString(font, this.title, 18, 7, 11141120, false);
+            graphics.drawString(font, this.subtitle, 18, 18, -16777216, false);
+        }
     }
     
     @Override

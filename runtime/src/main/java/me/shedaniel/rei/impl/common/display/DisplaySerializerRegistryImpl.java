@@ -23,55 +23,112 @@
 
 package me.shedaniel.rei.impl.common.display;
 
-import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import io.netty.buffer.ByteBuf;
 import me.shedaniel.rei.api.common.display.Display;
 import me.shedaniel.rei.api.common.display.DisplaySerializer;
 import me.shedaniel.rei.api.common.display.DisplaySerializerRegistry;
-import me.shedaniel.rei.api.common.plugins.REIPlugin;
-import net.minecraft.nbt.CompoundTag;
+import me.shedaniel.rei.api.common.plugins.REICommonPlugin;
+import me.shedaniel.rei.api.common.registry.ReloadStage;
+import me.shedaniel.rei.impl.common.InternalLogger;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
 
 public class DisplaySerializerRegistryImpl implements DisplaySerializerRegistry {
-    private final Map<CategoryIdentifier<?>, DisplaySerializer<?>> serializers = new HashMap<>();
+    private final BiMap<ResourceLocation, DisplaySerializer<?>> serializers = HashBiMap.create();
     
     @Override
-    public <D extends Display> void register(CategoryIdentifier<? extends D> categoryId, DisplaySerializer<D> serializer) {
-        serializers.put(categoryId, serializer);
-    }
-    
-    @Override
-    public <D extends Display> void registerNotSerializable(CategoryIdentifier<D> categoryId) {
-        serializers.remove(categoryId);
-    }
-    
-    @Override
-    public <D extends Display> boolean hasSerializer(CategoryIdentifier<D> categoryId) {
-        return serializers.containsKey(categoryId);
-    }
-    
-    @Override
-    public <D extends Display> CompoundTag save(D display, CompoundTag tag) {
-        CategoryIdentifier<?> categoryId = display.getCategoryIdentifier();
-        return Objects.requireNonNull((DisplaySerializer<D>) serializers.get(categoryId), "Category " + categoryId + " does not have a display serializer!")
-                .save(tag, display);
-    }
-    
-    @Override
-    public <D extends Display> D read(CategoryIdentifier<? extends D> categoryId, CompoundTag tag) {
-        return Objects.requireNonNull((DisplaySerializer<D>) serializers.get(categoryId), "Category " + categoryId + " does not have a display serializer!")
-                .read(tag);
+    public ReloadStage getStage() {
+        return ReloadStage.START;
     }
     
     @Override
     public void startReload() {
-        serializers.clear();
+        this.serializers.clear();
     }
     
     @Override
-    public void acceptPlugin(REIPlugin<?> plugin) {
+    public <D extends Display> void register(ResourceLocation id, DisplaySerializer<D> serializer) {
+        InternalLogger.getInstance().debug("Added display serializer [%s] %s", id, serializer);
+        this.serializers.put(id, serializer);
+    }
+    
+    @Override
+    @Nullable
+    public DisplaySerializer<?> get(ResourceLocation id) {
+        return this.serializers.get(id);
+    }
+    
+    @Override
+    @Nullable
+    public ResourceLocation getId(DisplaySerializer<?> serializer) {
+        return this.serializers.inverse().get(serializer);
+    }
+    
+    @Override
+    public boolean isRegistered(DisplaySerializer<?> serializer) {
+        return this.serializers.containsValue(serializer);
+    }
+    
+    @Override
+    public Codec<Display> codec() {
+        return serializerCodec().dispatch(Display::getSerializer, DisplaySerializer::codec);
+    }
+    
+    @Override
+    public StreamCodec<RegistryFriendlyByteBuf, Display> streamCodec() {
+        return serializerStreamCodec().<RegistryFriendlyByteBuf>cast()
+                .dispatch(Display::getSerializer, DisplaySerializer::streamCodec);
+    }
+    
+    @Override
+    public void acceptPlugin(REICommonPlugin plugin) {
         plugin.registerDisplaySerializer(this);
+    }
+    
+    private Codec<DisplaySerializer<?>> serializerCodec() {
+        return ResourceLocation.CODEC.flatXmap(id -> {
+            return Optional.ofNullable(this.get(id))
+                    .map(DataResult::success)
+                    .orElseGet(() -> DataResult.error(() -> "Unknown display serializer id: " + id));
+        }, serializer -> {
+            if (isRegistered(serializer)) {
+                return DataResult.success(getId(serializer));
+            } else {
+                return DataResult.error(() -> "Unregistered display serializer: " + serializer);
+            }
+        });
+    }
+    
+    private StreamCodec<ByteBuf, DisplaySerializer<?>> serializerStreamCodec() {
+        return new StreamCodec<>() {
+            @Override
+            public DisplaySerializer<?> decode(ByteBuf object) {
+                ResourceLocation id = new FriendlyByteBuf(object).readResourceLocation();
+                DisplaySerializer<?> serializer = get(id);
+                if (serializer == null) {
+                    throw new NullPointerException("Unknown display serializer id: " + id);
+                } else {
+                    return serializer;
+                }
+            }
+            
+            @Override
+            public void encode(ByteBuf buf, DisplaySerializer<?> serializer) {
+                if (isRegistered(serializer)) {
+                    new FriendlyByteBuf(buf).writeResourceLocation(getId(serializer));
+                } else {
+                    throw new IllegalArgumentException("Unregistered display serializer: " + serializer);
+                }
+            }
+        };
     }
 }

@@ -23,18 +23,14 @@
 
 package me.shedaniel.rei.plugin.test;
 
-import com.google.common.collect.ImmutableList;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
 import me.shedaniel.rei.api.client.entry.filtering.FilteringRuleTypeRegistry;
 import me.shedaniel.rei.api.client.entry.filtering.base.BasicFilteringRule;
-import me.shedaniel.rei.api.client.favorites.FavoriteEntry;
-import me.shedaniel.rei.api.client.favorites.FavoriteEntryType;
 import me.shedaniel.rei.api.client.plugins.REIClientPlugin;
 import me.shedaniel.rei.api.client.registry.entry.CollapsibleEntryRegistry;
 import me.shedaniel.rei.api.client.registry.entry.EntryRegistry;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.entry.EntryStack;
-import me.shedaniel.rei.api.common.entry.comparison.ItemComparatorRegistry;
 import me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes;
 import me.shedaniel.rei.api.common.plugins.PluginManager;
 import me.shedaniel.rei.api.common.registry.ReloadStage;
@@ -42,7 +38,6 @@ import me.shedaniel.rei.api.common.util.EntryStacks;
 import me.shedaniel.rei.impl.common.InternalLogger;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.Minecraft;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.item.ItemArgument;
 import net.minecraft.commands.arguments.item.ItemInput;
@@ -51,9 +46,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.CustomData;
-import net.minecraft.world.level.GameType;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Random;
@@ -94,12 +87,6 @@ public class REITestPlugin implements REIClientPlugin {
         for (Item item : BuiltInRegistries.ITEM) {
             EntryStack<ItemStack> base = EntryStacks.of(item);
             registry.addEntriesAfter(base, IntStream.range(0, times).mapToObj(value -> transformStack(EntryStacks.of(item))).collect(Collectors.toList()));
-            try {
-                for (ItemStack stack : registry.appendStacksForItem(item)) {
-                    registry.addEntries(IntStream.range(0, times).mapToObj(value -> transformStack(EntryStacks.of(stack))).collect(Collectors.toList()));
-                }
-            } catch (Exception ignored) {
-            }
         }
     }
     
@@ -127,34 +114,11 @@ public class REITestPlugin implements REIClientPlugin {
         });
     }
     
-    @Override
-    public void registerItemComparators(ItemComparatorRegistry registry) {
-        registry.registerComponents(BuiltInRegistries.ITEM.stream().toArray(Item[]::new));
-    }
-    
     public EntryStack<ItemStack> transformStack(EntryStack<ItemStack> stack) {
         CustomData data = stack.getValue().getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).update(tag -> {
             tag.putInt("Whatever", random.nextInt(Integer.MAX_VALUE));
         });
         stack.getValue().set(DataComponents.CUSTOM_DATA, data);
         return stack;
-    }
-    
-    @Override
-    public void registerFavorites(FavoriteEntryType.Registry registry) {
-        registry.registerSystemFavorites(() -> {
-            GameType mode = Minecraft.getInstance().gameMode.getPlayerMode();
-            switch (mode) {
-                case SURVIVAL:
-                    return ImmutableList.of(FavoriteEntry.fromEntryStack(EntryStacks.of(Items.STONE)));
-                case CREATIVE:
-                    return ImmutableList.of(FavoriteEntry.fromEntryStack(EntryStacks.of(Items.PACKED_ICE)));
-                case ADVENTURE:
-                    return ImmutableList.of(FavoriteEntry.fromEntryStack(EntryStacks.of(Items.ANVIL)));
-                case SPECTATOR:
-                default:
-                    return ImmutableList.of();
-            }
-        });
     }
 }

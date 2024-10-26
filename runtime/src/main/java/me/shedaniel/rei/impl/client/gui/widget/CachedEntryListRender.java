@@ -23,13 +23,13 @@
 
 package me.shedaniel.rei.impl.client.gui.widget;
 
+import com.mojang.blaze3d.ProjectionType;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.blaze3d.vertex.VertexSorting;
 import dev.architectury.registry.ReloadListenerRegistry;
 import it.unimi.dsi.fastutil.longs.Long2LongMap;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
@@ -44,12 +44,13 @@ import me.shedaniel.rei.api.common.util.EntryStacks;
 import me.shedaniel.rei.impl.common.InternalLogger;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.CoreShaders;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
+import net.minecraft.util.TriState;
 import net.minecraft.util.Unit;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -64,8 +65,8 @@ public class CachedEntryListRender {
     public static Long2LongMap hash = new Long2LongOpenHashMap();
     public static LazyResettable<RenderType> renderType = new LazyResettable<>(() -> RenderType.create("rei_cache", DefaultVertexFormat.POSITION_TEX, VertexFormat.Mode.QUADS, 256,
             RenderType.CompositeState.builder()
-                    .setTextureState(new RenderStateShard.TextureStateShard(cachedTextureLocation, false, false))
-                    .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionTexShader))
+                    .setTextureState(new RenderStateShard.TextureStateShard(cachedTextureLocation, TriState.DEFAULT, false))
+                    .setShaderState(new RenderStateShard.ShaderStateShard(CoreShaders.POSITION_TEX))
                     .createCompositeState(false)));
     
     public static class Sprite {
@@ -83,7 +84,7 @@ public class CachedEntryListRender {
     }
     
     static {
-        ReloadListenerRegistry.register(PackType.CLIENT_RESOURCES, (barrier, resourceManager, preparationProfiler, reloadProfiler, preparationExecutor, reloadExecutor) -> {
+        ReloadListenerRegistry.register(PackType.CLIENT_RESOURCES, (barrier, resourceManager, preparationExecutor, reloadExecutor) -> {
             return barrier.wait(Unit.INSTANCE).thenRunAsync(CachedEntryListRender::refresh, reloadExecutor);
         });
     }
@@ -145,15 +146,15 @@ public class CachedEntryListRender {
         
         hash = new Long2LongOpenHashMap(list.size() + 10);
         Minecraft minecraft = Minecraft.getInstance();
-        TextureTarget target = new TextureTarget(width, height, true, false);
+        TextureTarget target = new TextureTarget(width, height, true);
+        target.setClearColor(0, 0, 0, 0);
         target.bindWrite(true);
         Matrix4f projectionMatrix = new Matrix4f().setOrtho(0.0F, width, height, 0.0F, 1000.0F, 3000.0F);
-        RenderSystem.setProjectionMatrix(projectionMatrix, VertexSorting.ORTHOGRAPHIC_Z);
+        RenderSystem.setProjectionMatrix(projectionMatrix, ProjectionType.ORTHOGRAPHIC);
         Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
         modelViewStack.pushMatrix();
         modelViewStack.identity();
         modelViewStack.translate(0.0F, 0.0F, -2000.0F);
-        RenderSystem.applyModelViewMatrix();
         
         Lighting.setupFor3DItems();
         Rectangle bounds = new Rectangle();
@@ -179,11 +180,10 @@ public class CachedEntryListRender {
         renderType.reset();
         
         target.destroyBuffers();
-        Minecraft.getInstance().levelRenderer.graphicsChanged();
+        // Minecraft.getInstance().levelRenderer.graphicsChanged();
         Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
         
         modelViewStack.popMatrix();
-        RenderSystem.applyModelViewMatrix();
     }
     
     private static long pack(int x, int y) {

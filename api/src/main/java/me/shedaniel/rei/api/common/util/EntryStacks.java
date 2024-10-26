@@ -31,6 +31,7 @@ import me.shedaniel.rei.api.common.entry.type.EntryType;
 import me.shedaniel.rei.api.common.entry.type.EntryTypeBridge;
 import me.shedaniel.rei.api.common.entry.type.EntryTypeRegistry;
 import me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes;
+import net.minecraft.core.Holder;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.material.Fluid;
@@ -63,6 +64,22 @@ public final class EntryStacks {
     
     public static EntryStack<ItemStack> of(ItemLike item, int amount) {
         return of(new ItemStack(item, amount));
+    }
+    
+    public static EntryStack<FluidStack> ofFluidHolder(Holder<Fluid> fluid) {
+        return ofFluidHolder(fluid, FluidStack.bucketAmount());
+    }
+    
+    public static EntryStack<FluidStack> ofFluidHolder(Holder<Fluid> fluid, long amount) {
+        return of(fluid.value(), amount);
+    }
+    
+    public static EntryStack<ItemStack> ofItemHolder(Holder<? extends ItemLike> item) {
+        return of(item.value());
+    }
+    
+    public static EntryStack<ItemStack> ofItemHolder(Holder<? extends ItemLike> item, int amount) {
+        return of(item.value(), amount);
     }
     
     /**

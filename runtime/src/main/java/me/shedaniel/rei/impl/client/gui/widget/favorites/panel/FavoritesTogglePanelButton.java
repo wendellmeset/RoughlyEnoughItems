@@ -23,7 +23,6 @@
 
 package me.shedaniel.rei.impl.client.gui.widget.favorites.panel;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import me.shedaniel.math.Point;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.REIRuntime;
@@ -64,7 +63,7 @@ public class FavoritesTogglePanelButton extends FadingFavoritesPanelButton {
     }
     
     @Override
-    protected void renderButtonText(GuiGraphics graphics, MultiBufferSource.BufferSource bufferSource) {
+    protected void renderButtonText(GuiGraphics graphics, MultiBufferSource bufferSource) {
         float expendProgress = (float) parent.favoritePanel.expendState.progress();
         if (expendProgress < .9f) {
             int textColor = 0xFFFFFF | (Math.round(0xFF * alpha.floatValue() * (1 - expendProgress)) << 24);

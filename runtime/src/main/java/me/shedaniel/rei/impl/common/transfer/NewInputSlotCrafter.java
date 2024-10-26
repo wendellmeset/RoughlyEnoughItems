@@ -24,7 +24,7 @@
 package me.shedaniel.rei.impl.common.transfer;
 
 import me.shedaniel.rei.api.common.entry.InputIngredient;
-import me.shedaniel.rei.api.common.transfer.RecipeFinder;
+import me.shedaniel.rei.api.common.transfer.ItemRecipeFinder;
 import me.shedaniel.rei.api.common.transfer.info.stack.SlotAccessor;
 import net.minecraft.world.Container;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -61,7 +61,7 @@ public class NewInputSlotCrafter<T extends AbstractContainerMenu, C extends Cont
     }
     
     @Override
-    protected void populateRecipeFinder(RecipeFinder recipeFinder) {
+    protected void populateRecipeFinder(ItemRecipeFinder recipeFinder) {
         for (SlotAccessor slot : getInventorySlots()) {
             recipeFinder.addNormalItem(slot.getItemStack());
         }

@@ -23,13 +23,18 @@
 
 package me.shedaniel.rei.plugin.common.displays.beacon;
 
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import me.shedaniel.rei.api.common.display.DisplaySerializer;
 import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.util.EntryIngredients;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiFunction;
 
 public abstract class DefaultBeaconDisplay extends BasicDisplay {
     public DefaultBeaconDisplay(List<ItemStack> entries) {
@@ -44,7 +49,18 @@ public abstract class DefaultBeaconDisplay extends BasicDisplay {
         return getInputEntries().get(0);
     }
     
-    public static <T extends DefaultBeaconDisplay> BasicDisplay.Serializer<T> serializer(Serializer.SimpleRecipeLessConstructor<T> constructor) {
-        return BasicDisplay.Serializer.ofSimpleRecipeLess(constructor);
+    protected static <D extends DefaultBeaconDisplay> DisplaySerializer<D> serializer(BiFunction<List<EntryIngredient>, List<EntryIngredient>, D> constructor) {
+        return DisplaySerializer.of(
+                RecordCodecBuilder.mapCodec(instance -> instance.group(
+                        EntryIngredient.codec().listOf().fieldOf("inputs").forGetter(D::getInputEntries),
+                        EntryIngredient.codec().listOf().fieldOf("outputs").forGetter(D::getOutputEntries)
+                ).apply(instance, constructor)),
+                StreamCodec.composite(
+                        EntryIngredient.streamCodec().apply(ByteBufCodecs.list()),
+                        D::getInputEntries,
+                        EntryIngredient.streamCodec().apply(ByteBufCodecs.list()),
+                        D::getOutputEntries,
+                        constructor
+                ));
     }
 }

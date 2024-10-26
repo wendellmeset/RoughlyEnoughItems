@@ -84,7 +84,7 @@ public class DisplayRegistryInfoScreen extends ScreenWithMenu {
             });
         }
         list = new ListWidget();
-        list.addItem(new EntryImpl(Component.literal("Total Displays"), DisplayRegistry.getInstance().displaySize()));
+        list.addItem(new EntryImpl(Component.literal("Total Displays"), DisplayRegistry.getInstance().size()));
         sort(DisplayRegistry.getInstance().getAll().entrySet().stream())
                 .forEach(entry -> {
                     list.addItem(new EntryImpl(entry.getKey(), entry.getValue().size()));

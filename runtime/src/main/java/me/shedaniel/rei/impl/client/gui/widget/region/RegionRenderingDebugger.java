@@ -62,9 +62,10 @@ public class RegionRenderingDebugger {
             graphics.fillGradient(Math.min(x, minecraft.screen.width - stringWidth - 2), y, x + stringWidth + 2, y + font.lineHeight + 2, -16777216, -16777216);
             graphics.pose().pushPose();
             graphics.pose().translate(0.0D, 0.0D, 500.0D);
-            Matrix4f matrix = graphics.pose().last().pose();
-            font.drawInBatch(debugText.getVisualOrderText(), Math.min(x + 2, minecraft.screen.width - stringWidth), y + 2, -1, false, matrix, graphics.bufferSource(), Font.DisplayMode.NORMAL, 0, 15728880);
-            graphics.flush();
+            graphics.drawSpecial(source -> {
+                Matrix4f matrix = graphics.pose().last().pose();
+                font.drawInBatch(debugText.getVisualOrderText(), Math.min(x + 2, minecraft.screen.width - stringWidth), y + 2, -1, false, matrix, source, Font.DisplayMode.NORMAL, 0, 15728880);
+            });
             graphics.pose().popPose();
         }
         

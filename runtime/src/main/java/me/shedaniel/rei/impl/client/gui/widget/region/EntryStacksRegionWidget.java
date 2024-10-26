@@ -28,7 +28,6 @@ import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import me.shedaniel.clothconfig2.ClothConfigInitializer;
-import me.shedaniel.clothconfig2.api.ScissorsHandler;
 import me.shedaniel.clothconfig2.api.scroll.ScrollingContainer;
 import me.shedaniel.math.FloatingPoint;
 import me.shedaniel.math.Point;
@@ -126,7 +125,7 @@ public class EntryStacksRegionWidget<T extends RegionEntry<T>> extends WidgetWit
             }
         }
         
-        ScissorsHandler.INSTANCE.scissor(bounds);
+        graphics.enableScissor(bounds.x, bounds.y, bounds.getMaxX(), bounds.getMaxY());
         
         Stream<RegionEntryWidget<T>> entryStream = this.entriesList.stream()
                 .filter(entry -> entry.getBounds().getMaxY() >= this.bounds.getY() && entry.getBounds().y <= this.bounds.getMaxY());
@@ -135,8 +134,8 @@ public class EntryStacksRegionWidget<T extends RegionEntry<T>> extends WidgetWit
                 .render(graphics, mouseX, mouseY, delta);
         
         updatePosition(delta);
-        scrolling.renderScrollBar(graphics, 0, 1, REIRuntime.getInstance().isDarkThemeEnabled() ? 0.8f : 1f);
-        ScissorsHandler.INSTANCE.removeLastScissor();
+        scrolling.renderScrollBar(graphics, 0, REIRuntime.getInstance().isDarkThemeEnabled() ? 0.8f : 1f);
+        graphics.disableScissor();
     }
     
     @Override
@@ -309,7 +308,7 @@ public class EntryStacksRegionWidget<T extends RegionEntry<T>> extends WidgetWit
     
     public Optional<RealRegionEntry<T>> checkDraggedStacks(DraggingContext<Screen> context, DraggableStack stack) {
         EntrySerializer<?> serializer = stack.getStack().getDefinition().getSerializer();
-        if (serializer != null && (stack instanceof RegionDraggableStack || (serializer.supportReading() && serializer.supportSaving()))) {
+        if (serializer != null && stack instanceof RegionDraggableStack) {
             try {
                 T regionEntry = stack instanceof RegionDraggableStack ? ((RegionDraggableStack<T>) stack).getEntry().getEntry().copy()
                         : listener.convertDraggableStack(context, stack);

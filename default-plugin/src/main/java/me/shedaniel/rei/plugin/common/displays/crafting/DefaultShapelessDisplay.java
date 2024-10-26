@@ -23,20 +23,43 @@
 
 package me.shedaniel.rei.plugin.common.displays.crafting;
 
-import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import me.shedaniel.rei.api.common.display.Display;
+import me.shedaniel.rei.api.common.display.DisplaySerializer;
+import me.shedaniel.rei.api.common.entry.EntryIngredient;
+import me.shedaniel.rei.api.common.util.CollectionUtils;
 import me.shedaniel.rei.api.common.util.EntryIngredients;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
 
-import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
-public class DefaultShapelessDisplay extends DefaultCraftingDisplay<ShapelessRecipe> {
+public class DefaultShapelessDisplay extends DefaultCraftingDisplay {
+    public static final DisplaySerializer<DefaultCraftingDisplay> SERIALIZER = DisplaySerializer.of(
+            RecordCodecBuilder.mapCodec(instance -> instance.group(
+                    EntryIngredient.codec().listOf().fieldOf("inputs").forGetter(DefaultCraftingDisplay::getInputEntries),
+                    EntryIngredient.codec().listOf().fieldOf("outputs").forGetter(DefaultCraftingDisplay::getOutputEntries),
+                    ResourceLocation.CODEC.optionalFieldOf("location").forGetter(DefaultCraftingDisplay::getDisplayLocation)
+            ).apply(instance, DefaultCustomShapelessDisplay::new)),
+            StreamCodec.composite(
+                    EntryIngredient.streamCodec().apply(ByteBufCodecs.list()),
+                    DefaultCraftingDisplay::getInputEntries,
+                    EntryIngredient.streamCodec().apply(ByteBufCodecs.list()),
+                    DefaultCraftingDisplay::getOutputEntries,
+                    ByteBufCodecs.optional(ResourceLocation.STREAM_CODEC),
+                    DefaultCraftingDisplay::getDisplayLocation,
+                    DefaultCustomShapelessDisplay::new
+            ));
+    
     public DefaultShapelessDisplay(RecipeHolder<ShapelessRecipe> recipe) {
         super(
-                EntryIngredients.ofIngredients(recipe.value().getIngredients()),
-                Collections.singletonList(EntryIngredients.of(recipe.value().getResultItem(BasicDisplay.registryAccess()))),
-                Optional.of(recipe)
+                CollectionUtils.map(recipe.value().placementInfo().ingredients(), EntryIngredients::ofIngredient),
+                List.of(EntryIngredients.of(recipe.value().result)),
+                Optional.of(recipe.id().location())
         );
     }
     
@@ -51,18 +74,8 @@ public class DefaultShapelessDisplay extends DefaultCraftingDisplay<ShapelessRec
     }
     
     @Override
-    public int getInputWidth() {
-        return Math.min(getInputEntries().size(), 3);
-    }
-    
-    @Override
     public int getInputWidth(int craftingWidth, int craftingHeight) {
         return craftingWidth * craftingHeight <= getInputEntries().size() ? craftingWidth : Math.min(getInputEntries().size(), 3);
-    }
-    
-    @Override
-    public int getInputHeight() {
-        return (int) Math.ceil(getInputEntries().size() / (double) getInputWidth());
     }
     
     @Override
@@ -73,5 +86,10 @@ public class DefaultShapelessDisplay extends DefaultCraftingDisplay<ShapelessRec
     @Override
     public boolean isShapeless() {
         return true;
+    }
+    
+    @Override
+    public DisplaySerializer<? extends Display> getSerializer() {
+        return SERIALIZER;
     }
 }

@@ -31,17 +31,20 @@ import me.shedaniel.rei.RoughlyEnoughItemsNetwork;
 import me.shedaniel.rei.api.client.ClientHelper;
 import me.shedaniel.rei.api.client.registry.transfer.TransferHandler;
 import me.shedaniel.rei.api.client.registry.transfer.simple.SimpleTransferHandler;
+import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.entry.InputIngredient;
-import me.shedaniel.rei.api.common.transfer.RecipeFinder;
+import me.shedaniel.rei.api.common.transfer.ItemRecipeFinder;
 import me.shedaniel.rei.api.common.transfer.info.stack.SlotAccessor;
 import me.shedaniel.rei.api.common.transfer.info.stack.SlotAccessorRegistry;
 import me.shedaniel.rei.api.common.util.CollectionUtils;
 import me.shedaniel.rei.api.common.util.EntryIngredients;
 import me.shedaniel.rei.impl.ClientInternals;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.gui.screens.recipebook.RecipeUpdateListener;
+import net.minecraft.client.gui.screens.inventory.AbstractRecipeBookScreen;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -79,24 +82,24 @@ public enum SimpleTransferHandlerImpl implements ClientInternals.SimpleTransferH
         }
         
         context.getMinecraft().setScreen(containerScreen);
-        if (containerScreen instanceof RecipeUpdateListener listener) {
-            listener.getRecipeBookComponent().ghostRecipe.clear();
+        if (containerScreen instanceof AbstractRecipeBookScreen<?> screen) {
+            screen.recipeBookComponent.ghostSlots.clear();
         }
         
         RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(), context.getMinecraft().getConnection().registryAccess());
         buf.writeResourceLocation(context.getDisplay().getCategoryIdentifier().getIdentifier());
         buf.writeBoolean(context.isStackedCrafting());
         
-        buf.writeNbt(save(context, inputs, inputSlots, inventorySlots));
+        buf.writeNbt(save(context, buf.registryAccess(), inputs, inputSlots, inventorySlots));
         NetworkManager.sendToServer(RoughlyEnoughItemsNetwork.MOVE_ITEMS_NEW_PACKET, buf);
         return TransferHandler.Result.createSuccessful();
     }
     
-    private CompoundTag save(TransferHandler.Context context, List<InputIngredient<ItemStack>> inputs, Iterable<SlotAccessor> inputSlots, Iterable<SlotAccessor> inventorySlots) {
+    private CompoundTag save(TransferHandler.Context context, RegistryAccess access, List<InputIngredient<ItemStack>> inputs, Iterable<SlotAccessor> inputSlots, Iterable<SlotAccessor> inventorySlots) {
         CompoundTag tag = new CompoundTag();
         tag.putInt("Version", 1);
-        tag.put("Inputs", saveInputs(inputs));
-        tag.put("InventorySlots", saveSlots(context,inventorySlots));
+        tag.put("Inputs", saveInputs(access, inputs));
+        tag.put("InventorySlots", saveSlots(context, inventorySlots));
         tag.put("InputSlots", saveSlots(context, inputSlots));
         return tag;
     }
@@ -111,12 +114,13 @@ public enum SimpleTransferHandlerImpl implements ClientInternals.SimpleTransferH
         return tag;
     }
     
-    private Tag saveInputs(List<InputIngredient<ItemStack>> inputs) {
+    private Tag saveInputs(RegistryAccess access, List<InputIngredient<ItemStack>> inputs) {
         ListTag tag = new ListTag();
         
         for (InputIngredient<ItemStack> input : inputs) {
             CompoundTag innerTag = new CompoundTag();
-            innerTag.put("Ingredient", EntryIngredients.ofItemStacks(input.get()).saveIngredient());
+            Tag ingredientTag = EntryIngredient.codec().encodeStart(access.createSerializationContext(NbtOps.INSTANCE), EntryIngredients.ofItemStacks(input.get())).getOrThrow();
+            innerTag.put("Ingredient", ingredientTag);
             innerTag.putInt("Index", input.getIndex());
             tag.add(innerTag);
         }
@@ -126,7 +130,7 @@ public enum SimpleTransferHandlerImpl implements ClientInternals.SimpleTransferH
     
     public static List<InputIngredient<ItemStack>> hasItemsIndexed(TransferHandler.Context context, Iterable<SlotAccessor> inventorySlots, List<InputIngredient<ItemStack>> inputs) {
         // Create a clone of player's inventory, and count
-        RecipeFinder recipeFinder = new RecipeFinder();
+        ItemRecipeFinder recipeFinder = new ItemRecipeFinder();
         for (SlotAccessor slot : inventorySlots) {
             recipeFinder.addNormalItem(slot.getItemStack());
         }
@@ -136,10 +140,9 @@ public enum SimpleTransferHandlerImpl implements ClientInternals.SimpleTransferH
             for (ItemStack possibleStack : possibleStacks.get()) {
                 if (!done) {
                     int invRequiredCount = possibleStack.getCount();
-                    int key = RecipeFinder.getItemId(possibleStack);
-                    while (invRequiredCount > 0 && recipeFinder.contains(key)) {
+                    while (invRequiredCount > 0 && recipeFinder.contains(possibleStack)) {
                         invRequiredCount--;
-                        recipeFinder.take(key, 1);
+                        recipeFinder.take(possibleStack, 1);
                     }
                     if (invRequiredCount <= 0) {
                         done = true;

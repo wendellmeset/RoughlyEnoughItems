@@ -30,7 +30,7 @@ import me.shedaniel.rei.api.client.registry.screen.ExclusionZonesProvider;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.inventory.EffectRenderingInventoryScreen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.world.effect.MobEffectInstance;
 
 import java.util.ArrayList;
@@ -39,10 +39,10 @@ import java.util.Collections;
 import java.util.List;
 
 @Environment(EnvType.CLIENT)
-public class DefaultPotionEffectExclusionZones implements ExclusionZonesProvider<EffectRenderingInventoryScreen<?>> {
+public class DefaultPotionEffectExclusionZones<T extends AbstractContainerScreen<?>> implements ExclusionZonesProvider<T> {
     @Override
-    public Collection<Rectangle> provide(EffectRenderingInventoryScreen<?> screen) {
-        if (!screen.canSeeEffects())
+    public Collection<Rectangle> provide(T screen) {
+        if (!screen.showsActiveEffects())
             return Collections.emptyList();
         boolean leftSideMobEffects = ConfigObject.getInstance().isLeftSideMobEffects();
         Collection<MobEffectInstance> activePotionEffects = Minecraft.getInstance().player.getActiveEffects();

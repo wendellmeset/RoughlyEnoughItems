@@ -5,7 +5,7 @@
   "compatibilityLevel": "JAVA_8",
   "client": [
     "MixinClientPacketListener",
-    "MixinEffectRenderingInventoryScreen",
+    "MixinEffectsInInventory",
     "MixinInputConstants",
     "MixinInputConstantsKey",
     "MixinRecipeToast",
@@ -13,8 +13,7 @@
   ],
   "mixins": [
     "MixinPacketEncoder",
-    "MixinTagLoader",
-    "MixinTagManager"
+    "MixinTagLoader"
   ],
   "injectors": {
     "maxShiftBy": 5,

@@ -46,7 +46,9 @@ import me.shedaniel.rei.impl.client.gui.InternalTextures;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.ARGB;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,13 +114,8 @@ public class TabWidget extends WidgetWithBounds implements DraggableStackProvide
         if (renderer != null) {
             try (CloseableScissors scissors = Widget.scissor(graphics, new Rectangle(bounds.x, bounds.y + 2, bounds.width, (selected ? bounds.height + 2 : bounds.height - 2)))) {
                 darkBackgroundAlpha.update(delta);
-                RenderSystem.enableBlend();
-                RenderSystem.blendFuncSeparate(770, 771, 1, 0);
-                RenderSystem.blendFunc(770, 771);
-                RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, opacity);
-                graphics.blit(InternalTextures.CHEST_GUI_TEXTURE, bounds.x, bounds.y + 2, u + (selected ? bounds.width : 0), v, bounds.width, (selected ? bounds.height + 2 : bounds.height - 2));
-                RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, darkBackgroundAlpha.value() * opacity);
-                graphics.blit(InternalTextures.CHEST_GUI_TEXTURE_DARK, bounds.x, bounds.y + 2, u + (selected ? bounds.width : 0), v, bounds.width, (selected ? bounds.height + 2 : bounds.height - 2));
+                graphics.blit(RenderType::guiTextured, InternalTextures.CHEST_GUI_TEXTURE, bounds.x, bounds.y + 2, u + (selected ? bounds.width : 0), v, bounds.width, (selected ? bounds.height + 2 : bounds.height - 2), 256, 256, ARGB.white(opacity));
+                graphics.blit(RenderType::guiTextured, InternalTextures.CHEST_GUI_TEXTURE_DARK, bounds.x, bounds.y + 2, u + (selected ? bounds.width : 0), v, bounds.width, (selected ? bounds.height + 2 : bounds.height - 2), 256, 256, ARGB.white(darkBackgroundAlpha.value() * opacity));
                 RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, opacity);
                 graphics.pose().pushPose();
                 graphics.pose().translate(0, 0, 100);

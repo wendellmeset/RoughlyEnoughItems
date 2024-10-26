@@ -31,8 +31,6 @@ import me.shedaniel.rei.api.common.entry.EntryStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Mth;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
 
 import java.util.*;
 import java.util.function.Function;
@@ -41,7 +39,6 @@ import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 public class CollectionUtils {
     public static <A, B> List<B> getOrPutEmptyList(Map<A, List<B>> map, A key) {
@@ -502,14 +499,6 @@ public class CollectionUtils {
                 };
             }
         };
-    }
-    
-    public static Ingredient toIngredient(ItemStack stack) {
-        return Ingredient.of(Stream.of(stack));
-    }
-    
-    public static Ingredient toIngredient(Iterable<ItemStack> stacks) {
-        return Ingredient.of(StreamSupport.stream(stacks.spliterator(), false));
     }
     
     @SafeVarargs

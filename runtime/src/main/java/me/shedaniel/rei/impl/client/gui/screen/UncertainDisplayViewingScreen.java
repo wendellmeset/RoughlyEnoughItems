@@ -25,7 +25,6 @@ package me.shedaniel.rei.impl.client.gui.screen;
 
 import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
-import me.shedaniel.clothconfig2.api.ScissorsHandler;
 import me.shedaniel.clothconfig2.gui.widget.DynamicNewSmoothScrollingEntryListWidget;
 import me.shedaniel.clothconfig2.impl.EasingMethod;
 import me.shedaniel.math.Point;
@@ -42,6 +41,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
@@ -129,7 +129,7 @@ public class UncertainDisplayViewingScreen extends Screen {
     public void render(GuiGraphics graphics, int int_1, int int_2, float float_1) {
         super.render(graphics, int_1, int_2, float_1);
         graphics.drawCenteredString(this.font, Component.translatable("text.rei.recipe_screen_type.selection"), this.width / 2, 20, 16777215);
-        ScissorsHandler.INSTANCE.scissor(new Rectangle(0, 20 + font.lineHeight + 2, width, height - 42));
+        graphics.enableScissor(0, 20 + font.lineHeight + 2, width, 20 + font.lineHeight + 2 + height - 42);
         if (showTips) {
             int i = 32;
             for (FormattedCharSequence s : this.font.split(Component.translatable("text.rei.recipe_screen_type.selection.sub").withStyle(ChatFormatting.GRAY), width - 30)) {
@@ -154,7 +154,7 @@ public class UncertainDisplayViewingScreen extends Screen {
             graphics.fillGradient(x - 4 + 208 - 2 - 10, y - 4, x - 4 + 208 - 10, y - 4 + 126, -1778384897, -1778384897);
             graphics.pose().popPose();
         }
-        ScissorsHandler.INSTANCE.removeLastScissor();
+        graphics.disableScissor();
         button.render(graphics, int_1, int_2, float_1);
     }
     
@@ -203,7 +203,7 @@ public class UncertainDisplayViewingScreen extends Screen {
         
         @Override
         public void render(GuiGraphics graphics, int i, int i1, float delta) {
-            graphics.blit(type == DisplayScreenType.ORIGINAL ? DEFAULT : COMPOSITE, bounds.x + (type == DisplayScreenType.ORIGINAL ? 8 : 4), bounds.y + 4, bounds.width - 8, bounds.height - 8, 113, type == DisplayScreenType.ORIGINAL ? 16 : 27, 854 - 113 * 2, 480 - 27 * 2, 854, 480);
+            graphics.blit(RenderType::guiTextured, type == DisplayScreenType.ORIGINAL ? DEFAULT : COMPOSITE, bounds.x + (type == DisplayScreenType.ORIGINAL ? 8 : 4), bounds.y + 4, bounds.width - 8, bounds.height - 8, 113, type == DisplayScreenType.ORIGINAL ? 16 : 27, 854 - 113 * 2, 480 - 27 * 2, 854, 480);
         }
         
         @Override

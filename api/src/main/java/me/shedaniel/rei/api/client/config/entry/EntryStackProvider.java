@@ -23,11 +23,13 @@
 
 package me.shedaniel.rei.api.client.config.entry;
 
-import me.shedaniel.rei.api.common.entry.EntrySerializer;
+import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.entry.type.EntryDefinition;
 import me.shedaniel.rei.api.common.util.EntryStacks;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Objects;
@@ -53,11 +55,10 @@ public interface EntryStackProvider<T> {
      *
      * @return the saved tag
      * @throws UnsupportedOperationException if the {@link EntryDefinition} does not support saving to a tag
-     * @see EntrySerializer#supportSaving()
-     * @see EntryStack#saveStack()
+     * @see EntryStack#codec()
      * @since 8.3
      */
-    CompoundTag save();
+    Tag save();
     
     /**
      * Returns whether the {@link EntryStack} is valid.
@@ -67,14 +68,14 @@ public interface EntryStackProvider<T> {
     boolean isValid();
     
     /**
-     * Creates a new {@link EntryStackProvider} from the given {@link CompoundTag},
+     * Creates a new {@link EntryStackProvider} from the given {@link Tag},
      * the stack is not resolved immediately, but rather deferred until {@link #provide()} is called.
      *
      * @param tag the tag to load from
      * @param <T> the type of {@link EntryStack}
      * @return the {@link EntryStackProvider}
      */
-    static <T> EntryStackProvider<T> defer(CompoundTag tag) {
+    static <T> EntryStackProvider<T> defer(Tag tag) {
         return new EntryStackProvider<T>() {
             private EntryStack<T> stack;
             
@@ -82,7 +83,7 @@ public interface EntryStackProvider<T> {
             public EntryStack<T> provide() {
                 if (stack == null) {
                     try {
-                        stack = (EntryStack<T>) EntryStack.read(tag);
+                        stack = EntryStack.codec().parse(BasicDisplay.registryAccess().createSerializationContext(NbtOps.INSTANCE), tag).getOrThrow().cast();
                     } catch (Exception e) {
                         e.printStackTrace();
                         return (EntryStack<T>) EntryStack.empty();
@@ -95,7 +96,7 @@ public interface EntryStackProvider<T> {
             }
             
             @Override
-            public CompoundTag save() {
+            public Tag save() {
                 return tag.copy();
             }
             
@@ -137,8 +138,8 @@ public interface EntryStackProvider<T> {
             }
             
             @Override
-            public CompoundTag save() {
-                return finalStack.saveStack();
+            public Tag save() {
+                return EntryStack.codec().encodeStart(BasicDisplay.registryAccess().createSerializationContext(NbtOps.INSTANCE), finalStack).getOrThrow();
             }
             
             @Override

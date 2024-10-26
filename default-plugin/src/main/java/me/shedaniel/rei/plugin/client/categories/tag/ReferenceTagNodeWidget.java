@@ -23,18 +23,18 @@
 
 package me.shedaniel.rei.plugin.client.categories.tag;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.gui.widgets.Slot;
 import me.shedaniel.rei.api.client.gui.widgets.Tooltip;
 import me.shedaniel.rei.api.client.gui.widgets.Widgets;
 import me.shedaniel.rei.api.client.util.MatrixUtils;
+import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.util.EntryIngredients;
 import me.shedaniel.rei.plugin.common.displays.tag.TagNode;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -58,7 +58,7 @@ public class ReferenceTagNodeWidget<S, T> extends TagNodeWidget<S, T> {
                 .disableBackground()
                 .disableHighlight()
                 .disableTooltips()
-                .entries(EntryIngredients.ofTag(node.getReference(), mapper));
+                .entries(EntryIngredients.ofTag(BasicDisplay.registryAccess(), node.getReference(), mapper));
         this.children = Collections.singletonList(this.slot);
     }
     
@@ -70,10 +70,9 @@ public class ReferenceTagNodeWidget<S, T> extends TagNodeWidget<S, T> {
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
         if (this.overflowBounds.intersects(MatrixUtils.transform(graphics.pose().last().pose(), getBounds()))) {
-            RenderSystem.setShader(GameRenderer::getPositionTexShader);
-            graphics.innerBlit(ResourceLocation.withDefaultNamespace("textures/gui/sprites/advancements/task_frame_unobtained.png"),
-                    bounds.x - 1, bounds.x - 1 + 26, bounds.y - 1, bounds.y - 1 + 26, 0,
-                    0, 1, 0, 1);
+            graphics.innerBlit(RenderType::guiTextured, ResourceLocation.withDefaultNamespace("textures/gui/sprites/advancements/task_frame_unobtained.png"),
+                    bounds.x - 1, bounds.x - 1 + 26, bounds.y - 1, bounds.y - 1 + 26,
+                    0, 1, 0, 1, -1);
             this.slot.getBounds().setLocation(bounds.getCenterX() - this.slot.getBounds().getWidth() / 2, bounds.y + (bounds.height - this.slot.getBounds().getHeight()) / 2 + 1);
             this.slot.render(graphics, mouseX, mouseY, delta);
             if (this.containsMouse(mouseX, mouseY)) {

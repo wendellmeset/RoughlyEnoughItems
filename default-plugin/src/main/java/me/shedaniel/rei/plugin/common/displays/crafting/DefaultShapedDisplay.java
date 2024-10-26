@@ -23,32 +23,75 @@
 
 package me.shedaniel.rei.plugin.common.displays.crafting;
 
-import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import me.shedaniel.rei.api.common.display.Display;
+import me.shedaniel.rei.api.common.display.DisplaySerializer;
+import me.shedaniel.rei.api.common.entry.EntryIngredient;
+import me.shedaniel.rei.api.common.util.CollectionUtils;
 import me.shedaniel.rei.api.common.util.EntryIngredients;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 
-import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
-public class DefaultShapedDisplay extends DefaultCraftingDisplay<ShapedRecipe> {
+public class DefaultShapedDisplay extends DefaultCraftingDisplay {
+    public static final DisplaySerializer<DefaultCraftingDisplay> SERIALIZER = DisplaySerializer.of(
+            RecordCodecBuilder.mapCodec(instance -> instance.group(
+                    EntryIngredient.codec().listOf().fieldOf("inputs").forGetter(DefaultCraftingDisplay::getInputEntries),
+                    EntryIngredient.codec().listOf().fieldOf("outputs").forGetter(DefaultCraftingDisplay::getOutputEntries),
+                    ResourceLocation.CODEC.optionalFieldOf("location").forGetter(DefaultCraftingDisplay::getDisplayLocation),
+                    Codec.INT.fieldOf("width").forGetter(DefaultCraftingDisplay::getWidth),
+                    Codec.INT.fieldOf("height").forGetter(DefaultCraftingDisplay::getHeight)
+            ).apply(instance, DefaultCustomShapedDisplay::new)),
+            StreamCodec.composite(
+                    EntryIngredient.streamCodec().apply(ByteBufCodecs.list()),
+                    DefaultCraftingDisplay::getInputEntries,
+                    EntryIngredient.streamCodec().apply(ByteBufCodecs.list()),
+                    DefaultCraftingDisplay::getOutputEntries,
+                    ByteBufCodecs.optional(ResourceLocation.STREAM_CODEC),
+                    DefaultCraftingDisplay::getDisplayLocation,
+                    ByteBufCodecs.INT,
+                    DefaultCraftingDisplay::getWidth,
+                    ByteBufCodecs.INT,
+                    DefaultCraftingDisplay::getHeight,
+                    DefaultCustomShapedDisplay::new
+            ));
+    
+    private final int width;
+    private final int height;
+    
     public DefaultShapedDisplay(RecipeHolder<ShapedRecipe> recipe) {
         super(
-                EntryIngredients.ofIngredients(recipe.value().getIngredients()),
-                Collections.singletonList(EntryIngredients.of(recipe.value().getResultItem(BasicDisplay.registryAccess()))),
-                Optional.of(recipe)
+                CollectionUtils.map(recipe.value().getIngredients(), opt -> opt.map(EntryIngredients::ofIngredient).orElse(EntryIngredient.empty())),
+                List.of(EntryIngredients.of(recipe.value().result)),
+                Optional.of(recipe.id().location())
         );
+        this.width = recipe.value().getWidth();
+        this.height = recipe.value().getHeight();
     }
     
-    @SuppressWarnings("OptionalGetWithoutIsPresent")
     @Override
     public int getWidth() {
-        return recipe.get().value().getWidth();
+        return this.width;
     }
     
-    @SuppressWarnings("OptionalGetWithoutIsPresent")
     @Override
     public int getHeight() {
-        return recipe.get().value().getHeight();
+        return this.height;
+    }
+    
+    @Override
+    public boolean isShapeless() {
+        return false;
+    }
+    
+    @Override
+    public DisplaySerializer<? extends Display> getSerializer() {
+        return SERIALIZER;
     }
 }

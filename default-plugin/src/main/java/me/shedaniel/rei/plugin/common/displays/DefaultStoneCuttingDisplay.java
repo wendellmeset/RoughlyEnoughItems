@@ -23,23 +23,44 @@
 
 package me.shedaniel.rei.plugin.common.displays;
 
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.display.Display;
+import me.shedaniel.rei.api.common.display.DisplaySerializer;
 import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.util.EntryIngredients;
 import me.shedaniel.rei.plugin.common.BuiltinPlugin;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.StonecutterRecipe;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 public class DefaultStoneCuttingDisplay extends BasicDisplay {
+    public static final DisplaySerializer<DefaultStoneCuttingDisplay> SERIALIZER = DisplaySerializer.of(
+            RecordCodecBuilder.mapCodec(instance -> instance.group(
+                    EntryIngredient.codec().listOf().fieldOf("inputs").forGetter(DefaultStoneCuttingDisplay::getInputEntries),
+                    EntryIngredient.codec().listOf().fieldOf("outputs").forGetter(DefaultStoneCuttingDisplay::getOutputEntries),
+                    ResourceLocation.CODEC.optionalFieldOf("location").forGetter(DefaultStoneCuttingDisplay::getDisplayLocation)
+            ).apply(instance, DefaultStoneCuttingDisplay::new)),
+            StreamCodec.composite(
+                    EntryIngredient.streamCodec().apply(ByteBufCodecs.list()),
+                    DefaultStoneCuttingDisplay::getInputEntries,
+                    EntryIngredient.streamCodec().apply(ByteBufCodecs.list()),
+                    DefaultStoneCuttingDisplay::getOutputEntries,
+                    ByteBufCodecs.optional(ResourceLocation.STREAM_CODEC),
+                    DefaultStoneCuttingDisplay::getDisplayLocation,
+                    DefaultStoneCuttingDisplay::new
+            ));
+    
     public DefaultStoneCuttingDisplay(RecipeHolder<StonecutterRecipe> recipe) {
-        this(EntryIngredients.ofIngredients(recipe.value().getIngredients()), Collections.singletonList(EntryIngredients.of(recipe.value().getResultItem(BasicDisplay.registryAccess()))),
-                Optional.ofNullable(recipe.id()));
+        this(List.of(EntryIngredients.ofIngredient(recipe.value().input())),
+                List.of(EntryIngredients.of(recipe.value().result())),
+                Optional.of(recipe.id().location()));
     }
     
     public DefaultStoneCuttingDisplay(List<EntryIngredient> inputs, List<EntryIngredient> outputs, Optional<ResourceLocation> location) {
@@ -51,7 +72,8 @@ public class DefaultStoneCuttingDisplay extends BasicDisplay {
         return BuiltinPlugin.STONE_CUTTING;
     }
     
-    public static BasicDisplay.Serializer<DefaultStoneCuttingDisplay> serializer() {
-        return BasicDisplay.Serializer.ofSimple(DefaultStoneCuttingDisplay::new);
+    @Override
+    public DisplaySerializer<? extends Display> getSerializer() {
+        return SERIALIZER;
     }
 }

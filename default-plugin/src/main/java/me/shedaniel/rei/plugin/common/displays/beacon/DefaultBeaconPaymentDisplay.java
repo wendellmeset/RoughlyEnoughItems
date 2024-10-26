@@ -24,6 +24,8 @@
 package me.shedaniel.rei.plugin.common.displays.beacon;
 
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.display.Display;
+import me.shedaniel.rei.api.common.display.DisplaySerializer;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.plugin.common.BuiltinPlugin;
 import net.minecraft.world.item.ItemStack;
@@ -31,6 +33,8 @@ import net.minecraft.world.item.ItemStack;
 import java.util.List;
 
 public class DefaultBeaconPaymentDisplay extends DefaultBeaconDisplay {
+    public static DisplaySerializer<DefaultBeaconPaymentDisplay> SERIALIZER = serializer(DefaultBeaconPaymentDisplay::new);
+    
     public DefaultBeaconPaymentDisplay(List<ItemStack> entries) {
         super(entries);
     }
@@ -42,5 +46,10 @@ public class DefaultBeaconPaymentDisplay extends DefaultBeaconDisplay {
     @Override
     public CategoryIdentifier<?> getCategoryIdentifier() {
         return BuiltinPlugin.BEACON_PAYMENT;
+    }
+    
+    @Override
+    public DisplaySerializer<? extends Display> getSerializer() {
+        return SERIALIZER;
     }
 }

@@ -67,6 +67,7 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
@@ -177,11 +178,11 @@ public class DefaultDisplayViewingScreen extends AbstractDisplayViewingScreen {
             Rectangle categoryNextBounds = categoryNext.getBounds();
             graphics.pose().pushPose();
             graphics.pose().translate(0.5, 0.5, 0);
-            graphics.blit(InternalTextures.ARROW_LEFT_TEXTURE, recipeBackBounds.x + 2, recipeBackBounds.y + 2, 0, 0, 8, 8, 8, 8);
-            graphics.blit(InternalTextures.ARROW_LEFT_TEXTURE, categoryBackBounds.x + 2, categoryBackBounds.y + 2, 0, 0, 8, 8, 8, 8);
+            graphics.blit(RenderType::guiTextured, InternalTextures.ARROW_LEFT_TEXTURE, recipeBackBounds.x + 2, recipeBackBounds.y + 2, 0, 0, 8, 8, 8, 8);
+            graphics.blit(RenderType::guiTextured, InternalTextures.ARROW_LEFT_TEXTURE, categoryBackBounds.x + 2, categoryBackBounds.y + 2, 0, 0, 8, 8, 8, 8);
             graphics.pose().translate(-0.5, 0, 0);
-            graphics.blit(InternalTextures.ARROW_RIGHT_TEXTURE, recipeNextBounds.x + 2, recipeNextBounds.y + 2, 0, 0, 8, 8, 8, 8);
-            graphics.blit(InternalTextures.ARROW_RIGHT_TEXTURE, categoryNextBounds.x + 2, categoryNextBounds.y + 2, 0, 0, 8, 8, 8, 8);
+            graphics.blit(RenderType::guiTextured, InternalTextures.ARROW_RIGHT_TEXTURE, recipeNextBounds.x + 2, recipeNextBounds.y + 2, 0, 0, 8, 8, 8, 8);
+            graphics.blit(RenderType::guiTextured, InternalTextures.ARROW_RIGHT_TEXTURE, categoryNextBounds.x + 2, categoryNextBounds.y + 2, 0, 0, 8, 8, 8, 8);
             graphics.pose().popPose();
         }), 0, 0, 1));
         
@@ -347,8 +348,10 @@ public class DefaultDisplayViewingScreen extends AbstractDisplayViewingScreen {
                         Component text = Component.translatable("text.rei.release_export", export.getLocalizedName().plainCopy().getString());
                         graphics.pose().pushPose();
                         graphics.pose().translate(0.0D, 0.0D, 10.0D);
-                        Matrix4f matrix4f = graphics.pose().last().pose();
-                        font.drawInBatch(text.getVisualOrderText(), bounds.getCenterX() - font.width(text) / 2f, bounds.getCenterY() - 4.5f, 0xff000000, false, matrix4f, graphics.bufferSource(), Font.DisplayMode.NORMAL, 0, 15728880);
+                        graphics.drawSpecial(source -> {
+                            Matrix4f matrix4f = graphics.pose().last().pose();
+                            font.drawInBatch(text.getVisualOrderText(), bounds.getCenterX() - font.width(text) / 2f, bounds.getCenterY() - 4.5f, 0xff000000, false, matrix4f, source, Font.DisplayMode.NORMAL, 0, 15728880);
+                        });
                         graphics.flush();
                         graphics.pose().popPose();
                     } else {

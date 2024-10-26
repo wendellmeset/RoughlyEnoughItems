@@ -50,14 +50,12 @@ import java.io.Closeable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
-import java.util.function.UnaryOperator;
 
 @ApiStatus.Internal
 public class PluginManagerImpl<P extends REIPlugin<?>> implements PluginManager<P>, PluginView<P> {
     private final List<Reloadable<P>> reloadables = new ArrayList<>();
     private final Map<Class<? extends Reloadable<P>>, Reloadable<? super P>> cache = new ConcurrentHashMap<>();
     private final Class<P> pluginClass;
-    private final UnaryOperator<PluginView<P>> view;
     @Nullable
     private ReloadStage reloading = null;
     private final List<ReloadStage> observedStages = new ArrayList<>();
@@ -67,9 +65,8 @@ public class PluginManagerImpl<P extends REIPlugin<?>> implements PluginManager<
     private final Stopwatch forceMainThreadStopwatch = Stopwatch.createUnstarted();
     
     @SafeVarargs
-    public PluginManagerImpl(Class<P> pluginClass, UnaryOperator<PluginView<P>> view, Reloadable<? extends P>... reloadables) {
+    public PluginManagerImpl(Class<P> pluginClass, Reloadable<? extends P>... reloadables) {
         this.pluginClass = pluginClass;
-        this.view = view;
         for (Reloadable<? extends P> reloadable : reloadables) {
             registerReloadable(reloadable);
         }
@@ -106,7 +103,7 @@ public class PluginManagerImpl<P extends REIPlugin<?>> implements PluginManager<
     
     @Override
     public PluginView<P> view() {
-        return view.apply(this);
+        return this;
     }
     
     @Override

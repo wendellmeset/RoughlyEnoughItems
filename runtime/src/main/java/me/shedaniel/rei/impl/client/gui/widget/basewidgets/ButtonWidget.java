@@ -23,7 +23,6 @@
 
 package me.shedaniel.rei.impl.client.gui.widget.basewidgets;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import me.shedaniel.clothconfig2.api.animator.ValueAnimator;
 import me.shedaniel.clothconfig2.api.animator.ValueProvider;
 import me.shedaniel.math.Color;
@@ -34,8 +33,10 @@ import me.shedaniel.rei.api.client.gui.widgets.Button;
 import me.shedaniel.rei.api.client.gui.widgets.Tooltip;
 import net.minecraft.client.gui.ComponentPath;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.WidgetSprites;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.navigation.FocusNavigationEvent;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -52,8 +53,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class ButtonWidget extends Button {
-    private static final ResourceLocation BUTTON_LOCATION = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "textures/gui/button.png");
-    private static final ResourceLocation BUTTON_LOCATION_DARK = ResourceLocation.fromNamespaceAndPath("roughlyenoughitems", "textures/gui/button_dark.png");
+    private static final WidgetSprites SPRITES = new WidgetSprites(ResourceLocation.withDefaultNamespace("widget/button"), ResourceLocation.withDefaultNamespace("widget/button_disabled"), ResourceLocation.withDefaultNamespace("widget/button_highlighted"));
+    private static final WidgetSprites DARK_SPRITES = new WidgetSprites(ResourceLocation.parse("roughlyenoughitems:widget/button_dark"), ResourceLocation.parse("roughlyenoughitems:widget/button_disabled_dark"), ResourceLocation.parse("roughlyenoughitems:widget/button_highlighted_dark"));
     private Rectangle bounds;
     private boolean enabled = true;
     private Component text;
@@ -69,8 +70,6 @@ public class ButtonWidget extends Button {
     private Function<Button, @Nullable Component[]> tooltipFunction;
     @Nullable
     private BiFunction<Button, Point, Integer> textColorFunction;
-    @Nullable
-    private BiFunction<Button, Point, Integer> textureIdFunction;
     private final ValueAnimator<Color> darkBackground;
     private ValueProvider<Double> alpha;
     
@@ -176,11 +175,6 @@ public class ButtonWidget extends Button {
     }
     
     @Override
-    public final void setTextureId(@Nullable BiFunction<Button, Point, Integer> textureIdFunction) {
-        this.textureIdFunction = textureIdFunction;
-    }
-    
-    @Override
     public final int getTextColor(Point mouse) {
         if (this.textColorFunction != null) {
             Integer apply = this.textColorFunction.apply(this, mouse);
@@ -209,10 +203,10 @@ public class ButtonWidget extends Button {
         }
         int x = bounds.x, y = bounds.y, width = bounds.width, height = bounds.height;
         int alphaAsInt = (int) (alpha.value() * 255);
-        renderBackground(graphics, x, y, width, height, this.getTextureId(new Point(mouseX, mouseY)), false, Color.ofTransparent(0xFFFFFF | (alphaAsInt << 24)));
+        renderBackground(graphics, x, y, width, height, isFocused(mouseX, mouseY), false, Color.ofTransparent(0xFFFFFF | (alphaAsInt << 24)));
         Color darkBackgroundColor = darkBackground.value();
         darkBackgroundColor = Color.ofRGBA(darkBackgroundColor.getRed(), darkBackgroundColor.getGreen(), darkBackgroundColor.getBlue(), (int) Math.round(darkBackgroundColor.getAlpha() * alpha.value()));
-        renderBackground(graphics, x, y, width, height, this.getTextureId(new Point(mouseX, mouseY)), true, darkBackgroundColor);
+        renderBackground(graphics, x, y, width, height, isFocused(mouseX, mouseY), true, darkBackgroundColor);
         
         int color = 0xe0e0e0;
         if (!this.enabled) {
@@ -285,48 +279,13 @@ public class ButtonWidget extends Button {
         return Collections.emptyList();
     }
     
-    @Override
-    public final int getTextureId(Point mouse) {
-        if (this.textureIdFunction != null) {
-            Integer apply = this.textureIdFunction.apply(this, mouse);
-            if (apply != null)
-                return apply;
-        }
-        if (!this.isEnabled()) {
-            return 0;
-        } else if (containsMouse(mouse) || focused) {
-            return 4; // 2 is the old blue highlight, 3 is the 1.15 outline, 4 is the 1.15 online + light hover
-        }
-        return 1;
+    protected void renderBackground(GuiGraphics graphics, int x, int y, int width, int height, boolean focused) {
+        renderBackground(graphics, x, y, width, height, focused, REIRuntime.getInstance().isDarkThemeEnabled(), Color.ofTransparent(0xFFFFFFFF));
     }
     
-    protected void renderBackground(GuiGraphics graphics, int x, int y, int width, int height, int textureOffset) {
-        renderBackground(graphics, x, y, width, height, textureOffset, REIRuntime.getInstance().isDarkThemeEnabled(), Color.ofTransparent(0xFFFFFFFF));
-    }
-    
-    protected void renderBackground(GuiGraphics graphics, int x, int y, int width, int height, int textureOffset, boolean dark, Color color) {
-        RenderSystem.setShaderColor(color.getRed() / 255F, color.getGreen() / 255F, color.getBlue() / 255F, color.getAlpha() / 255F);
-        RenderSystem.enableBlend();
-        RenderSystem.blendFuncSeparate(770, 771, 1, 0);
-        RenderSystem.blendFunc(770, 771);
-        ResourceLocation texture = dark ? BUTTON_LOCATION_DARK : BUTTON_LOCATION;
-        
-        // 9 Patch Texture
-        
-        // Four Corners
-        graphics.blit(texture, x, y, 0, 0, textureOffset * 80, 8, 8, 256, 512);
-        graphics.blit(texture, x + width - 8, y, 0, 248, textureOffset * 80, 8, 8, 256, 512);
-        graphics.blit(texture, x, y + height - 8, 0, 0, textureOffset * 80 + 72, 8, 8, 256, 512);
-        graphics.blit(texture, x + width - 8, y + height - 8, 0, 248, textureOffset * 80 + 72, 8, 8, 256, 512);
-        
-        // Sides
-        graphics.innerBlit(texture, x + 8, x + width - 8, y, y + 8, 0, (8) / 256f, (248) / 256f, (textureOffset * 80) / 512f, (textureOffset * 80 + 8) / 512f);
-        graphics.innerBlit(texture, x + 8, x + width - 8, y + height - 8, y + height, 0, (8) / 256f, (248) / 256f, (textureOffset * 80 + 72) / 512f, (textureOffset * 80 + 80) / 512f);
-        graphics.innerBlit(texture, x, x + 8, y + 8, y + height - 8, 0, (0) / 256f, (8) / 256f, (textureOffset * 80 + 8) / 512f, (textureOffset * 80 + 72) / 512f);
-        graphics.innerBlit(texture, x + width - 8, x + width, y + 8, y + height - 8, 0, (248) / 256f, (256) / 256f, (textureOffset * 80 + 8) / 512f, (textureOffset * 80 + 72) / 512f);
-        
-        // Center
-        graphics.innerBlit(texture, x + 8, x + width - 8, y + 8, y + height - 8, 0, (8) / 256f, (248) / 256f, (textureOffset * 80 + 8) / 512f, (textureOffset * 80 + 72) / 512f);
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+    protected void renderBackground(GuiGraphics graphics, int x, int y, int width, int height, boolean focused, boolean dark, Color color) {
+        WidgetSprites sprites = dark ? DARK_SPRITES : SPRITES;
+        ResourceLocation texture = sprites.get(this.isEnabled(), focused);
+        graphics.blitSprite(RenderType::guiTextured, texture, x, y, width, height, color.getColor());
     }
 }

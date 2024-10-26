@@ -48,6 +48,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
@@ -123,8 +124,7 @@ public class CollapsibleEntryWidget extends WidgetWithBounds {
                     super.renderWidget(graphics, mouseX, mouseY, delta);
                     graphics.pose().pushPose();
                     graphics.pose().translate(0, 0, 1);
-                    RenderSystem.setShaderTexture(0, InternalTextures.CHEST_GUI_TEXTURE);
-                    graphics.blit(InternalTextures.CHEST_GUI_TEXTURE, getX() + 3, getY() + 3, 0, 0, 14, 14);
+                    graphics.blit(RenderType::guiTextured, InternalTextures.CHEST_GUI_TEXTURE, getX() + 3, getY() + 3, 0, 0, 14, 14, 256, 256);
                     graphics.pose().popPose();
                 }
             };
@@ -256,19 +256,14 @@ public class CollapsibleEntryWidget extends WidgetWithBounds {
             graphics.pose().translate(0, 0, 300);
             
             if (this.stacks.size() > rowSize * 3) {
-                Tesselator tesselator = Tesselator.getInstance();
-                RenderSystem.enableBlend();
-                RenderSystem.defaultBlendFunc();
-                RenderSystem.setShader(GameRenderer::getPositionColorShader);
-                RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-                Matrix4f matrix = graphics.pose().last().pose();
-                BufferBuilder buffer = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-                buffer.addVertex(matrix, this.x + 1, this.y + this.height - 1, 0.0F).setColor(0xFF000000);
-                buffer.addVertex(matrix, this.x + this.width - 1, this.y + this.height - 1, 0.0F).setColor(0xFF000000);
-                buffer.addVertex(matrix, this.x + this.width - 1, this.y + this.height - 40, 0.0F).setColor(0x00000000);
-                buffer.addVertex(matrix, this.x + 1, this.y + this.height - 40, 0.0F).setColor(0x00000000);
-                BufferUploader.drawWithShader(buffer.buildOrThrow());
-                RenderSystem.disableBlend();
+                graphics.drawSpecial(source -> {
+                    VertexConsumer buffer = source.getBuffer(RenderType.gui());
+                    Matrix4f matrix = graphics.pose().last().pose();
+                    buffer.addVertex(matrix, this.x + 1, this.y + this.height - 1, 0.0F).setColor(0xFF000000);
+                    buffer.addVertex(matrix, this.x + this.width - 1, this.y + this.height - 1, 0.0F).setColor(0xFF000000);
+                    buffer.addVertex(matrix, this.x + this.width - 1, this.y + this.height - 40, 0.0F).setColor(0x00000000);
+                    buffer.addVertex(matrix, this.x + 1, this.y + this.height - 40, 0.0F).setColor(0x00000000);
+                });
             }
         }
         graphics.pose().popPose();

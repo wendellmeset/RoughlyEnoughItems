@@ -25,6 +25,7 @@ package me.shedaniel.rei.plugin.client.entry;
 
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
+import com.mojang.serialization.Codec;
 import dev.architectury.fluid.FluidStack;
 import dev.architectury.hooks.fluid.FluidStackHooks;
 import dev.architectury.platform.Platform;
@@ -60,10 +61,11 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
@@ -178,28 +180,18 @@ public class FluidEntryDefinition implements EntryDefinition<FluidStack>, EntryS
     }
     
     @Override
-    public boolean supportSaving() {
-        return true;
-    }
-    
-    @Override
-    public boolean supportReading() {
-        return true;
-    }
-    
-    @Override
     public boolean acceptsNull() {
         return false;
     }
     
     @Override
-    public CompoundTag save(EntryStack<FluidStack> entry, FluidStack value) {
-        return (CompoundTag) value.write(BasicDisplay.registryAccess(), new CompoundTag());
+    public Codec<FluidStack> codec() {
+        return FluidStack.CODEC;
     }
     
     @Override
-    public FluidStack read(CompoundTag tag) {
-        return FluidStack.read(BasicDisplay.registryAccess(), tag).orElse(FluidStack.empty());
+    public StreamCodec<RegistryFriendlyByteBuf, FluidStack> streamCodec() {
+        return FluidStack.STREAM_CODEC;
     }
     
     @Override

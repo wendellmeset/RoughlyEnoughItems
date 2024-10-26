@@ -58,7 +58,7 @@ public class TippedArrowRecipeFiller implements CraftingRecipeFiller<TippedArrow
                     input.add(arrowStack);
                 ItemStack outputStack = new ItemStack(Items.TIPPED_ARROW, 8);
                 outputStack.set(DataComponents.POTION_CONTENTS, potion);
-                displays.add(new DefaultCustomDisplay(recipe, input, List.of(EntryIngredients.of(outputStack))));
+                displays.add(new DefaultCustomDisplay(input, List.of(EntryIngredients.of(outputStack)), Optional.of(recipe.id().location())));
             }
         });
         

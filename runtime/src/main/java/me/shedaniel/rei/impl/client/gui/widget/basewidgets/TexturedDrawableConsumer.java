@@ -24,15 +24,14 @@
 package me.shedaniel.rei.impl.client.gui.widget.basewidgets;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import me.shedaniel.rei.api.client.gui.DrawableConsumer;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import org.joml.Matrix4f;
 
 public final class TexturedDrawableConsumer implements DrawableConsumer {
-    
     private ResourceLocation identifier;
     private int x, y, width, height, uWidth, vHeight, textureWidth, textureHeight;
     private float u, v;
@@ -53,21 +52,19 @@ public final class TexturedDrawableConsumer implements DrawableConsumer {
     
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-        RenderSystem.setShaderTexture(0, identifier);
-        innerBlit(graphics.pose().last().pose(), x, x + width, y, y + height, 0, uWidth, vHeight, u, v, textureWidth, textureHeight);
+        graphics.drawSpecial(source -> {
+            innerBlit(source.getBuffer(RenderType.guiTextured(identifier)), graphics.pose().last().pose(), x, x + width, y, y + height, 0, uWidth, vHeight, u, v, textureWidth, textureHeight);
+        });
     }
     
-    private static void innerBlit(Matrix4f matrix, int xStart, int xEnd, int yStart, int yEnd, int z, int width, int height, float u, float v, int texWidth, int texHeight) {
-        innerBlit(matrix, xStart, xEnd, yStart, yEnd, z, u / texWidth, (u + width) / texWidth, v / texHeight, (v + height) / texHeight);
+    private static void innerBlit(VertexConsumer consumer, Matrix4f matrix, int xStart, int xEnd, int yStart, int yEnd, int z, int width, int height, float u, float v, int texWidth, int texHeight) {
+        innerBlit(consumer, matrix, xStart, xEnd, yStart, yEnd, z, u / texWidth, (u + width) / texWidth, v / texHeight, (v + height) / texHeight);
     }
     
-    protected static void innerBlit(Matrix4f matrix, int xStart, int xEnd, int yStart, int yEnd, int z, float uStart, float uEnd, float vStart, float vEnd) {
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        BufferBuilder bufferBuilder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        bufferBuilder.addVertex(matrix, xStart, yEnd, z).setUv(uStart, vEnd);
-        bufferBuilder.addVertex(matrix, xEnd, yEnd, z).setUv(uEnd, vEnd);
-        bufferBuilder.addVertex(matrix, xEnd, yStart, z).setUv(uEnd, vStart);
-        bufferBuilder.addVertex(matrix, xStart, yStart, z).setUv(uStart, vStart);
-        BufferUploader.drawWithShader(bufferBuilder.buildOrThrow());
+    private static void innerBlit(VertexConsumer consumer, Matrix4f matrix, int xStart, int xEnd, int yStart, int yEnd, int z, float uStart, float uEnd, float vStart, float vEnd) {
+        consumer.addVertex(matrix, xStart, yEnd, z).setUv(uStart, vEnd).setColor(-1);
+        consumer.addVertex(matrix, xEnd, yEnd, z).setUv(uEnd, vEnd).setColor(-1);
+        consumer.addVertex(matrix, xEnd, yStart, z).setUv(uEnd, vStart).setColor(-1);
+        consumer.addVertex(matrix, xStart, yStart, z).setUv(uStart, vStart).setColor(-1);
     }
 }

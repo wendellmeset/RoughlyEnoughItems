@@ -32,7 +32,6 @@ import me.shedaniel.clothconfig2.api.animator.ValueAnimator;
 import me.shedaniel.math.Point;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.REIRuntime;
-import me.shedaniel.rei.api.client.config.ConfigManager;
 import me.shedaniel.rei.api.client.config.ConfigObject;
 import me.shedaniel.rei.api.client.favorites.FavoriteEntry;
 import me.shedaniel.rei.api.client.gui.drag.DraggableStack;
@@ -54,15 +53,12 @@ import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.display.Display;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.plugins.PluginManager;
-import me.shedaniel.rei.api.common.transfer.info.MenuTransferException;
 import me.shedaniel.rei.api.common.util.FormattingUtils;
 import me.shedaniel.rei.impl.client.REIRuntimeImpl;
 import me.shedaniel.rei.impl.client.gui.InternalTextures;
-import me.shedaniel.rei.impl.client.gui.ScreenOverlayImpl;
 import me.shedaniel.rei.impl.client.gui.dragging.CurrentDraggingStack;
-import me.shedaniel.rei.impl.client.gui.widget.favorites.FavoritesListWidget;
+import me.shedaniel.rei.impl.client.registry.display.DisplayCache;
 import me.shedaniel.rei.impl.client.registry.display.DisplayRegistryImpl;
-import me.shedaniel.rei.impl.client.registry.display.DisplaysHolder;
 import me.shedaniel.rei.impl.client.util.CyclingList;
 import me.shedaniel.rei.impl.client.util.OriginalRetainingCyclingList;
 import me.shedaniel.rei.impl.client.view.ViewsImpl;
@@ -75,11 +71,13 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.item.Item;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
@@ -332,12 +330,12 @@ public class EntryWidget extends Slot implements DraggableStackProviderWidget {
         
         try {
             DisplayRegistry displayRegistry = DisplayRegistry.getInstance();
-            DisplaysHolder displaysHolder = ((DisplayRegistryImpl) displayRegistry).displaysHolder();
+            DisplayCache displayCache = ((DisplayRegistryImpl) displayRegistry).cache();
             CategoryRegistry categoryRegistry = CategoryRegistry.getInstance();
             Map<CategoryIdentifier<?>, Boolean> filteringQuickCraftCategories = ConfigObject.getInstance().getFilteringQuickCraftCategories();
             boolean shouldFilterDisplays = ConfigObject.getInstance().shouldFilterDisplays();
             
-            for (Display display : displaysHolder.cache().getAllDisplaysByOutputs(getEntries())) {
+            for (Display display : displayCache.getAllDisplaysByOutputs(getEntries())) {
                 CategoryIdentifier<?> categoryIdentifier = display.getCategoryIdentifier();
                 Optional<? extends CategoryRegistry.CategoryConfiguration<?>> configuration;
                 if ((configuration = categoryRegistry.tryGet(categoryIdentifier)).isEmpty()
@@ -346,7 +344,7 @@ public class EntryWidget extends Slot implements DraggableStackProviderWidget {
                     
                     continue;
                 if ((!shouldFilterDisplays || displayRegistry.isDisplayVisible(display))
-                            ) {
+                ) {
                     AutoCraftingEvaluator.AutoCraftingResult result = AutoCraftingEvaluator.evaluateAutoCrafting(false, false, display, null);
                     if (result.successful) {
                         this.display = display;
@@ -427,12 +425,9 @@ public class EntryWidget extends Slot implements DraggableStackProviderWidget {
             RenderSystem.enableBlend();
             RenderSystem.blendFuncSeparate(770, 771, 1, 0);
             RenderSystem.blendFunc(770, 771);
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-            graphics.blit(InternalTextures.CHEST_GUI_TEXTURE, bounds.x, bounds.y, 0, 222, bounds.width, bounds.height);
+            graphics.blit(RenderType::guiTextured, InternalTextures.CHEST_GUI_TEXTURE, bounds.x, bounds.y, 0, 222, bounds.width, bounds.height, 256, 256);
             if (darkBackgroundAlpha.value() > 0.0F) {
-                RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, darkBackgroundAlpha.value());
-                graphics.blit(InternalTextures.CHEST_GUI_TEXTURE_DARK, bounds.x, bounds.y, 0, 222, bounds.width, bounds.height);
-                RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+                graphics.blit(RenderType::guiTextured, InternalTextures.CHEST_GUI_TEXTURE_DARK, bounds.x, bounds.y, 0, 222, bounds.width, bounds.height, 256, 256, ARGB.white(darkBackgroundAlpha.value()));
             }
         }
     }

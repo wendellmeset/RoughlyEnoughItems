@@ -34,7 +34,7 @@ import me.shedaniel.rei.api.client.gui.widgets.Widgets;
 import me.shedaniel.rei.api.client.registry.display.DisplayCategory;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.entry.EntryStack;
-import me.shedaniel.rei.plugin.common.displays.cooking.DefaultCookingDisplay;
+import me.shedaniel.rei.plugin.common.displays.cooking.CookingDisplay;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.network.chat.Component;
@@ -44,31 +44,34 @@ import java.util.Collections;
 import java.util.List;
 
 @Environment(EnvType.CLIENT)
-public class DefaultCookingCategory implements DisplayCategory<DefaultCookingDisplay> {
-    private CategoryIdentifier<? extends DefaultCookingDisplay> identifier;
+public class DefaultCookingCategory implements DisplayCategory<CookingDisplay> {
+    private CategoryIdentifier<? extends CookingDisplay> identifier;
     private EntryStack<?> logo;
     private String categoryName;
+    private double defaultCookingTime;
     
-    public DefaultCookingCategory(CategoryIdentifier<? extends DefaultCookingDisplay> identifier, EntryStack<?> logo, String categoryName) {
+    public DefaultCookingCategory(CategoryIdentifier<? extends CookingDisplay> identifier, EntryStack<?> logo, String categoryName, double defaultCookingTime) {
         this.identifier = identifier;
         this.logo = logo;
         this.categoryName = categoryName;
+        this.defaultCookingTime = defaultCookingTime;
     }
     
     @Override
-    public List<Widget> setupDisplay(DefaultCookingDisplay display, Rectangle bounds) {
+    public List<Widget> setupDisplay(CookingDisplay display, Rectangle bounds) {
         Point startPoint = new Point(bounds.getCenterX() - 41, bounds.y + 10);
-        double cookingTime = display.getCookingTime();
         DecimalFormat df = new DecimalFormat("###.##");
         List<Widget> widgets = Lists.newArrayList();
         widgets.add(Widgets.createRecipeBase(bounds));
         widgets.add(Widgets.createResultSlotBackground(new Point(startPoint.x + 61, startPoint.y + 9)));
         widgets.add(Widgets.createBurningFire(new Point(startPoint.x + 1, startPoint.y + 20))
                 .animationDurationMS(10000));
-        widgets.add(Widgets.createLabel(new Point(bounds.x + bounds.width - 5, bounds.y + 5),
-                Component.translatable("category.rei.cooking.time&xp", df.format(display.getXp()), df.format(cookingTime / 20d))).noShadow().rightAligned().color(0xFF404040, 0xFFBBBBBB));
+        if (display.cookTime().isPresent() && display.xp().isPresent()) {
+            widgets.add(Widgets.createLabel(new Point(bounds.x + bounds.width - 5, bounds.y + 5),
+                    Component.translatable("category.rei.cooking.time&xp", df.format(display.xp().getAsDouble()), df.format(display.cookTime().getAsDouble() / 20d))).noShadow().rightAligned().color(0xFF404040, 0xFFBBBBBB));
+        }
         widgets.add(Widgets.createArrow(new Point(startPoint.x + 24, startPoint.y + 8))
-                .animationDurationTicks(cookingTime));
+                .animationDurationTicks(display.cookTime().orElse(defaultCookingTime)));
         widgets.add(Widgets.createSlot(new Point(startPoint.x + 61, startPoint.y + 9))
                 .entries(display.getOutputEntries().get(0))
                 .disableBackground()
@@ -80,7 +83,7 @@ public class DefaultCookingCategory implements DisplayCategory<DefaultCookingDis
     }
     
     @Override
-    public DisplayRenderer getDisplayRenderer(DefaultCookingDisplay display) {
+    public DisplayRenderer getDisplayRenderer(CookingDisplay display) {
         return SimpleDisplayRenderer.from(Collections.singletonList(display.getInputEntries().get(0)), display.getOutputEntries());
     }
     
@@ -90,7 +93,7 @@ public class DefaultCookingCategory implements DisplayCategory<DefaultCookingDis
     }
     
     @Override
-    public CategoryIdentifier<? extends DefaultCookingDisplay> getCategoryIdentifier() {
+    public CategoryIdentifier<? extends CookingDisplay> getCategoryIdentifier() {
         return identifier;
     }
     

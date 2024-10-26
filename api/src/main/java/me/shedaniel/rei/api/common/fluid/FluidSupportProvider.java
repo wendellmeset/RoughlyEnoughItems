@@ -27,7 +27,7 @@ import dev.architectury.event.CompoundEventResult;
 import dev.architectury.fluid.FluidStack;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.plugins.PluginManager;
-import me.shedaniel.rei.api.common.plugins.REIPlugin;
+import me.shedaniel.rei.api.common.plugins.REICommonPlugin;
 import me.shedaniel.rei.api.common.registry.Reloadable;
 import net.minecraft.world.item.ItemStack;
 
@@ -38,7 +38,7 @@ import java.util.stream.Stream;
 /**
  * A registry to provide support for getting fluids from items.
  */
-public interface FluidSupportProvider extends Reloadable<REIPlugin<?>>, List<FluidSupportProvider.Provider> {
+public interface FluidSupportProvider extends Reloadable<REICommonPlugin>, List<FluidSupportProvider.Provider> {
     static FluidSupportProvider getInstance() {
         return PluginManager.getInstance().get(FluidSupportProvider.class);
     }

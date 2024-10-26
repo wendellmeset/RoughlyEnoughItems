@@ -24,8 +24,7 @@
 package me.shedaniel.rei.impl.client.gui.modules.entries;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.collect.Lists;
-import me.shedaniel.clothconfig2.api.ScissorsHandler;
+import com.mojang.blaze3d.systems.RenderSystem;
 import me.shedaniel.math.FloatingRectangle;
 import me.shedaniel.math.Point;
 import me.shedaniel.math.Rectangle;
@@ -36,6 +35,7 @@ import me.shedaniel.rei.impl.client.gui.modules.Menu;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 
 import java.util.Collections;
@@ -119,19 +119,17 @@ public class SubMenuEntry extends AbstractMenuEntry {
                     menu.bounds.setAs(new FloatingRectangle(facingRight ? createBounds.x : createBounds.getMaxX(), facingDownwards ? createBounds.y : createBounds.getMaxY(), 0.1, 0.1));
                 }
                 
-                List<Rectangle> areas = Lists.newArrayList(ScissorsHandler.INSTANCE.getScissorsAreas());
-                ScissorsHandler.INSTANCE.clearScissors();
+                RenderSystem.disableScissor();
                 menu.render(graphics, mouseX, mouseY, delta);
-                for (Rectangle area : areas) {
-                    ScissorsHandler.INSTANCE.scissor(area);
-                }
+                graphics.enableScissor(0, 0, 0, 0);
+                graphics.disableScissor();
             }
         } else {
             this.childMenu = null;
         }
         graphics.drawString(font, text, getX() + 2, getY() + 2, isSelected() ? 16777215 : 8947848, false);
         if (!entries.isEmpty()) {
-            graphics.blit(InternalTextures.CHEST_GUI_TEXTURE, getX() + getWidth() - 15, getY() - 2, 0, 28, 18, 18);
+            graphics.blit(RenderType::guiTextured, InternalTextures.CHEST_GUI_TEXTURE, getX() + getWidth() - 15, getY() - 2, 0, 28, 18, 18, 256, 256);
         }
     }
     

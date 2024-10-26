@@ -28,8 +28,6 @@ import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.impl.ClientInternals;
 import me.shedaniel.rei.plugin.common.BuiltinPlugin;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
 
 import java.util.List;
 import java.util.function.UnaryOperator;
@@ -39,11 +37,7 @@ public interface BuiltinClientPlugin extends BuiltinPlugin {
         return (BuiltinClientPlugin) ClientInternals.getBuiltinPlugin();
     }
     
-    default void registerBrewingRecipe(ItemStack input, Ingredient ingredient, ItemStack output) {
-        registerBrewingRecipe(Ingredient.of(input), ingredient, output);
-    }
-    
-    void registerBrewingRecipe(Ingredient input, Ingredient ingredient, ItemStack output);
+    void registerBrewingRecipe(EntryIngredient input, EntryIngredient ingredient, EntryIngredient output);
     
     void registerInformation(EntryIngredient ingredient, Component name, UnaryOperator<List<Component>> textBuilder);
     

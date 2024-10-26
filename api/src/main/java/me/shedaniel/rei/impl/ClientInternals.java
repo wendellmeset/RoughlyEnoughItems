@@ -56,7 +56,6 @@ import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import org.apache.commons.io.function.IOQuadFunction;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -198,8 +197,6 @@ public final class ClientInternals {
     
     @Environment(EnvType.CLIENT)
     public interface WidgetsProvider {
-        boolean isRenderingPanel(Panel panel);
-        
         Widget wrapVanillaWidget(GuiEventListener element);
         
         WidgetWithBounds wrapRenderer(Supplier<Rectangle> bounds, Renderer renderer);

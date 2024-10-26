@@ -23,7 +23,7 @@
 
 package me.shedaniel.rei.impl.common.transfer;
 
-import me.shedaniel.rei.api.common.plugins.REIServerPlugin;
+import me.shedaniel.rei.api.common.plugins.REICommonPlugin;
 import me.shedaniel.rei.api.common.transfer.info.stack.SlotAccessor;
 import me.shedaniel.rei.api.common.transfer.info.stack.SlotAccessorRegistry;
 import me.shedaniel.rei.impl.common.InternalLogger;
@@ -51,7 +51,7 @@ public class SlotAccessorRegistryImpl implements SlotAccessorRegistry {
     }
     
     @Override
-    public void acceptPlugin(REIServerPlugin plugin) {
+    public void acceptPlugin(REICommonPlugin plugin) {
         plugin.registerSlotAccessors(this);
     }
     

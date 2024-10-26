@@ -23,13 +23,19 @@
 
 package me.shedaniel.rei.plugin.common.displays;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.Object2FloatMap;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.display.Display;
+import me.shedaniel.rei.api.common.display.DisplaySerializer;
 import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.util.EntryIngredients;
 import me.shedaniel.rei.plugin.common.BuiltinPlugin;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.level.ItemLike;
 import org.jetbrains.annotations.ApiStatus;
 
@@ -37,10 +43,26 @@ import java.util.Arrays;
 import java.util.List;
 
 public class DefaultCompostingDisplay extends BasicDisplay {
+    public static final DisplaySerializer<DefaultCompostingDisplay> SERIALIZER = DisplaySerializer.of(
+            RecordCodecBuilder.mapCodec(instance -> instance.group(
+                    EntryIngredient.codec().listOf().fieldOf("inputs").forGetter(DefaultCompostingDisplay::getInputEntries),
+                    EntryIngredient.codec().listOf().fieldOf("outputs").forGetter(DefaultCompostingDisplay::getOutputEntries),
+                    Codec.INT.fieldOf("page").forGetter(DefaultCompostingDisplay::getPage)
+            ).apply(instance, DefaultCompostingDisplay::new)),
+            StreamCodec.composite(
+                    EntryIngredient.streamCodec().apply(ByteBufCodecs.list()),
+                    DefaultCompostingDisplay::getInputEntries,
+                    EntryIngredient.streamCodec().apply(ByteBufCodecs.list()),
+                    DefaultCompostingDisplay::getOutputEntries,
+                    ByteBufCodecs.INT,
+                    DefaultCompostingDisplay::getPage,
+                    DefaultCompostingDisplay::new
+            ));
+    
     private static int pages;
-
+    
     private final int page;
-
+    
     @Deprecated(forRemoval = true)
     public static DefaultCompostingDisplay of(List<Object2FloatMap.Entry<ItemLike>> inputs, List<EntryIngredient> output, int page) {
         EntryIngredient[] inputIngredients = new EntryIngredient[inputs.size()];
@@ -51,17 +73,17 @@ public class DefaultCompostingDisplay extends BasicDisplay {
         }
         return new DefaultCompostingDisplay(Arrays.asList(inputIngredients), output, page);
     }
-
+    
     @ApiStatus.Internal
     public DefaultCompostingDisplay(List<EntryIngredient> inputs, List<EntryIngredient> outputs, CompoundTag tag) {
         this(inputs, outputs, tag.getInt("page"));
     }
-
+    
     public DefaultCompostingDisplay(List<EntryIngredient> inputs, List<EntryIngredient> outputs) {
         super(inputs, outputs);
         this.page = pages++;
     }
-
+    
     @ApiStatus.Internal
     public DefaultCompostingDisplay(List<EntryIngredient> inputs, List<EntryIngredient> outputs, int page) {
         super(inputs, outputs);
@@ -72,7 +94,7 @@ public class DefaultCompostingDisplay extends BasicDisplay {
     public int getPage() {
         return page;
     }
-
+    
     public static int getPages() {
         return pages;
     }
@@ -82,9 +104,8 @@ public class DefaultCompostingDisplay extends BasicDisplay {
         return BuiltinPlugin.COMPOSTING;
     }
     
-    public static BasicDisplay.Serializer<DefaultCompostingDisplay> serializer() {
-        return BasicDisplay.Serializer.ofRecipeLess(DefaultCompostingDisplay::new, (display, tag) -> {
-            tag.putInt("page", display.page);
-        });
+    @Override
+    public DisplaySerializer<? extends Display> getSerializer() {
+        return SERIALIZER;
     }
 }

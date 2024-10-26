@@ -24,8 +24,6 @@
 package me.shedaniel.rei.impl.client.gui.screen;
 
 import com.google.common.collect.Lists;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.datafixers.util.Pair;
 import dev.architectury.fluid.FluidStack;
 import dev.architectury.utils.value.IntValue;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
@@ -68,6 +66,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -315,8 +314,8 @@ public abstract class AbstractDisplayViewingScreen extends Screen implements Dis
                 objects = CollectionUtils.map(widget.getEntries(), stack -> stack.<FluidStack>castValue().getFluid().builtInRegistryHolder());
             } else continue;
             Stream<? extends TagKey<?>> collection = registry.getTags()
-                    .filter(pair -> pair.getSecond().size() == objects.size())
-                    .map(Pair::getFirst);
+                    .filter(set -> set.size() == objects.size())
+                    .map(HolderSet.Named::key);
             TagKey<?> firstOrNull = CollectionUtils.findFirstOrNull(collection::iterator,
                     key -> CollectionUtils.allMatch(objects, holder -> ((Holder<Object>) holder).is((TagKey<Object>) key)));
             if (firstOrNull != null) {
@@ -380,7 +379,7 @@ public abstract class AbstractDisplayViewingScreen extends Screen implements Dis
             }
             
             @Override
-            public int getHeight() {
+            public int getHeight(Font font) {
                 int entrySize = EntryListWidget.entrySize();
                 int w = Math.max(1, MAX_WIDTH / entrySize);
                 int height = Math.min(6, Mth.ceil(widget.getEntries().size() / (float) w)) * entrySize + 2;
@@ -401,7 +400,7 @@ public abstract class AbstractDisplayViewingScreen extends Screen implements Dis
             }
             
             @Override
-            public void renderImage(Font font, int x, int y, GuiGraphics graphics) {
+            public void renderImage(Font font, int x, int y, int width, int height, GuiGraphics graphics) {
                 int entrySize = EntryListWidget.entrySize();
                 int w = Math.max(1, MAX_WIDTH / entrySize);
                 int i = 0;
@@ -413,7 +412,9 @@ public abstract class AbstractDisplayViewingScreen extends Screen implements Dis
                     i++;
                     if (i / w > 5) {
                         Component text = Component.literal("+" + (widget.getEntries().size() - w * 6 + 1)).withStyle(ChatFormatting.GRAY);
-                        font.drawInBatch(text, x1 + entrySize / 2 - font.width(text) / 2, y1 + entrySize / 2 - 1, -1, true, graphics.pose().last().pose(), graphics.bufferSource(), Font.DisplayMode.NORMAL, 0, 15728880);
+                        graphics.drawSpecial(source -> {
+                            font.drawInBatch(text, x1 + entrySize / 2 - font.width(text) / 2, y1 + entrySize / 2 - 1, -1, true, graphics.pose().last().pose(), source, Font.DisplayMode.NORMAL, 0, 15728880);
+                        });
                         graphics.flush();
                         break;
                     } else {

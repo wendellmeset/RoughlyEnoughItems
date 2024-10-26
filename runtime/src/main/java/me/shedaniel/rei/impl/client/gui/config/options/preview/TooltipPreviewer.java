@@ -23,8 +23,7 @@
 
 package me.shedaniel.rei.impl.client.gui.config.options.preview;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.config.ConfigObject;
 import me.shedaniel.rei.api.client.gui.widgets.Tooltip;
@@ -37,7 +36,7 @@ import me.shedaniel.rei.impl.client.gui.config.options.AllREIConfigOptions;
 import me.shedaniel.rei.impl.client.gui.config.options.ConfigUtils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
@@ -78,24 +77,20 @@ public class TooltipPreviewer {
             stack.getRenderer().render(stack, graphics, new Rectangle(width / 2 - 12, 0, 24, 24), mouseX, mouseY, delta);
             
             graphics.pose().translate(0, 0, -400);
-            Tesselator tesselator = Tesselator.getInstance();
-            RenderSystem.setShader(GameRenderer::getPositionColorShader);
-            BufferBuilder bufferBuilder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-            Matrix4f matrix4f = graphics.pose().last().pose();
-            fillGradient(matrix4f, bufferBuilder, tX - 3, tY - 4, tX + tWidth + 3, tY - 3, 400, -267386864, -267386864);
-            fillGradient(matrix4f, bufferBuilder, tX - 3, tY + tHeight + 3, tX + tWidth + 3, tY + tHeight + 4, 400, -267386864, -267386864);
-            fillGradient(matrix4f, bufferBuilder, tX - 3, tY - 3, tX + tWidth + 3, tY + tHeight + 3, 400, -267386864, -267386864);
-            fillGradient(matrix4f, bufferBuilder, tX - 4, tY - 3, tX - 3, tY + tHeight + 3, 400, -267386864, -267386864);
-            fillGradient(matrix4f, bufferBuilder, tX + tWidth + 3, tY - 3, tX + tWidth + 4, tY + tHeight + 3, 400, -267386864, -267386864);
-            fillGradient(matrix4f, bufferBuilder, tX - 3, tY - 3 + 1, tX - 3 + 1, tY + tHeight + 3 - 1, 400, 1347420415, 1344798847);
-            fillGradient(matrix4f, bufferBuilder, tX + tWidth + 2, tY - 3 + 1, tX + tWidth + 3, tY + tHeight + 3 - 1, 400, 1347420415, 1344798847);
-            fillGradient(matrix4f, bufferBuilder, tX - 3, tY - 3, tX + tWidth + 3, tY - 3 + 1, 400, 1347420415, 1347420415);
-            fillGradient(matrix4f, bufferBuilder, tX - 3, tY + tHeight + 2, tX + tWidth + 3, tY + tHeight + 3, 400, 1344798847, 1344798847);
-            RenderSystem.enableDepthTest();
-            RenderSystem.enableBlend();
-            RenderSystem.defaultBlendFunc();
-            BufferUploader.drawWithShader(bufferBuilder.buildOrThrow());
-            RenderSystem.disableBlend();
+            int finalTY = tY;
+            graphics.drawSpecial(source -> {
+                VertexConsumer buffer = source.getBuffer(RenderType.gui());
+                Matrix4f matrix4f = graphics.pose().last().pose();
+                fillGradient(matrix4f, buffer, tX - 3, finalTY - 4, tX + tWidth + 3, finalTY - 3, 400, -267386864, -267386864);
+                fillGradient(matrix4f, buffer, tX - 3, finalTY + tHeight + 3, tX + tWidth + 3, finalTY + tHeight + 4, 400, -267386864, -267386864);
+                fillGradient(matrix4f, buffer, tX - 3, finalTY - 3, tX + tWidth + 3, finalTY + tHeight + 3, 400, -267386864, -267386864);
+                fillGradient(matrix4f, buffer, tX - 4, finalTY - 3, tX - 3, finalTY + tHeight + 3, 400, -267386864, -267386864);
+                fillGradient(matrix4f, buffer, tX + tWidth + 3, finalTY - 3, tX + tWidth + 4, finalTY + tHeight + 3, 400, -267386864, -267386864);
+                fillGradient(matrix4f, buffer, tX - 3, finalTY - 3 + 1, tX - 3 + 1, finalTY + tHeight + 3 - 1, 400, 1347420415, 1344798847);
+                fillGradient(matrix4f, buffer, tX + tWidth + 2, finalTY - 3 + 1, tX + tWidth + 3, finalTY + tHeight + 3 - 1, 400, 1347420415, 1344798847);
+                fillGradient(matrix4f, buffer, tX - 3, finalTY - 3, tX + tWidth + 3, finalTY - 3 + 1, 400, 1347420415, 1347420415);
+                fillGradient(matrix4f, buffer, tX - 3, finalTY + tHeight + 2, tX + tWidth + 3, finalTY + tHeight + 3, 400, 1344798847, 1344798847);
+            });
             
             graphics.pose().translate(0, 0, 400);
             
@@ -108,7 +103,7 @@ public class TooltipPreviewer {
         }), bounds);
     }
     
-    private static void fillGradient(Matrix4f pose, BufferBuilder builder, int x1, int y1, int x2, int y2, int blitOffset, int color1, int color2) {
+    private static void fillGradient(Matrix4f pose, VertexConsumer buffer, int x1, int y1, int x2, int y2, int blitOffset, int color1, int color2) {
         float f = (float) (color1 >> 24 & 0xFF) / 255.0F;
         float g = (float) (color1 >> 16 & 0xFF) / 255.0F;
         float h = (float) (color1 >> 8 & 0xFF) / 255.0F;
@@ -117,9 +112,9 @@ public class TooltipPreviewer {
         float k = (float) (color2 >> 16 & 0xFF) / 255.0F;
         float l = (float) (color2 >> 8 & 0xFF) / 255.0F;
         float m = (float) (color2 & 0xFF) / 255.0F;
-        builder.addVertex(pose, (float) x2, (float) y1, (float) blitOffset).setColor(g, h, i, f);
-        builder.addVertex(pose, (float) x1, (float) y1, (float) blitOffset).setColor(g, h, i, f);
-        builder.addVertex(pose, (float) x1, (float) y2, (float) blitOffset).setColor(k, l, m, j);
-        builder.addVertex(pose, (float) x2, (float) y2, (float) blitOffset).setColor(k, l, m, j);
+        buffer.addVertex(pose, (float) x2, (float) y1, (float) blitOffset).setColor(g, h, i, f);
+        buffer.addVertex(pose, (float) x1, (float) y1, (float) blitOffset).setColor(g, h, i, f);
+        buffer.addVertex(pose, (float) x1, (float) y2, (float) blitOffset).setColor(k, l, m, j);
+        buffer.addVertex(pose, (float) x2, (float) y2, (float) blitOffset).setColor(k, l, m, j);
     }
 }

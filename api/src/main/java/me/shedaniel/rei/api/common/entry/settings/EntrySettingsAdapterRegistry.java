@@ -26,13 +26,13 @@ package me.shedaniel.rei.api.common.entry.settings;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.entry.type.EntryType;
 import me.shedaniel.rei.api.common.plugins.PluginManager;
-import me.shedaniel.rei.api.common.plugins.REIPlugin;
+import me.shedaniel.rei.api.common.plugins.REICommonPlugin;
 import me.shedaniel.rei.api.common.registry.Reloadable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
-public interface EntrySettingsAdapterRegistry extends Reloadable<REIPlugin<?>> {
+public interface EntrySettingsAdapterRegistry extends Reloadable<REICommonPlugin> {
     static EntrySettingsAdapterRegistry getInstance() {
         return PluginManager.getInstance().get(EntrySettingsAdapterRegistry.class);
     }

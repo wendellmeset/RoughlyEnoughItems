@@ -23,6 +23,7 @@
 
 package me.shedaniel.rei.impl.common.entry.type.types;
 
+import com.mojang.serialization.Codec;
 import dev.architectury.utils.Env;
 import dev.architectury.utils.EnvExecutor;
 import me.shedaniel.rei.api.client.entry.renderer.EntryRenderer;
@@ -33,8 +34,9 @@ import me.shedaniel.rei.api.common.entry.type.EntryDefinition;
 import me.shedaniel.rei.api.common.entry.type.EntryType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import org.jetbrains.annotations.ApiStatus;
@@ -116,7 +118,7 @@ public class BuiltinEntryDefinition<T> implements EntryDefinition<T>, EntrySeria
     @Override
     @Nullable
     public EntrySerializer<T> getSerializer() {
-        return this;
+        return empty ? this : null;
     }
     
     @Override
@@ -130,22 +132,12 @@ public class BuiltinEntryDefinition<T> implements EntryDefinition<T>, EntrySeria
     }
     
     @Override
-    public boolean supportReading() {
-        return empty;
+    public Codec<T> codec() {
+        return Codec.unit(defaultValue.get());
     }
     
     @Override
-    public boolean supportSaving() {
-        return empty;
-    }
-    
-    @Override
-    public CompoundTag save(EntryStack<T> entry, T value) {
-        return new CompoundTag();
-    }
-    
-    @Override
-    public T read(CompoundTag tag) {
-        return defaultValue.get();
+    public StreamCodec<RegistryFriendlyByteBuf, T> streamCodec() {
+        return StreamCodec.unit(defaultValue.get());
     }
 }

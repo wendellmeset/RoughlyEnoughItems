@@ -23,70 +23,78 @@
 
 package me.shedaniel.rei.plugin.common.displays.cooking;
 
-import me.shedaniel.rei.api.common.display.SimpleGridMenuDisplay;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import me.shedaniel.rei.api.common.display.DisplaySerializer;
 import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
-import me.shedaniel.rei.api.common.registry.RecipeManagerContext;
 import me.shedaniel.rei.api.common.util.EntryIngredients;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.AbstractCookingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalDouble;
 
-public abstract class DefaultCookingDisplay extends BasicDisplay implements SimpleGridMenuDisplay {
-    private RecipeHolder<?> recipe;
-    private float xp;
-    private double cookTime;
+public abstract class DefaultCookingDisplay extends BasicDisplay implements CookingDisplay {
+    protected float xp;
+    protected double cookTime;
     
     public DefaultCookingDisplay(RecipeHolder<? extends AbstractCookingRecipe> recipe) {
-        this(EntryIngredients.ofIngredients(recipe.value().getIngredients()), Collections.singletonList(EntryIngredients.of(recipe.value().getResultItem(BasicDisplay.registryAccess()))),
-                recipe, recipe.value().getExperience(), recipe.value().getCookingTime());
+        this(List.of(EntryIngredients.ofIngredient(recipe.value().input())),
+                List.of(EntryIngredients.of(recipe.value().result())),
+                Optional.of(recipe.id().location()), recipe.value().experience(), recipe.value().cookingTime());
     }
     
-    public DefaultCookingDisplay(List<EntryIngredient> input, List<EntryIngredient> output, CompoundTag tag) {
-        this(input, output, RecipeManagerContext.getInstance().byId(tag, "location"),
-                tag.getFloat("xp"), tag.getDouble("cookTime"));
+    public DefaultCookingDisplay(List<EntryIngredient> input, List<EntryIngredient> output, Optional<ResourceLocation> id, CompoundTag tag) {
+        this(input, output, id, tag.getFloat("xp"), tag.getDouble("cookTime"));
     }
     
-    public DefaultCookingDisplay(List<EntryIngredient> input, List<EntryIngredient> output, @Nullable RecipeHolder<?> recipe, float xp, double cookTime) {
-        super(input, output, Optional.ofNullable(recipe).map(RecipeHolder::id));
-        this.recipe = recipe;
+    public DefaultCookingDisplay(List<EntryIngredient> input, List<EntryIngredient> output, Optional<ResourceLocation> id, float xp, double cookTime) {
+        super(input, output, id);
         this.xp = xp;
         this.cookTime = cookTime;
     }
     
-    public float getXp() {
-        return xp;
-    }
-    
-    public double getCookingTime() {
-        return cookTime;
-    }
-    
-    @ApiStatus.Internal
-    public Optional<RecipeHolder<?>> getOptionalRecipe() {
-        return Optional.ofNullable(recipe);
+    @Override
+    public OptionalDouble xp() {
+        return OptionalDouble.of(xp);
     }
     
     @Override
-    public int getWidth() {
-        return 1;
+    public OptionalDouble cookTime() {
+        return OptionalDouble.of(cookTime);
     }
     
-    @Override
-    public int getHeight() {
-        return 1;
+    protected static <D extends DefaultCookingDisplay> DisplaySerializer<D> serializer(Constructor<D> constructor) {
+        return DisplaySerializer.of(
+                RecordCodecBuilder.mapCodec(instance -> instance.group(
+                        EntryIngredient.codec().listOf().fieldOf("inputs").forGetter(D::getInputEntries),
+                        EntryIngredient.codec().listOf().fieldOf("outputs").forGetter(D::getOutputEntries),
+                        ResourceLocation.CODEC.optionalFieldOf("location").forGetter(D::getDisplayLocation),
+                        Codec.FLOAT.fieldOf("xp").forGetter(display -> display.xp),
+                        Codec.DOUBLE.fieldOf("cookTime").forGetter(display -> display.cookTime)
+                ).apply(instance, constructor::create)),
+                StreamCodec.composite(
+                        EntryIngredient.streamCodec().apply(ByteBufCodecs.list()),
+                        D::getInputEntries,
+                        EntryIngredient.streamCodec().apply(ByteBufCodecs.list()),
+                        D::getOutputEntries,
+                        ByteBufCodecs.optional(ResourceLocation.STREAM_CODEC),
+                        D::getDisplayLocation,
+                        ByteBufCodecs.FLOAT,
+                        display -> display.xp,
+                        ByteBufCodecs.DOUBLE,
+                        display -> display.cookTime,
+                        constructor::create
+                ));
     }
     
-    public static <R extends DefaultCookingDisplay> BasicDisplay.Serializer<R> serializer(BasicDisplay.Serializer.RecipeLessConstructor<R> constructor) {
-        return BasicDisplay.Serializer.ofRecipeLess(constructor, (display, tag) -> {
-            tag.putFloat("xp", display.getXp());
-            tag.putDouble("cookTime", display.getCookingTime());
-        });
+    protected interface Constructor<T extends DefaultCookingDisplay> {
+        T create(List<EntryIngredient> inputs, List<EntryIngredient> outputs, Optional<ResourceLocation> location, float xp, double cookTime);
     }
 }

@@ -25,7 +25,7 @@ package me.shedaniel.rei.plugin.client.categories;
 
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import me.shedaniel.clothconfig2.ClothConfigInitializer;
 import me.shedaniel.clothconfig2.api.scroll.ScrollingContainer;
 import me.shedaniel.math.Point;
@@ -46,7 +46,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.FormattedCharSequence;
@@ -59,13 +59,13 @@ import java.util.Objects;
 @Environment(EnvType.CLIENT)
 public class DefaultInformationCategory implements DisplayCategory<DefaultInformationDisplay> {
     protected static void innerBlit(GuiGraphics graphics, Matrix4f matrix4f, int xStart, int xEnd, int yStart, int yEnd, int z, float uStart, float uEnd, float vStart, float vEnd) {
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        BufferBuilder bufferBuilder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        bufferBuilder.addVertex(matrix4f, xStart, yEnd, z).setUv(uStart, vEnd);
-        bufferBuilder.addVertex(matrix4f, xEnd, yEnd, z).setUv(uEnd, vEnd);
-        bufferBuilder.addVertex(matrix4f, xEnd, yStart, z).setUv(uEnd, vStart);
-        bufferBuilder.addVertex(matrix4f, xStart, yStart, z).setUv(uStart, vStart);
-        BufferUploader.drawWithShader(bufferBuilder.buildOrThrow());
+        graphics.drawSpecial(source -> {
+            VertexConsumer buffer = source.getBuffer(RenderType.guiTextured(REIRuntime.getInstance().getDefaultDisplayTexture()));
+            buffer.addVertex(matrix4f, xStart, yEnd, z).setUv(uStart, vEnd).setColor(0xFFFFFFFF);
+            buffer.addVertex(matrix4f, xEnd, yEnd, z).setUv(uEnd, vEnd).setColor(0xFFFFFFFF);
+            buffer.addVertex(matrix4f, xEnd, yStart, z).setUv(uEnd, vStart).setColor(0xFFFFFFFF);
+            buffer.addVertex(matrix4f, xStart, yStart, z).setUv(uStart, vStart).setColor(0xFFFFFFFF);
+        });
     }
     
     @Override
@@ -209,7 +209,7 @@ public class DefaultInformationCategory implements DisplayCategory<DefaultInform
                 }
             }
             try (CloseableScissors scissors = scissor(graphics, scrolling.getBounds())) {
-                scrolling.renderScrollBar(graphics, 0, 1, 1f);
+                scrolling.renderScrollBar(graphics, 0, 1f);
             }
         }
         
