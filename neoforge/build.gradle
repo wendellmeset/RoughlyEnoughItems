@@ -147,15 +147,16 @@ publishing {
                 project.afterEvaluate {
                     def project = project(":" + projectName)
                     remapMojang.inputFile = project.fakeForgeJar.archiveFile
-                    publication.artifact(remapMojang) { classifier null }
+                    def normalArtifact, sourceArtifact
+                    publication.artifact(remapMojang) { classifier null; normalArtifact = it }
                     publication.artifact(remapMojangSourcesJar) {
                         builtBy remapMojangSourcesJar
                         classifier "sources"
+                        sourceArtifact = it
                     }
 
-                    // Hack to inherit the dependencies without inheriting the artifacts
-                    publication.setArtifacts(publication.artifacts)
                     from components.java
+                    publication.setArtifacts([normalArtifact, sourceArtifact])
                 }
             }
         }

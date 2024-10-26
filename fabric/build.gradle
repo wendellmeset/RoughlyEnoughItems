@@ -100,16 +100,17 @@ publishing {
                 publication.artifactId = rootProject.name + "-" + projectName + "-fabric"
                 project.afterEvaluate {
                     def project = project(":" + projectName)
-                    publication.artifact(project.fakeJar) { classifier null }
+                    def normalArtifact, sourceArtifact
+                    publication.artifact(project.fakeJar) { classifier null; normalArtifact = it }
                     def remapSourcesJarTask = project.remapSourcesJar
                     publication.artifact(remapSourcesJarTask) {
                         builtBy remapSourcesJarTask
                         classifier "sources"
+                        sourceArtifact = it
                     }
 
-                    // Hack to inherit the dependencies without inheriting the artifacts
-                    publication.setArtifacts(publication.artifacts)
                     from components.java
+                    publication.setArtifacts([normalArtifact, sourceArtifact])
                 }
             }
         }
