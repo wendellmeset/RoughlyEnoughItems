@@ -100,16 +100,17 @@ publishing {
                 publication.artifactId = rootProject.name + "-" + projectName + "-fabric"
                 project.afterEvaluate {
                     def project = project(":" + projectName)
-                    publication.artifact(project.fakeJar) { classifier null }
+                    def normalArtifact, sourceArtifact
+                    publication.artifact(project.fakeJar) { classifier null; normalArtifact = it }
                     def remapSourcesJarTask = project.remapSourcesJar
                     publication.artifact(remapSourcesJarTask) {
                         builtBy remapSourcesJarTask
                         classifier "sources"
+                        sourceArtifact = it
                     }
 
-                    // Hack to inherit the dependencies without inheriting the artifacts
-                    publication.setArtifacts(publication.artifacts)
                     from components.java
+                    publication.setArtifacts([normalArtifact, sourceArtifact])
                 }
             }
         }
@@ -120,7 +121,7 @@ unifiedPublishing {
     project {
         displayName = "[Fabric $rootProject.supported_version] v$project.version"
         releaseType = rootProject.unstable == "false" ? "release" : "alpha"
-        gameVersions = ["1.21.1"]
+        gameVersions = ["1.21.2", "1.21.3"]
         gameLoaders = ["fabric"]
         changelog = rootProject.releaseChangelog
 
@@ -145,7 +146,7 @@ unifiedPublishing {
             curseforge {
                 token = project.hasProperty("danielshe_curse_api_key") ? project.property("danielshe_curse_api_key") : System.getenv("danielshe_curse_api_key")
                 id = "310111"
-                gameVersions.addAll "Java 17", project.minecraft_version
+                gameVersions.addAll "Java 17"
             }
         }
 
@@ -154,7 +155,7 @@ unifiedPublishing {
                 token = project.hasProperty("modrinth_key") ? project.property("modrinth_key") : System.getenv("modrinth_key")
                 id = "nfn13YXA"
                 version = "$project.version+$project.name"
-                gameVersions.addAll project.minecraft_version
+//                gameVersions.addAll project.minecraft_version
             }
         }
     }
