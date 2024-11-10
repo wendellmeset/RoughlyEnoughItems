@@ -24,14 +24,7 @@
 package me.shedaniel.rei.plugin.client.categories.crafting.filler;
 
 import me.shedaniel.rei.api.common.display.Display;
-import me.shedaniel.rei.api.common.entry.EntryIngredient;
-import me.shedaniel.rei.api.common.entry.EntryStack;
-import me.shedaniel.rei.api.common.util.EntryIngredients;
-import me.shedaniel.rei.plugin.common.displays.crafting.DefaultCustomDisplay;
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.resources.language.I18n;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.Items;
+import me.shedaniel.rei.plugin.common.displays.crafting.MapExtendingCraftingDisplay;
 import net.minecraft.world.item.crafting.MapExtendingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 
@@ -46,19 +39,7 @@ public class MapExtendingRecipeFiller implements CraftingRecipeFiller<MapExtendi
         List<Display> displays = new ArrayList<>();
         
         for (int i = 0; i < 4; i++) {
-            EntryIngredient[] inputs = new EntryIngredient[9];
-            for (int j = 0; j < 9; j++) {
-                if (j == 4) {
-                    inputs[j] = mapWith("X", i, 1);
-                } else {
-                    inputs[j] = EntryIngredients.of(Items.PAPER);
-                }
-            }
-            
-            displays.add(new DefaultCustomDisplay(
-                    List.of(inputs),
-                    List.of(mapWith("X", i + 1, 1)),
-                    Optional.of(recipe.id().location())));
+            displays.add(new MapExtendingCraftingDisplay(i, Optional.of(recipe.id().location())));
         }
         
         return displays;
@@ -67,22 +48,5 @@ public class MapExtendingRecipeFiller implements CraftingRecipeFiller<MapExtendi
     @Override
     public Class<MapExtendingRecipe> getRecipeClass() {
         return MapExtendingRecipe.class;
-    }
-    
-    public static EntryIngredient mapWith(String mapId, int scale, int count) {
-        EntryIngredient stacks = EntryIngredients.of(Items.FILLED_MAP, count);
-        String unknown = I18n.get("filled_map.unknown");
-        for (EntryStack<?> stack : stacks) {
-            stack.tooltipProcessor(($, tooltip) -> {
-                tooltip.entries().removeIf(entry -> entry.isText() && entry.getAsText().getString().equals(unknown));
-                return tooltip;
-            });
-            stack.tooltip(
-                    Component.translatable("filled_map.id", mapId).withStyle(ChatFormatting.GRAY),
-                    Component.translatable("filled_map.scale", (1 << scale)).withStyle(ChatFormatting.GRAY),
-                    Component.translatable("filled_map.level", scale, 4).withStyle(ChatFormatting.GRAY)
-            );
-        }
-        return stacks;
     }
 }

@@ -84,24 +84,27 @@ public enum DeferringEntryTypeProviderImpl implements Function<ResourceLocation,
     
     @Environment(EnvType.CLIENT)
     public EntryType<Renderer> renderingType(ResourceLocation id) {
+        @Environment(EnvType.CLIENT)
+        class RenderType implements EntryType<Renderer> {
+            private final int hashCode = id.hashCode();
+            
+            @Override
+            public ResourceLocation getId() {
+                return id;
+            }
+            
+            @Override
+            public EntryDefinition<Renderer> getDefinition() {
+                return RenderingEntryDefinition.RENDERING;
+            }
+            
+            @Override
+            public int hashCode() {
+                return hashCode;
+            }
+        }
         if (render == null) {
-            int hashCode = id.hashCode();
-            render = new EntryType<>() {
-                @Override
-                public ResourceLocation getId() {
-                    return id;
-                }
-                
-                @Override
-                public EntryDefinition<Renderer> getDefinition() {
-                    return RenderingEntryDefinition.RENDERING;
-                }
-                
-                @Override
-                public int hashCode() {
-                    return hashCode;
-                }
-            };
+            render = new RenderType();
         }
         return render;
     }

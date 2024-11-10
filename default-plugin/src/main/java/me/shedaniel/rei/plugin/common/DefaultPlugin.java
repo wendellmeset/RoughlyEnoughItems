@@ -152,6 +152,7 @@ public class DefaultPlugin implements BuiltinPlugin, REICommonPlugin {
         registry.register(id("default/crafting/custom"), DefaultCustomDisplay.SERIALIZER);
         registry.register(id("default/crafting/custom_shaped"), DefaultCustomShapedDisplay.SERIALIZER);
         registry.register(id("default/crafting/custom_shapeless"), DefaultCustomShapelessDisplay.SERIALIZER);
+        registry.register(id("extension/crafting/map_extending"), MapExtendingCraftingDisplay.SERIALIZER);
         registry.register(id("default/smelting"), DefaultSmeltingDisplay.SERIALIZER);
         registry.register(id("default/smoking"), DefaultSmokingDisplay.SERIALIZER);
         registry.register(id("default/blasting"), DefaultBlastingDisplay.SERIALIZER);

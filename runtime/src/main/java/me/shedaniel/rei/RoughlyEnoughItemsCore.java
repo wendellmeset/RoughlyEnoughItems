@@ -24,11 +24,13 @@
 package me.shedaniel.rei;
 
 import com.google.common.collect.ImmutableList;
+import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.platform.Mod;
 import dev.architectury.platform.Platform;
 import dev.architectury.registry.ReloadListenerRegistry;
 import dev.architectury.utils.Env;
 import dev.architectury.utils.EnvExecutor;
+import dev.architectury.utils.GameInstance;
 import me.shedaniel.rei.api.common.entry.type.EntryType;
 import me.shedaniel.rei.api.common.plugins.REICommonPlugin;
 import me.shedaniel.rei.impl.Internals;
@@ -147,9 +149,12 @@ public class RoughlyEnoughItemsCore {
         RoughlyEnoughItemsNetwork.onInitialize();
         
         if (Platform.getEnvironment() == Env.SERVER) {
-            MutableLong lastReload = new MutableLong(-1);
+            LifecycleEvent.SERVER_STARTED.register(server -> {
+                ReloadManagerImpl.reloadPlugins(null, ReloadInterruptionContext.ofNever());
+            });
             ReloadListenerRegistry.register(PackType.SERVER_DATA, (preparationBarrier, resourceManager, executor, executor2) -> {
                 return preparationBarrier.wait(Unit.INSTANCE).thenRunAsync(() -> {
+                    if (GameInstance.getServer() == null) return;
                     ReloadManagerImpl.reloadPlugins(null, ReloadInterruptionContext.ofNever());
                 }, executor2);
             });

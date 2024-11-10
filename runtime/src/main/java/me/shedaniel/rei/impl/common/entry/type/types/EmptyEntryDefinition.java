@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public class EmptyEntryDefinition {
-    public static final EntryDefinition<Unit> EMPTY = new BuiltinEntryDefinition<>(Unit.class, BuiltinEntryTypes.EMPTY, true, () -> Unit.INSTANCE, () -> () -> new EmptyRenderer());
+    public static final EntryDefinition<Unit> EMPTY = new BuiltinEntryDefinition<>(Unit.class, BuiltinEntryTypes.EMPTY, true, () -> Unit.INSTANCE, () -> EmptyRenderer::new);
     
     @Environment(EnvType.CLIENT)
     public static class EmptyRenderer implements EntryRenderer<Unit> {

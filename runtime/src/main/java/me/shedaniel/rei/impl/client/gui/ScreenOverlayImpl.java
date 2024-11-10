@@ -51,6 +51,7 @@ import me.shedaniel.rei.api.common.plugins.PluginManager;
 import me.shedaniel.rei.impl.client.REIRuntimeImpl;
 import me.shedaniel.rei.impl.client.gui.craftable.CraftableFilter;
 import me.shedaniel.rei.impl.client.gui.dragging.CurrentDraggingStack;
+import me.shedaniel.rei.impl.client.gui.hints.ImportantWarningsWidget;
 import me.shedaniel.rei.impl.client.gui.modules.MenuAccess;
 import me.shedaniel.rei.impl.client.gui.modules.MenuHolder;
 import me.shedaniel.rei.impl.client.gui.widget.*;
@@ -187,6 +188,8 @@ public abstract class ScreenOverlayImpl extends ScreenOverlay {
         this.widgets.add(draggingStack);
         this.widgets.add(InternalWidgets.wrapLateRenderable(hintsWidget));
         this.hintsWidget.init();
+        
+        this.widgets.add(InternalWidgets.wrapLateRenderable(new ImportantWarningsWidget()));
     }
     
     private Rectangle getSearchFieldArea() {

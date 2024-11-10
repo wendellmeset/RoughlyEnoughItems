@@ -32,6 +32,8 @@ import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.util.EntryIngredients;
 import me.shedaniel.rei.plugin.common.BuiltinPlugin;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -108,6 +110,7 @@ public class DefaultAnvilDisplay extends BasicDisplay {
     
     @ApiStatus.Experimental
     @ApiStatus.Internal
+    @Environment(EnvType.CLIENT)
     public static Optional<Pair<ItemStack, Integer>> calculateOutput(ItemStack left, ItemStack right) {
         try {
             if (Minecraft.getInstance().player == null) return Optional.empty();

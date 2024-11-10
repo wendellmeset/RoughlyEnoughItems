@@ -23,13 +23,16 @@
 
 package me.shedaniel.rei.plugin.client.categories.crafting.filler;
 
-import me.shedaniel.rei.api.client.registry.entry.EntryRegistry;
 import me.shedaniel.rei.api.common.display.Display;
+import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.util.EntryIngredients;
 import me.shedaniel.rei.api.common.util.EntryStacks;
 import me.shedaniel.rei.plugin.common.displays.crafting.DefaultCustomDisplay;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -46,21 +49,24 @@ public class TippedArrowRecipeFiller implements CraftingRecipeFiller<TippedArrow
         Set<ResourceLocation> registeredPotions = new HashSet<>();
         List<Display> displays = new ArrayList<>();
         
-        EntryRegistry.getInstance().getEntryStacks().filter(entry -> entry.getValueType() == ItemStack.class && entry.<ItemStack>castValue().getItem() == Items.LINGERING_POTION).forEach(entry -> {
-            ItemStack itemStack = (ItemStack) entry.getValue();
-            PotionContents potion = itemStack.get(DataComponents.POTION_CONTENTS);
-            if (potion.potion().isPresent() && potion.potion().get().unwrapKey().isPresent() && registeredPotions.add(potion.potion().get().unwrapKey().get().location())) {
-                List<EntryIngredient> input = new ArrayList<>();
-                for (int i = 0; i < 4; i++)
-                    input.add(arrowStack);
-                input.add(EntryIngredients.of(itemStack));
-                for (int i = 0; i < 4; i++)
-                    input.add(arrowStack);
-                ItemStack outputStack = new ItemStack(Items.TIPPED_ARROW, 8);
-                outputStack.set(DataComponents.POTION_CONTENTS, potion);
-                displays.add(new DefaultCustomDisplay(input, List.of(EntryIngredients.of(outputStack)), Optional.of(recipe.id().location())));
-            }
-        });
+        RegistryAccess registryAccess = BasicDisplay.registryAccess();
+        BasicDisplay.registryAccess().lookup(Registries.POTION).stream()
+                .flatMap(Registry::listElements)
+                .map(reference -> PotionContents.createItemStack(Items.LINGERING_POTION, reference))
+                .forEach(itemStack -> {
+                    PotionContents potion = itemStack.get(DataComponents.POTION_CONTENTS);
+                    if (potion.potion().isPresent() && potion.potion().get().unwrapKey().isPresent() && registeredPotions.add(potion.potion().get().unwrapKey().get().location())) {
+                        List<EntryIngredient> input = new ArrayList<>();
+                        for (int i = 0; i < 4; i++)
+                            input.add(arrowStack);
+                        input.add(EntryIngredients.of(itemStack));
+                        for (int i = 0; i < 4; i++)
+                            input.add(arrowStack);
+                        ItemStack outputStack = new ItemStack(Items.TIPPED_ARROW, 8);
+                        outputStack.set(DataComponents.POTION_CONTENTS, potion);
+                        displays.add(new DefaultCustomDisplay(input, List.of(EntryIngredients.of(outputStack)), Optional.of(recipe.id().location())));
+                    }
+                });
         
         return displays;
     }

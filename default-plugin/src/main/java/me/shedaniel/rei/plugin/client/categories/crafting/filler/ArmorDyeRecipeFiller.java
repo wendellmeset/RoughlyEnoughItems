@@ -23,12 +23,13 @@
 
 package me.shedaniel.rei.plugin.client.categories.crafting.filler;
 
-import me.shedaniel.rei.api.client.registry.entry.EntryRegistry;
 import me.shedaniel.rei.api.common.display.Display;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.util.EntryIngredients;
+import me.shedaniel.rei.api.common.util.EntryStacks;
 import me.shedaniel.rei.plugin.common.displays.crafting.DefaultCustomShapelessDisplay;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.DyeItem;
@@ -43,7 +44,11 @@ public class ArmorDyeRecipeFiller implements CraftingRecipeFiller<ArmorDyeRecipe
     @Override
     public Collection<Display> apply(RecipeHolder<ArmorDyeRecipe> recipe) {
         List<Display> displays = new ArrayList<>();
-        List<EntryStack<?>> toDye = EntryRegistry.getInstance().getEntryStacks().filter(entry -> entry.getValueType() == ItemStack.class && entry.<ItemStack>castValue().is(ItemTags.DYEABLE)).toList();
+        List<EntryStack<?>> toDye = BuiltInRegistries.ITEM.stream()
+                .filter(item -> item.builtInRegistryHolder().is(ItemTags.DYEABLE))
+                .map(EntryStacks::of)
+                .<EntryStack<?>>map(EntryStack::cast)
+                .toList();
         DyeColor[] colors = DyeColor.values();
         
         for (EntryStack<?> armor : toDye) {
