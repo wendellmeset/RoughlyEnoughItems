@@ -265,7 +265,7 @@ public class ItemEntryDefinition implements EntryDefinition<ItemStack>, EntrySer
                 graphics.pose().translate(bounds.getCenterX(), bounds.getCenterY(), 0);
                 graphics.pose().mulPose(new Matrix4f().scaling(1.0F, -1.0F, 1.0F));
                 graphics.pose().scale(bounds.getWidth(), bounds.getHeight(), (bounds.getWidth() + bounds.getHeight()) / 2.0F);
-                MultiBufferSource.BufferSource immediate = Minecraft.getInstance().renderBuffers().bufferSource();
+                MultiBufferSource.BufferSource immediate = graphics.bufferSource;
                 Minecraft.getInstance().getItemRenderer().render(value, ItemDisplayContext.GUI, false, graphics.pose(), immediate,
                         ITEM_LIGHT, OverlayTexture.NO_OVERLAY, model);
                 immediate.endBatch();

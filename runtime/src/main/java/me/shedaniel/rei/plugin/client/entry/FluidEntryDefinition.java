@@ -271,7 +271,7 @@ public class FluidEntryDefinition implements EntryDefinition<FluidStack>, EntryS
             if (sprite == null) return;
             int color = FluidStackHooks.getColor(stack);
             
-            MultiBufferSource.BufferSource immediate = Minecraft.getInstance().renderBuffers().bufferSource();
+            MultiBufferSource.BufferSource immediate = graphics.bufferSource;
             
             SpriteRenderer.beginPass()
                     .setup(immediate, RenderType.solid())

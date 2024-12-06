@@ -28,7 +28,6 @@ import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.MultiBufferSource;
 
@@ -107,7 +106,7 @@ public interface BatchedEntryRenderer<T, E> extends EntryRenderer<T> {
         graphics.pose().last().normal().set(newStack.last().normal());
         E data = getExtraData(entry);
         startBatch(entry, data, graphics, delta);
-        MultiBufferSource.BufferSource immediate = Minecraft.getInstance().renderBuffers().bufferSource();
+        MultiBufferSource.BufferSource immediate = graphics.bufferSource;
         renderBase(entry, data, graphics, immediate, bounds, mouseX, mouseY, delta);
         immediate.endBatch();
         renderOverlay(entry, data, graphics, immediate, bounds, mouseX, mouseY, delta);

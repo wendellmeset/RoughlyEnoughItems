@@ -26,7 +26,6 @@ package me.shedaniel.rei.impl.client.gui.widget;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -37,7 +36,6 @@ import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.util.CollectionUtils;
 import me.shedaniel.rei.impl.client.util.CrashReportUtils;
 import net.minecraft.CrashReport;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.MultiBufferSource;
 import org.apache.commons.lang3.mutable.MutableInt;
@@ -178,7 +176,7 @@ public class BatchedEntryRendererManager<T extends EntryWidget> implements Itera
         graphics.pose().last().pose().set(newStack.last().pose());
         graphics.pose().last().normal().set(newStack.last().normal());
         long l = debugTime ? System.nanoTime() : 0;
-        MultiBufferSource.BufferSource immediate = Minecraft.getInstance().renderBuffers().bufferSource();
+        MultiBufferSource.BufferSource immediate = graphics.bufferSource;
         int i = 0;
         for (T entry : entries) {
             try {
