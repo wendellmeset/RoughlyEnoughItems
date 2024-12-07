@@ -277,7 +277,7 @@ public class RoughlyEnoughItemsCoreClient {
     }
     
     private void loadTestPlugins() {
-        if (System.getProperty("rei.test", "false").equals("true") || true) {
+        if (System.getProperty("rei.test", "false").equals("true")) {
             PluginView.getClientInstance().registerPlugin(new REITestPlugin());
             PluginView.getInstance().registerPlugin(new REITestCommonPlugin());
         }
