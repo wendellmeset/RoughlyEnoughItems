@@ -16,3 +16,10 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           arguments: clean build --stacktrace
+
+      # Upload build artifacts for download
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: build/libs/
