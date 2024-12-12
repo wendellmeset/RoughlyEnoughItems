@@ -34,8 +34,7 @@ import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
-import net.minecraft.world.item.ItemStack;
-
+import net.minecraft.item.ItemStack;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;

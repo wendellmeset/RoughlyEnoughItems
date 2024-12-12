@@ -23,10 +23,10 @@
 
 package me.shedaniel.rei.mixin.fabric;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
 import me.shedaniel.rei.api.client.config.ConfigObject;
-import net.minecraft.network.chat.Component;
+import net.minecraft.client.util.InputUtil;
+import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -34,15 +34,15 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(InputConstants.Key.class)
+@Mixin(InputUtil.Key.class)
 public abstract class MixinInputConstantsKey {
     @Shadow
     public abstract String getName();
     
     @Inject(method = "getDisplayName", at = @At("HEAD"), cancellable = true)
-    private void getDisplayName(CallbackInfoReturnable<Component> cir) {
+    private void getDisplayName(CallbackInfoReturnable<Text> cir) {
         if (isPatchingAsyncThreadCrash() && !RenderSystem.isOnRenderThread()) {
-            cir.setReturnValue(Component.translatable(getName()));
+            cir.setReturnValue(Text.translatable(getName()));
         }
     }
     

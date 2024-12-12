@@ -24,8 +24,8 @@
 package me.shedaniel.rei.mixin.fabric;
 
 import me.shedaniel.rei.impl.client.fabric.ErrorDisplayerImpl;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.Screen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -40,7 +40,7 @@ public class MixinScreen {
     private static final ThreadLocal<Boolean> REI_IN = ThreadLocal.withInitial(() -> false);
     
     @Inject(method = "init(Lnet/minecraft/client/Minecraft;II)V", at = @At("HEAD"))
-    private void init(Minecraft minecraft, int i, int j, CallbackInfo ci) {
+    private void init(MinecraftClient minecraft, int i, int j, CallbackInfo ci) {
         if (!REI_IN.get()) {
             REI_IN.set(true);
             for (Consumer<Screen> consumer : ErrorDisplayerImpl.consumerList) {

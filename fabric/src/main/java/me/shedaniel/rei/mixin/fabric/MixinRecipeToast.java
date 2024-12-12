@@ -24,9 +24,9 @@
 package me.shedaniel.rei.mixin.fabric;
 
 import me.shedaniel.rei.api.client.config.ConfigObject;
-import net.minecraft.client.gui.components.toasts.RecipeToast;
-import net.minecraft.client.gui.components.toasts.ToastManager;
-import net.minecraft.world.item.crafting.display.RecipeDisplay;
+import net.minecraft.client.toast.RecipeToast;
+import net.minecraft.client.toast.ToastManager;
+import net.minecraft.recipe.display.RecipeDisplay;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;

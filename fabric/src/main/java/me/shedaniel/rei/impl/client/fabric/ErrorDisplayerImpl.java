@@ -24,9 +24,8 @@
 package me.shedaniel.rei.impl.client.fabric;
 
 import me.shedaniel.rei.impl.client.ErrorDisplayer;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
-
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.Screen;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -38,15 +37,15 @@ public class ErrorDisplayerImpl implements ErrorDisplayer.ErrorGuiInitializer {
     @Override
     public void registerGuiInit(UnaryOperator<Screen> consumer) {
         consumerList.add(screen -> {
-            if (screen != Minecraft.getInstance().screen) return;
+            if (screen != MinecraftClient.getInstance().currentScreen) return;
             Screen screen1 = consumer.apply(screen);
             if (screen1 != null) {
-                Minecraft minecraft = Minecraft.getInstance();
+                MinecraftClient minecraft = MinecraftClient.getInstance();
                 try {
-                    if (minecraft.screen != null) minecraft.screen.removed();
+                    if (minecraft.currentScreen != null) minecraft.currentScreen.removed();
                 } catch (Throwable ignored) {
                 }
-                minecraft.screen = null;
+                minecraft.currentScreen = null;
                 minecraft.setScreen(screen1);
             }
         });

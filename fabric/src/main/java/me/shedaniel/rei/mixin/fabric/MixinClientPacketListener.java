@@ -24,12 +24,11 @@
 package me.shedaniel.rei.mixin.fabric;
 
 import me.shedaniel.rei.RoughlyEnoughItemsCoreClient;
-import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.network.protocol.common.ClientboundUpdateTagsPacket;
-import net.minecraft.network.protocol.game.ClientboundUpdateRecipesPacket;
-import net.minecraft.world.item.crafting.RecipeAccess;
-import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.network.packet.s2c.common.SynchronizeTagsS2CPacket;
+import net.minecraft.network.packet.s2c.play.SynchronizeRecipesS2CPacket;
+import net.minecraft.recipe.RecipeManager;
+import net.minecraft.registry.DynamicRegistryManager;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -37,19 +36,19 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ClientPacketListener.class)
+@Mixin(ClientPlayNetworkHandler.class)
 public abstract class MixinClientPacketListener {
-    @Shadow public abstract RecipeAccess recipes();
+    @Shadow public abstract RecipeManager recipes();
     
-    @Shadow public abstract RegistryAccess.Frozen registryAccess();
+    @Shadow public abstract DynamicRegistryManager.Immutable registryAccess();
     
     @Inject(method = "handleUpdateRecipes", at = @At("HEAD"))
-    private void handleUpdateRecipes(ClientboundUpdateRecipesPacket clientboundUpdateRecipesPacket, CallbackInfo ci) {
+    private void handleUpdateRecipes(SynchronizeRecipesS2CPacket clientboundUpdateRecipesPacket, CallbackInfo ci) {
         RoughlyEnoughItemsCoreClient.PRE_UPDATE_RECIPES.invoker().accept(recipes(), registryAccess());
     }
     
     @Inject(method = "handleUpdateTags", at = @At("HEAD"))
-    private void handleUpdateTags(ClientboundUpdateTagsPacket packet, CallbackInfo ci) {
+    private void handleUpdateTags(SynchronizeTagsS2CPacket packet, CallbackInfo ci) {
         RoughlyEnoughItemsCoreClient.POST_UPDATE_TAGS.invoker().run();
     }
 }

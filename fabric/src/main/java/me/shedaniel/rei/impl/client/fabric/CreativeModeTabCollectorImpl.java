@@ -27,31 +27,30 @@ import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.impl.common.InternalLogger;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroupEntries;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.flag.FeatureFlagSet;
-import net.minecraft.world.flag.FeatureFlags;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.CreativeModeTabs;
-import net.minecraft.world.item.ItemStack;
-
+import net.minecraft.item.ItemGroup;
+import net.minecraft.item.ItemGroups;
+import net.minecraft.item.ItemStack;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.resource.featuretoggle.FeatureFlags;
+import net.minecraft.resource.featuretoggle.FeatureSet;
 import java.util.*;
 
 public class CreativeModeTabCollectorImpl {
-    public static Map<CreativeModeTab, Collection<ItemStack>> collectTabs() {
-        Map<CreativeModeTab, Collection<ItemStack>> map = new LinkedHashMap<>();
-        FeatureFlagSet featureFlags = FeatureFlags.REGISTRY.allFlags();
-        CreativeModeTab.ItemDisplayParameters parameters = new CreativeModeTab.ItemDisplayParameters(featureFlags, true, BasicDisplay.registryAccess());
+    public static Map<ItemGroup, Collection<ItemStack>> collectTabs() {
+        Map<ItemGroup, Collection<ItemStack>> map = new LinkedHashMap<>();
+        FeatureSet featureFlags = FeatureFlags.FEATURE_MANAGER.getFeatureSet();
+        ItemGroup.DisplayContext parameters = new ItemGroup.DisplayContext(featureFlags, true, BasicDisplay.registryAccess());
         
-        for (CreativeModeTab tab : CreativeModeTabs.allTabs()) {
-            if (tab.getType() != CreativeModeTab.Type.HOTBAR && tab.getType() != CreativeModeTab.Type.INVENTORY) {
+        for (ItemGroup tab : ItemGroups.getGroups()) {
+            if (tab.getType() != ItemGroup.Type.HOTBAR && tab.getType() != ItemGroup.Type.INVENTORY) {
                 try {
-                    CreativeModeTab.ItemDisplayBuilder builder = new CreativeModeTab.ItemDisplayBuilder(tab, featureFlags);
-                    ResourceKey<CreativeModeTab> resourceKey = BuiltInRegistries.CREATIVE_MODE_TAB
-                            .getResourceKey(tab)
+                    ItemGroup.EntriesImpl builder = new ItemGroup.EntriesImpl(tab, featureFlags);
+                    RegistryKey<ItemGroup> resourceKey = Registries.ITEM_GROUP
+                            .getKey(tab)
                             .orElseThrow(() -> new IllegalStateException("Unregistered creative tab: " + tab));
-                    tab.displayItemsGenerator.accept(parameters, builder);
-                    map.put(tab, postFabricEvents(tab, parameters, resourceKey, builder.tabContents));
+                    tab.entryCollector.accept(parameters, builder);
+                    map.put(tab, postFabricEvents(tab, parameters, resourceKey, builder.parentTabStacks));
                 } catch (Throwable throwable) {
                     InternalLogger.getInstance().error("Failed to collect creative tab: " + tab, throwable);
                 }
@@ -62,7 +61,7 @@ public class CreativeModeTabCollectorImpl {
     }
     
     @SuppressWarnings("UnstableApiUsage")
-    private static Collection<ItemStack> postFabricEvents(CreativeModeTab tab, CreativeModeTab.ItemDisplayParameters parameters, ResourceKey<CreativeModeTab> resourceKey, Collection<ItemStack> tabContents) {
+    private static Collection<ItemStack> postFabricEvents(ItemGroup tab, ItemGroup.DisplayContext parameters, RegistryKey<ItemGroup> resourceKey, Collection<ItemStack> tabContents) {
         try {
             // Sorry!
             FabricItemGroupEntries entries = new FabricItemGroupEntries(parameters, new LinkedList<>(tabContents), new LinkedList<>());

@@ -26,17 +26,17 @@ package me.shedaniel.rei.impl.client.gui.fabric;
 import me.shedaniel.rei.api.client.gui.widgets.Tooltip;
 import me.shedaniel.rei.impl.ClientInternals;
 import me.shedaniel.rei.impl.client.gui.ScreenOverlayImpl;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
-import net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner;
-import net.minecraft.locale.Language;
-import net.minecraft.network.chat.FormattedText;
-import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.world.inventory.tooltip.TooltipComponent;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.tooltip.HoveredTooltipPositioner;
+import net.minecraft.client.gui.tooltip.TooltipComponent;
+import net.minecraft.item.tooltip.TooltipData;
+import net.minecraft.text.OrderedText;
+import net.minecraft.text.StringVisitable;
+import net.minecraft.text.Style;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.Language;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -45,14 +45,14 @@ import java.util.stream.Stream;
 
 public class ScreenOverlayImplFabric extends ScreenOverlayImpl {
     @Override
-    public void renderTooltipInner(Screen screen, GuiGraphics graphics, Tooltip tooltip, int mouseX, int mouseY) {
-        List<ClientTooltipComponent> lines = tooltip.entries().stream()
+    public void renderTooltipInner(Screen screen, DrawContext graphics, Tooltip tooltip, int mouseX, int mouseY) {
+        List<TooltipComponent> lines = tooltip.entries().stream()
                 .flatMap(component -> {
                     if (component.isText()) {
-                        List<FormattedText> texts = Minecraft.getInstance().font.getSplitter().splitLines(component.getAsText(), 100000, Style.EMPTY);
-                        Stream<FormattedCharSequence> sequenceStream = texts.isEmpty() ? Stream.of(component.getAsText().getVisualOrderText())
-                                : texts.stream().map(Language.getInstance()::getVisualOrder);
-                        return sequenceStream.map(ClientTooltipComponent::create);
+                        List<StringVisitable> texts = MinecraftClient.getInstance().textRenderer.getTextHandler().wrapLines(component.getAsText(), 100000, Style.EMPTY);
+                        Stream<OrderedText> sequenceStream = texts.isEmpty() ? Stream.of(component.getAsText().asOrderedText())
+                                : texts.stream().map(Language.getInstance()::reorder);
+                        return sequenceStream.map(TooltipComponent::of);
                     } else {
                         return Stream.empty();
                     }
@@ -60,9 +60,9 @@ public class ScreenOverlayImplFabric extends ScreenOverlayImpl {
                 .collect(Collectors.toList());
         for (Tooltip.Entry entry : tooltip.entries()) {
             if (entry.isTooltipComponent()) {
-                TooltipComponent component = entry.getAsTooltipComponent();
+                TooltipData component = entry.getAsTooltipComponent();
                 
-                if (component instanceof ClientTooltipComponent client) {
+                if (component instanceof TooltipComponent client) {
                     lines.add(client);
                     continue;
                 }
@@ -77,12 +77,12 @@ public class ScreenOverlayImplFabric extends ScreenOverlayImpl {
         renderTooltipInner(graphics, lines, tooltip.getX(), tooltip.getY(), tooltip.getTooltipStyle());
     }
     
-    public static void renderTooltipInner(GuiGraphics graphics, List<ClientTooltipComponent> lines, int mouseX, int mouseY, @Nullable ResourceLocation tooltipStyle) {
+    public static void renderTooltipInner(DrawContext graphics, List<TooltipComponent> lines, int mouseX, int mouseY, @Nullable Identifier tooltipStyle) {
         if (lines.isEmpty()) {
             return;
         }
-        graphics.pose().pushPose();
-        graphics.renderTooltipInternal(Minecraft.getInstance().font, lines, mouseX, mouseY, DefaultTooltipPositioner.INSTANCE, tooltipStyle);
-        graphics.pose().popPose();
+        graphics.getMatrices().push();
+        graphics.drawTooltip(MinecraftClient.getInstance().textRenderer, lines, mouseX, mouseY, HoveredTooltipPositioner.INSTANCE, tooltipStyle);
+        graphics.getMatrices().pop();
     }
 }

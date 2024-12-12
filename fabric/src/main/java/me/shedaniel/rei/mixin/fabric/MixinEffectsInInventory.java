@@ -24,8 +24,8 @@
 package me.shedaniel.rei.mixin.fabric;
 
 import me.shedaniel.rei.api.client.config.ConfigObject;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.gui.screens.inventory.EffectsInInventory;
+import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.gui.screen.ingame.StatusEffectsDisplay;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -33,11 +33,11 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-@Mixin(EffectsInInventory.class)
+@Mixin(StatusEffectsDisplay.class)
 public abstract class MixinEffectsInInventory {
     @Shadow
     @Final
-    private AbstractContainerScreen<?> screen;
+    private HandledScreen<?> screen;
     
     @Unique
     private boolean leftSideEffects() {
@@ -49,8 +49,8 @@ public abstract class MixinEffectsInInventory {
             ordinal = 2) // 3rd int
     public int modifyK(int k) {
         if (!leftSideEffects()) return k;
-        boolean bl = this.screen.leftPos >= 120;
-        return bl ? this.screen.leftPos - 120 - 4 : this.screen.leftPos - 32 - 4;
+        boolean bl = this.screen.x >= 120;
+        return bl ? this.screen.x - 120 - 4 : this.screen.x - 32 - 4;
     }
     
     @ModifyVariable(method = "renderEffects",
@@ -58,6 +58,6 @@ public abstract class MixinEffectsInInventory {
             ordinal = 0) // 1st bool
     public boolean modifyBl(boolean bl) {
         if (!leftSideEffects()) return bl;
-        return this.screen.leftPos >= 120;
+        return this.screen.x >= 120;
     }
 }

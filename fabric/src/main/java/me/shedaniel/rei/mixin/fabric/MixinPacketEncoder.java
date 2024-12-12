@@ -26,29 +26,29 @@ package me.shedaniel.rei.mixin.fabric;
 import dev.architectury.utils.GameInstance;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.PacketEncoder;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientboundUpdateRecipesPacket;
+import net.minecraft.network.handler.EncoderHandler;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.network.packet.s2c.play.SynchronizeRecipesS2CPacket;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(PacketEncoder.class)
+@Mixin(EncoderHandler.class)
 public class MixinPacketEncoder {
     @Inject(method = "encode", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/Packet;isSkippable()Z"))
     private void failedToEncode(ChannelHandlerContext channelHandlerContext, Packet<?> packet, ByteBuf byteBuf, CallbackInfo ci) {
-        if (packet instanceof ClientboundUpdateRecipesPacket) {
+        if (packet instanceof SynchronizeRecipesS2CPacket) {
             MinecraftServer server = GameInstance.getServer();
             String issue = "REI: Server failed to synchronize recipe data with the client! " +
                            "Please check the server console log for errors, this breaks REI and vanilla recipe books!";
             server.execute(() -> {
-                for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-                    player.sendSystemMessage(Component.literal(issue).withStyle(ChatFormatting.RED));
+                for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+                    player.sendMessage(Text.literal(issue).formatted(Formatting.RED));
                 }
             });
             System.out.println(issue);

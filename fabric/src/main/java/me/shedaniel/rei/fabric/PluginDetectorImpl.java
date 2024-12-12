@@ -36,9 +36,9 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.entrypoint.EntrypointContainer;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
-import net.minecraft.world.inventory.tooltip.TooltipComponent;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.tooltip.TooltipComponent;
+import net.minecraft.item.tooltip.TooltipData;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.lang.reflect.InvocationTargetException;
@@ -143,14 +143,14 @@ public class PluginDetectorImpl implements PluginDetector {
                 String methodName = FabricLoader.getInstance().isDevelopmentEnvironment() ? FabricLoader.getInstance().getMappingResolver().mapMethodName("intermediary", "net.minecraft.class_332", "method_51442", "(Ljava/util/List;Lnet/minecraft/class_5632;)V")
                         : "method_51442";
                 try {
-                    Method declaredMethod = GuiGraphics.class.getDeclaredMethod(methodName, List.class, TooltipComponent.class);
+                    Method declaredMethod = DrawContext.class.getDeclaredMethod(methodName, List.class, TooltipData.class);
                     if (declaredMethod != null) declaredMethod.setAccessible(true);
                     return declaredMethod;
                 } catch (NoSuchMethodException e) {
                     throw new RuntimeException(e);
                 }
             });
-            ClientInternals.attachInstance((BiConsumer<List<ClientTooltipComponent>, TooltipComponent>) (lines, component) -> {
+            ClientInternals.attachInstance((BiConsumer<List<TooltipComponent>, TooltipData>) (lines, component) -> {
                 try {
                     method.get().invoke(null, lines, component);
                 } catch (IllegalAccessException | InvocationTargetException e) {
